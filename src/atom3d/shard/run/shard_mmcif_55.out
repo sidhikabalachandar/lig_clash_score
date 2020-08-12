@@ -1,0 +1,9 @@
+2020-08-09 14:14:17,037 INFO 1776: Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+/home/groups/rondror/software/sidhikab/miniconda/envs/geometric/lib/python3.8/site-packages/pandas/core/generic.py:2490: PerformanceWarning: 
+your performance may suffer as PyTables will pickle object types that it cannot
+map directly to c-types [inferred_type->mixed,key->block2_values] [items->Index(['ensemble', 'structure', 'chain', 'hetero', 'insertion_code', 'segid',
+       'resname', 'altloc', 'element', 'name', 'fullname', 'serial_number'],
+      dtype='object')]
+
+  pytables.to_hdf(
+1713781

@@ -3,32 +3,33 @@ The purpose of this code is to train the gnn model
 It can be run on sherlock using
 $ /home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python pdbbind_dataloader.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/graphs /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
 $ /home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python pdbbind_dataloader.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/graphs /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --group 0
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python pdbbind_dataloader.py pdb /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/graphs /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --target 4or4 --start 4q46
 $ /home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python pdbbind_dataloader.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/graphs /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python pdbbind_dataloader.py combine /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/graphs /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python pdbbind_dataloader.py combine_all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/graphs /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python pdbbind_dataloader.py combine_group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/graphs /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python pdbbind_dataloader.py combine_check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/graphs /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python pdbbind_dataloader.py pdbbind_dataloader /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/graphs /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
 """
 
-# import numpy as np
 import pandas as pd
-import sys
-sys.path.append('../..')
-from atom3d.util import datatypes as dt
-from atom3d.util import file as fi
-from atom3d.util import splits as sp
-from atom3d.protein_ligand.get_labels import get_label
-from atom3d.util import graph
+import datatypes as dt
+import file as fi
+import splits as sp
+from get_labels import get_label
+import graph
 import os
 import torch
 from torch_geometric.data import Dataset, Data, DataLoader
 from tqdm import tqdm
 import argparse
-
-# import logging
-# import pdb
 import pickle
 
+CUTOFF = 0.1
+label_file = '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/pdbbind_refined_set_labels.csv'
 graph_root = '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/graphs'
 protein_file = '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt'
-run_path = '/home/users/sidhikab/flexibility_project/atom3d/src/atom3d/protein_ligand/run'
+run_path = '/home/users/sidhikab/lig_clash_score/src/examples/pytorch_geometric/run'
+processed_root = '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/graph_data/processed'
 
 # loader for pytorch-geometric
 
@@ -45,13 +46,14 @@ class GraphPDBBind(Dataset):
 
     @property
     def raw_file_names(self):
+
         return sorted(os.listdir(self.raw_dir))
 
     @property
     def processed_file_names(self):
-        num_samples = len(self.raw_file_names) // 3 # each example has protein/pocket/ligand files
-        return [f'data_{i}.pt' for i in range(num_samples)]
-
+        # print(sorted(os.listdir(processed_root)))
+        return sorted(os.listdir(processed_root))
+        # return []
     def get_idx_mapping(self):
         pdb_idx_dict = {}
         i = 0
@@ -67,26 +69,31 @@ class GraphPDBBind(Dataset):
         return self.pdb_idx_dict.get(pdb)
 
     def process(self):
-        label_file = os.path.join(self.root, 'pdbbind_refined_set_labels.csv')
-        label_df = pd.read_csv(label_file)
-        i = 0
-        with open(protein_file) as fp:
-            for line in tqdm(fp, desc='files'):
-                if line[0] == '#': continue
-                protein, target, start = line.strip().split()
-                graph_dir = '{}/{}-to-{}_graph.pkl'.format(graph_root, target, start)
-                infile = open(graph_dir, 'rb')
-                data = pickle.load(infile)
-                infile.close()
-                print(data)
-                for pdb_code in data:
-                    node_feats, edge_index, edge_feats, pos = data[pdb_code]
-                    y = torch.FloatTensor([get_label(pdb_code, label_df)])
-                    data = Data(node_feats, edge_index, edge_feats, y=y, pos=pos)
-                    data.pdb = pdb_code
-                    torch.save(data, os.path.join(self.processed_dir, 'data_{}.pt'.format(i)))
-                    print(os.path.join(self.processed_dir, 'data_{}.pt'.format(i)))
-                    i += 1
+        pass
+        # label_df = pd.read_csv(label_file)
+        # total_num_codes = len(label_df)
+        # num_codes = 0
+        # num_pairs = 0
+        # with open(protein_file) as fp:
+        #     for line in tqdm(fp, desc='files'):
+        #         if line[0] == '#': continue
+        #         if num_codes / total_num_codes > CUTOFF:
+        #             break
+        #         protein, target, start = line.strip().split()
+        #         num_pairs += 1
+        #         graph_dir = '{}/{}-to-{}_graph.pkl'.format(graph_root, target, start)
+        #         infile = open(graph_dir, 'rb')
+        #         graph_data = pickle.load(infile)
+        #         infile.close()
+        #         for pdb_code in graph_data:
+        #             node_feats, edge_index, edge_feats, pos = graph_data[pdb_code]
+        #             y = torch.FloatTensor([get_label(pdb_code, label_df)])
+        #             data = Data(node_feats, edge_index, edge_feats, y=y, pos=pos)
+        #             data.pdb = pdb_code
+        #             torch.save(data, os.path.join(self.processed_dir, 'data_{}.pt'.format(num_codes)))
+        #             num_codes += 1
+        # print('Num codes', num_codes)
+        # print('Num pairs', num_pairs)
 
     def len(self):
         return len(self.processed_file_names)
@@ -103,11 +110,9 @@ def pdbbind_dataloader(batch_size, data_dir='../../data/pdbbind', split_file=Non
     TODO: implement on-the-fly splitting using split functions
     """
     dataset = GraphPDBBind(root=data_dir)
-    print(len(dataset))
     if split_file is None:
         return DataLoader(dataset, batch_size, shuffle=True)
     indices = sp.read_split_file(split_file)
-    print(indices)
 
     # if split specifies pdb ids, convert to indices
     if isinstance(indices[0], str):
@@ -140,11 +145,12 @@ def create_graphs(target, start, root, out_dir):
             except Exception as e:
                 error_count += 1
 
+    print(len(data))
     outfile = open(os.path.join(out_dir, '{}-to-{}_graph.pkl'.format(target, start)), 'wb')
     pickle.dump(data, outfile)
     print(error_count)
 
-def get_prots(fname, out_dir):
+def get_unfinished_prots(fname, out_dir):
     pairs = []
     unfinished_pairs = []
     with open(fname) as fp:
@@ -161,6 +167,64 @@ def get_prots(fname, out_dir):
 
     return pairs, unfinished_pairs
 
+def get_prots(fname):
+    pairs = []
+    with open(fname) as fp:
+        for line in tqdm(fp, desc='files'):
+            if line[0] == '#': continue
+            protein, target, start = line.strip().split()
+            pairs.append((protein, target, start))
+
+    return pairs
+
+def split_process(target, start, start_num_code):
+    label_df = pd.read_csv(label_file)
+    graph_dir = '{}/{}-to-{}_graph.pkl'.format(graph_root, target, start)
+    infile = open(graph_dir, 'rb')
+    graph_data = pickle.load(infile)
+    infile.close()
+    for pdb_code in tqdm(graph_data, desc='pdb_codes'):
+        node_feats, edge_index, edge_feats, pos = graph_data[pdb_code]
+        y = torch.FloatTensor([get_label(pdb_code, label_df)])
+        data = Data(node_feats, edge_index, edge_feats, y=y, pos=pos)
+        data.pdb = pdb_code
+        torch.save(data, os.path.join(processed_root, 'data_{}.pt'.format(start_num_code)))
+        start_num_code += 1
+
+def get_code_groups(fname):
+    pkl_file = '/home/users/sidhikab/lig_clash_score/src/examples/pytorch_geometric/pairs.pkl'
+    if (os.path.exists(pkl_file)):
+        infile = open(pkl_file, 'rb')
+        pairs = pickle.load(infile)
+        infile.close()
+        return pairs
+    else:
+        label_df = pd.read_csv(label_file)
+        pairs = []
+        num_pairs = 0
+        num_codes = 0
+
+        with open(fname) as fp:
+            for line in tqdm(fp, desc='files'):
+                if line[0] == '#': continue
+                if num_codes / len(label_df) > CUTOFF:
+                    break
+                protein, target, start = line.strip().split()
+                num_pairs += 1
+                pairs.append((protein, target, start, num_codes))
+                graph_dir = '{}/{}-to-{}_graph.pkl'.format(graph_root, target, start)
+                infile = open(graph_dir, 'rb')
+                graph_data = pickle.load(infile)
+                infile.close()
+                for _ in graph_data:
+                    num_codes += 1
+
+        outfile = open(pkl_file, 'wb')
+        pickle.dump(pairs, outfile)
+        print(num_codes)
+        print(num_pairs)
+
+        return pairs
 
 def main():
     parser = argparse.ArgumentParser()
@@ -169,22 +233,60 @@ def main():
     parser.add_argument('out_dir', type=str, help='either all or group')
     parser.add_argument('prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('--group', type=int, default=-1, help='if type is group, argument indicates group index')
+    parser.add_argument('--target', type=str, default='', help='if type is group, argument indicates group index')
+    parser.add_argument('--start', type=str, default='', help='if type is group, argument indicates group index')
     args = parser.parse_args()
 
     if not os.path.exists(args.out_dir):
         os.mkdir(args.out_dir)
 
-    pairs, unfinished_pairs = get_prots(args.prot_file, args.out_dir)
-    n = 3
-    grouped_files = []
-
-    for i in range(0, len(pairs), n):
-        grouped_files += [pairs[i: i + n]]
-
     if args.task == 'all':
+        pairs = get_prots(args.prot_file)
+        n = 3
+        grouped_files = []
+
+        for i in range(0, len(pairs), n):
+            grouped_files += [pairs[i: i + n]]
+        # for i in range(len(grouped_files)):
+        #     cmd = 'sbatch -p owners -t 5:00:00 -o {} --wrap="' \
+        #           '/home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python pdbbind_dataloader.py group ' \
+        #           '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d ' \
+        #           '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/graphs ' \
+        #           '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --group {}"'
+        #     os.system(cmd.format(os.path.join(run_path, 'graph_{}.out'.format(i)), i))
+        #     # print(cmd.format(os.path.join(run_path, 'graph_{}.out'.format(i)), i))
+        print(len(grouped_files))
+
+    if args.task == 'group':
+        pairs = get_prots(args.prot_file)
+        n = 3
+        grouped_files = []
+
+        for i in range(0, len(pairs), n):
+            grouped_files += [pairs[i: i + n]]
+        for _, target, start in grouped_files[args.group]:
+            create_graphs(target, start, args.root, args.out_dir)
+
+    if args.task == 'pdb':
+        target, start = args.target, args.start
+        create_graphs(target, start, args.root, args.out_dir)
+
+    if args.task == 'check':
+        pairs, unfinished_pairs = get_unfinished_prots(args.prot_file, args.out_dir)
+        print('Missing:', len(unfinished_pairs), '/', len(pairs))
+        # print(unfinished_pairs)
+
+    if args.task == 'combine_all':
+        pairs = get_code_groups(args.prot_file)
+        n = 1
+        grouped_files = []
+        print(len(grouped_files))
+
+        for i in range(0, len(pairs), n):
+            grouped_files += [pairs[i: i + n]]
         for i in range(len(grouped_files)):
             cmd = 'sbatch -p owners -t 5:00:00 -o {} --wrap="' \
-                  '/home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python pdbbind_dataloader.py group ' \
+                  '/home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python pdbbind_dataloader.py combine_group ' \
                   '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d ' \
                   '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/graphs ' \
                   '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --group {}"'
@@ -192,16 +294,47 @@ def main():
             # print(cmd.format(os.path.join(run_path, 'graph_{}.out'.format(i)), i))
         print(len(grouped_files))
 
-    if args.task == 'group':
-        for _, target, start in grouped_files[args.group]:
-            create_graphs(target, start, args.root, args.out_dir)
+    if args.task == 'combine_group':
+        pairs = get_code_groups(args.prot_file)
+        n = 1
+        grouped_files = []
 
-    if args.task == 'check':
-        print('Missing:', len(unfinished_pairs), '/', len(pairs))
-        # print(unfinished_pairs)
+        for i in range(0, len(pairs), n):
+            grouped_files += [pairs[i: i + n]]
 
-    if args.task == 'combine':
-        dataset = GraphPDBBind(root=args.root)
+        for _, target, start, num_codes in grouped_files[args.group]:
+            split_process(target, start, num_codes)
+
+    if args.task == 'combine_check':
+        label_df = pd.read_csv(label_file)
+        unfinished_pairs = []
+        num_codes = 0
+        num_pairs = 0
+
+        with open(args.prot_file) as fp:
+            for line in tqdm(fp, desc='files'):
+                if line[0] == '#': continue
+                protein, target, start = line.strip().split()
+                if num_codes / len(label_df) > CUTOFF:
+                    break
+                num_pairs += 1
+                graph_dir = '{}/{}-to-{}_graph.pkl'.format(graph_root, target, start)
+                infile = open(graph_dir, 'rb')
+                graph_data = pickle.load(infile)
+                infile.close()
+                start_num_code = num_codes
+                for _ in graph_data:
+                    if not os.path.exists(os.path.join(processed_root, 'data_{}.pt'.format(num_codes))):
+                        unfinished_pairs.append((protein, target, start, start_num_code))
+                        break
+                    num_codes += 1
+
+        print('Missing', len(unfinished_pairs), '/', num_pairs)
+        print(unfinished_pairs)
+
+    if args.task == 'pdbbind_dataloader':
+        data = pdbbind_dataloader(1, data_dir='/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d')
+        print(len(data))
 
 if __name__=="__main__":
     main()

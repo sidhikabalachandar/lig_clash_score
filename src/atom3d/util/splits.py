@@ -10,7 +10,7 @@ import atom3d.util.file as fi
 import atom3d.util.log as log
 import atom3d.util.sequence as seq
 
-logger = log.getLogger('splits')
+logger = log.get_logger('splits')
 
 
 def read_split_file(split_file):

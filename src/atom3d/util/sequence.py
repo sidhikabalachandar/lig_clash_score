@@ -8,7 +8,9 @@ import Bio.PDB.Polypeptide as poly
 import dotenv as de
 import numpy as np
 import tqdm
+import sys
 
+sys.path.append('../..')
 import atom3d.util.datatypes as dt
 import atom3d.util.log as log
 import atom3d.util.file as fi
@@ -16,7 +18,7 @@ import atom3d.util.file as fi
 
 project_root = os.path.abspath(os.path.join(__file__, '../../..'))
 de.load_dotenv(os.path.join(project_root, '.env'))
-logger = log.getLogger('sequence')
+logger = log.get_logger('sequence')
 
 
 def find_similar(chain_sequences, blast_db, cutoff, num_alignments):

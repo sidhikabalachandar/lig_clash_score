@@ -11,7 +11,6 @@ import time
 import logging
 from scipy.stats import spearmanr
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 import datetime
 import argparse
@@ -19,7 +18,6 @@ import argparse
 import torch
 import torch.nn.functional as F
 from torch.nn import Sequential, Linear, ReLU, MSELoss
-from torch_geometric.data import DataLoader
 from torch_geometric.nn import GCNConv, GINConv, global_add_pool
 
 from pdbbind_dataloader import pdbbind_dataloader
@@ -193,11 +191,13 @@ def train_pdbbind(split, architecture, base_dir, device, log_dir, seed=None, tes
     train_split = os.path.join(split_dir, f'train_{split}.txt')
     val_split = os.path.join(split_dir, f'val_{split}.txt')
     test_split = os.path.join(split_dir,f'test_{split}.txt')
-    train_loader = pdbbind_dataloader(batch_size, data_dir=data_path, split_file=train_split)
-    val_loader = pdbbind_dataloader(batch_size, data_dir=data_path, split_file=val_split)
-    test_loader = pdbbind_dataloader(batch_size, data_dir=data_path, split_file=test_split)
-    with open(train_split) as f:
-        print(len(f.readlines()))
+    graph_path = os.path.join(data_path, 'graph_data')
+    train_loader = pdbbind_dataloader(batch_size, data_dir=graph_path, split_file=train_split)
+    print(len(train_loader))
+    val_loader = pdbbind_dataloader(batch_size, data_dir=graph_path, split_file=val_split)
+    print(len(val_loader))
+    test_loader = pdbbind_dataloader(batch_size, data_dir=graph_path, split_file=test_split)
+    print(len(test_loader))
 
     if not os.path.exists(os.path.join(log_dir, 'params.txt')):
         with open(os.path.join(log_dir, 'params.txt'), 'w') as f:
@@ -263,7 +263,7 @@ if __name__=="__main__":
     args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    base_dir = '../../data/pdbbind'
+    base_dir = '/home/users/sidhikab/lig_clash_score/models'
     log_dir = args.log_dir
 
 

@@ -1,0 +1,79 @@
+no change     /home/groups/rondror/software/sidhikab/miniconda/condabin/conda
+no change     /home/groups/rondror/software/sidhikab/miniconda/bin/conda
+no change     /home/groups/rondror/software/sidhikab/miniconda/bin/conda-env
+no change     /home/groups/rondror/software/sidhikab/miniconda/bin/activate
+no change     /home/groups/rondror/software/sidhikab/miniconda/bin/deactivate
+no change     /home/groups/rondror/software/sidhikab/miniconda/etc/profile.d/conda.sh
+no change     /home/groups/rondror/software/sidhikab/miniconda/etc/fish/conf.d/conda.fish
+no change     /home/groups/rondror/software/sidhikab/miniconda/shell/condabin/Conda.psm1
+no change     /home/groups/rondror/software/sidhikab/miniconda/shell/condabin/conda-hook.ps1
+no change     /home/groups/rondror/software/sidhikab/miniconda/lib/python3.8/site-packages/xontrib/conda.xsh
+no change     /home/groups/rondror/software/sidhikab/miniconda/etc/profile.d/conda.csh
+no change     /home/users/sidhikab/.bashrc
+No action taken.
+
+CommandNotFoundError: Your shell has not been properly configured to use 'conda deactivate'.
+To initialize your shell, run
+
+    $ conda init <SHELL_NAME>
+
+Currently supported shells are:
+  - bash
+  - fish
+  - tcsh
+  - xonsh
+  - zsh
+  - powershell
+
+See 'conda init --help' for more information and options.
+
+IMPORTANT: You may need to close and restart your shell after running 'conda init'.
+
+
+
+CommandNotFoundError: Your shell has not been properly configured to use 'conda deactivate'.
+To initialize your shell, run
+
+    $ conda init <SHELL_NAME>
+
+Currently supported shells are:
+  - bash
+  - fish
+  - tcsh
+  - xonsh
+  - zsh
+  - powershell
+
+See 'conda init --help' for more information and options.
+
+IMPORTANT: You may need to close and restart your shell after running 'conda init'.
+
+
+-------------------------------------------------------------------------------
+The following dependent module(s) are not currently loaded: py-numpy/1.14.3_py36 (required by: py-pytorch/1.4.0_py36)
+-------------------------------------------------------------------------------
+
+CommandNotFoundError: Your shell has not been properly configured to use 'conda activate'.
+To initialize your shell, run
+
+    $ conda init <SHELL_NAME>
+
+Currently supported shells are:
+  - bash
+  - fish
+  - tcsh
+  - xonsh
+  - zsh
+  - powershell
+
+See 'conda init --help' for more information and options.
+
+IMPORTANT: You may need to close and restart your shell after running 'conda init'.
+
+
+Traceback (most recent call last):
+  File "train_pdbbind.py", line 19, in <module>
+    import torch
+  File "/share/software/user/open/py-pytorch/1.4.0_py36/lib/python3.6/site-packages/torch/__init__.py", line 81, in <module>
+    from torch._C import *
+ModuleNotFoundError: No module named 'torch._C'

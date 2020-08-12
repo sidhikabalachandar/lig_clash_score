@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "pdbbind_dataloader.py", line 309, in <module>
+    main()
+  File "pdbbind_dataloader.py", line 302, in main
+    split_process(target, start, num_codes)
+  File "pdbbind_dataloader.py", line 192, in split_process
+    y = torch.FloatTensor([get_label(pdb_code, label_df)])
+  File "../../atom3d/protein_ligand/get_labels.py", line 24, in get_label
+    return label_df[label_df['target'] == pdb]['rmsd'].iloc[0]
+  File "/home/groups/rondror/software/sidhikab/miniconda/envs/geometric/lib/python3.8/site-packages/pandas/core/indexing.py", line 1768, in __getitem__
+    return self._getitem_axis(maybe_callable, axis=axis)
+  File "/home/groups/rondror/software/sidhikab/miniconda/envs/geometric/lib/python3.8/site-packages/pandas/core/indexing.py", line 2138, in _getitem_axis
+    self._validate_integer(key, axis)
+  File "/home/groups/rondror/software/sidhikab/miniconda/envs/geometric/lib/python3.8/site-packages/pandas/core/indexing.py", line 2063, in _validate_integer
+    raise IndexError("single positional indexer is out-of-bounds")
+IndexError: single positional indexer is out-of-bounds
