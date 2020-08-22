@@ -1,37 +1,47 @@
 """
-The purpose of this code is to set the train, val, and test data sets
+The purpose of this code is to find the mean and stdev of the set of all rmsds of all outputted glide poses
+
 It can be run on sherlock using
-/home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python translation_stats.py
+/home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python translation_stats.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures/lig_translation.png
 """
 
-import os
 import pandas as pd
 import statistics
 import seaborn as sns
 from tqdm import tqdm
+import argparse
 
 CUTOFF = 40
-prot_file = '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt'
-save_root = '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw'
-data_root = '/oak/stanford/groups/rondror/projects/ligand-docking/pdbbind_2019/data'
 
-def main():
+"""
+gets rmsds of the docking runs of all protein, target ligands, and starting ligands in the index file
+:param docked_prot_file: (string) file listing proteins to process
+:return: process (list) list of all protein, target ligands, and starting ligands to process
+"""
+def get_prots(docked_prot_file, raw_root):
     rmsds = {}
-
-    with open(prot_file) as fp:
-        for line in tqdm(fp, desc='protein file'):
+    with open(docked_prot_file) as fp:
+        for line in tqdm(fp, desc='going through protein, target, start groups'):
             if line[0] == '#': continue
             protein, target, start = line.strip().split()
-            pv_file = os.path.join(save_root,
-                                   '{}/{}-to-{}/{}-to-{}_pv.maegz'.format(protein, target, start, target, start))
-            if os.path.exists(pv_file):
-                rmsd_file = '{}/{}/docking/sp_es4/{}-to-{}/rmsd.csv'.format(data_root, protein, target, start)
-                df = pd.read_csv(rmsd_file)
-                if protein not in rmsds:
-                    rmsds[protein] = {}
-                if start not in rmsds[protein]:
-                    rmsds[protein][start] = {}
-                rmsds[protein][start][target] = df['RMSD']
+            rmsd_file = '{}/{}/docking/sp_es4/{}-to-{}/rmsd.csv'.format(raw_root, protein, target, start)
+            df = pd.read_csv(rmsd_file)
+            if protein not in rmsds:
+                rmsds[protein] = {}
+            if start not in rmsds[protein]:
+                rmsds[protein][start] = {}
+            rmsds[protein][start][target] = df['RMSD']
+
+    return rmsds
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
+    parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
+    parser.add_argument('save_path', type=str, help='path to saved figure')
+    args = parser.parse_args()
+
+    rmsds = get_prots(args.docked_prot_file, args.raw_root)
 
     rmsds_ls = []
     for protein in rmsds:
@@ -44,7 +54,7 @@ def main():
 
     ax = sns.distplot(rmsds_ls)
     fig = ax.get_figure()
-    fig.savefig('/home/users/sidhikab/flexibility_project/atom3d/reports/figures/lig_translation.png')
+    fig.savefig(args.save_path)
 
 
 if __name__=="__main__":

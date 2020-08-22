@@ -3,9 +3,11 @@ The purpose of this code is to label the data
 It can be run on sherlock using
 ml load chemistry
 ml load schrodinger
-/home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python get_labels.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
-/home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python get_labels.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
-/home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python get_labels.py combine /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python get_labels.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python get_labels.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python get_labels.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python get_labels.py combine /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python get_labels.py MAPK14 /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
 
 """
 
@@ -70,14 +72,14 @@ def main():
     if not os.path.exists(indiv_labels_dir):
         os.mkdir(indiv_labels_dir)
 
-    pairs, unfinished_pairs = get_prots(args.prot_file, indiv_labels_dir)
-    n = 15
-    grouped_files = []
-
-    for i in range(0, len(pairs), n):
-        grouped_files += [pairs[i: i + n]]
-
     if args.task == 'all':
+        pairs, unfinished_pairs = get_prots(args.prot_file, indiv_labels_dir)
+        n = 15
+        grouped_files = []
+
+        for i in range(0, len(pairs), n):
+            grouped_files += [pairs[i: i + n]]
+
         for i in range(len(grouped_files)):
             cmd = 'sbatch -p owners -t 5:00:00 -o {} --wrap="' \
                   '/home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python get_labels.py group ' \
@@ -89,6 +91,13 @@ def main():
         print(len(grouped_files))
 
     if args.task == 'group':
+        pairs, unfinished_pairs = get_prots(args.prot_file, indiv_labels_dir)
+        n = 15
+        grouped_files = []
+
+        for i in range(0, len(pairs), n):
+            grouped_files += [pairs[i: i + n]]
+
         for protein, target, start in grouped_files[args.group]:
             print(protein, target, start)
             pair = '{}-to-{}'.format(target, start)
@@ -101,12 +110,34 @@ def main():
             to_df(pair_data, indiv_labels_dir, pair)
 
     if args.task == 'check':
+        pairs, unfinished_pairs = get_prots(args.prot_file, indiv_labels_dir)
+        n = 15
+        grouped_files = []
+
+        for i in range(0, len(pairs), n):
+            grouped_files += [pairs[i: i + n]]
+
         print('Missing:', len(unfinished_pairs), '/', len(pairs))
         # print(unfinished_pairs)
 
     if args.task == 'combine':
         combined_csv_data = pd.concat([pd.read_csv(os.path.join(indiv_labels_dir, f)) for f in os.listdir(indiv_labels_dir)])
         combined_csv_data.to_csv(os.path.join(args.out_dir, 'pdbbind_refined_set_labels.csv'))
+
+    if args.task == 'MAPK14':
+        protein = 'MAPK14'
+        ligs = ['3D83', '4F9Y']
+        for target in ligs:
+            for start in ligs:
+                if target != start:
+                    pair = '{}-to-{}'.format(target, start)
+                    pair_path = os.path.join(args.datapath, '{}/{}'.format(protein, pair))
+                    infile = open(os.path.join(pair_path, '{}_rmsd_index.pkl'.format(pair)), 'rb')
+                    files = pickle.load(infile)
+                    infile.close()
+                    rmsds = get_rmsd_results(os.path.join(pair_path, '{}_rmsd.out'.format(pair)))
+                    pair_data = [[protein, start.lower(), files[i][:-4].lower(), rmsds[i]] for i in range(len(rmsds))]
+                    to_df(pair_data, indiv_labels_dir, pair)
 
 if __name__ == "__main__":
     main()

@@ -26,10 +26,4 @@ def get_pdb_code(path_to_pdb):
 
 
 def get_pdb_name(path_to_pdb):
-    return path_to_pdb.split('/')[-1]
-
-def get_file_name(path_to_pdb):
-    name = path_to_pdb.split('_')[-1].split('.')[0]
-    if name == 'lig':
-        name = 'lig0'
-    return name
+    return path_to_pdb.split('/')[-1][5:-4]

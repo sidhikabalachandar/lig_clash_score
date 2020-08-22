@@ -8,6 +8,7 @@ $ $SCHRODINGER/run python3 mcss_similarity.py group /oak/stanford/groups/rondror
 $ $SCHRODINGER/run python3 mcss_similarity.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/mcss /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
 $ $SCHRODINGER/run python3 mcss_similarity.py pdb /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/mcss /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --protein Q9ZMY2 --target 4ynb --start 4wkn
 $ $SCHRODINGER/run python3 mcss_similarity.py update /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/mcss /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random_mcss.txt --new_prot_file /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+$ $SCHRODINGER/run python3 mcss_similarity.py MAPK14 /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/mcss /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
 """
 
 import os
@@ -219,14 +220,13 @@ if __name__ == '__main__':
     if not os.path.exists(args.out_dir):
         os.mkdir(args.out_dir)
 
-    pairs, unfinished_pairs = get_prots(args.prot_file, args.out_dir)
-    n = 30
-    grouped_files = []
-
-    for i in range(0, len(unfinished_pairs), n):
-        grouped_files += [unfinished_pairs[i: i + n]]
-
     if args.task == 'all':
+        pairs, unfinished_pairs = get_prots(args.prot_file, args.out_dir)
+        n = 30
+        grouped_files = []
+
+        for i in range(0, len(unfinished_pairs), n):
+            grouped_files += [unfinished_pairs[i: i + n]]
         for protein, target, start in unfinished_pairs:
             cmd = 'sbatch -p rondror -t 5:00:00 -o {} --wrap="$SCHRODINGER/run python3 mcss_similarity.py pdb ' \
                   '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw ' \
@@ -238,6 +238,12 @@ if __name__ == '__main__':
         print(len(grouped_files))
 
     if args.task == 'group':
+        pairs, unfinished_pairs = get_prots(args.prot_file, args.out_dir)
+        n = 30
+        grouped_files = []
+
+        for i in range(0, len(unfinished_pairs), n):
+            grouped_files += [unfinished_pairs[i: i + n]]
         for protein, target, start in grouped_files[args.group]:
             print(protein, target, start)
             compute_protein_mcss(protein, [target, start], args.data_dir, args.out_dir)
@@ -247,6 +253,12 @@ if __name__ == '__main__':
         compute_protein_mcss(protein, [target, start], args.data_dir, args.out_dir)
 
     if args.task == 'check':
+        pairs, unfinished_pairs = get_prots(args.prot_file, args.out_dir)
+        n = 30
+        grouped_files = []
+
+        for i in range(0, len(unfinished_pairs), n):
+            grouped_files += [unfinished_pairs[i: i + n]]
         print('Missing:', len(unfinished_pairs), '/', len(pairs))
         print(unfinished_pairs)
 
@@ -262,3 +274,11 @@ if __name__ == '__main__':
         file = open(args.new_prot_file, "w")
         file.writelines(text)
         file.close()
+
+    if args.task == 'MAPK14':
+        protein = 'MAPK14'
+        ligs = ['3D83', '4F9Y']
+        for target in ligs:
+            for start in ligs:
+                if target != start:
+                    compute_protein_mcss(protein, [target, start], args.data_dir, args.out_dir)

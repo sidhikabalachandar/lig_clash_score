@@ -55,7 +55,6 @@ def create_from_ensembles(ensembles, path):
     shard_ranges = _get_shard_ranges(len(ensembles), num_shards)
     shard_size = shard_ranges[0, 1] - shard_ranges[0, 0]
 
-    total = 0
     logging.info(f'Ensembles per shard: {shard_size:}')
     for shard_num in tqdm.trange(num_written, num_shards):
         start, stop = shard_ranges[shard_num]

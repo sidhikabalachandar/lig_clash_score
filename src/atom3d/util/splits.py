@@ -1,16 +1,17 @@
 """Functions for splitting data into test, validation, and training sets."""
 import math
 import random
-import sys
 
 import numpy as np
-sys.path.append('../..')
+import sys
+sys.path.pop()
+sys.path.append('/home/users/sidhikab/lig_clash_score/src')
 
-import atom3d.util.file as fi
-import atom3d.util.log as log
-import atom3d.util.sequence as seq
+from atom3d.util import file as fi
+from atom3d.util import log as log
+from atom3d.util import sequence as seq
 
-logger = log.getLogger('splits')
+logger = log.get_logger('splits')
 
 
 def read_split_file(split_file):

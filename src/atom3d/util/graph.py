@@ -1,9 +1,11 @@
 import numpy as np
 import pandas as pd
 import sys
-sys.path.append('../..')
-import atom3d.util.datatypes as dt
-import atom3d. util.file as fi
+sys.path.pop()
+sys.path.append('/home/users/sidhikab/lig_clash_score/src')
+
+from atom3d.util import datatypes as dt
+from atom3d.util import file as fi
 import torch
 import torch.nn.functional as F
 from scipy.spatial import KDTree
@@ -35,14 +37,15 @@ def prot_df_to_graph(df, mcss, edge_dist_cutoff=4.5):
         node_pos (FloatTensor): x-y-z coordinates of each node
     """
 
-    node_pos = torch.FloatTensor(df[['x', 'y', 'z']].to_numpy())
+    no_h = df[df['element'] != 'H']
+    node_pos = torch.FloatTensor(no_h[['x', 'y', 'z']].to_numpy())
 
     kd_tree = KDTree(node_pos)
     edge_tuples = list(kd_tree.query_pairs(edge_dist_cutoff))
     edges = torch.LongTensor(edge_tuples).t().contiguous()
     node_feats = []
-    mean, stdev = statistics.mean(df['bfactor']), statistics.stdev(df['bfactor'])
-    for e, b in zip(df['element'], df['bfactor']):
+    mean, stdev = statistics.mean(no_h['bfactor']), statistics.stdev(no_h['bfactor'])
+    for e, b in zip(no_h['element'], no_h['bfactor']):
         feats = one_of_k_encoding_unk(e, prot_atoms)
         feats.append((b - mean) / stdev)
         feats.append(mcss)

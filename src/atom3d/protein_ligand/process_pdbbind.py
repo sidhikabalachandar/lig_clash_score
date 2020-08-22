@@ -1,9 +1,10 @@
 """
 The purpose of this code is to process the pdb files
 It can be run on sherlock using
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python process_pdbbind.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --out_dir
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python process_pdbbind.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --group <index> --out_dir /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/processed
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python process_pdbbind.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --out_dir /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/processed
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python process_pdbbind.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --out_dir
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python process_pdbbind.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --group <index> --out_dir /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/processed
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python process_pdbbind.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --out_dir /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/processed
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python process_pdbbind.py MAPK14 /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --out_dir /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/processed
 """
 
 #!/usr/bin/env python
@@ -45,7 +46,7 @@ def get_pdb_files(input_dir, protein, pdb, proteins, ending):
     for pair in proteins[protein]:
         if pdb in pair.split('-to-'):
             for file in fi.find_files(os.path.join(protein_path, pair), ending):
-                if file.split('/')[-1] not in pdb_file_endings and fi.get_pdb_code(file) == pdb:
+                if file.split('/')[-1] not in pdb_file_endings and fi.get_pdb_code(file) == pdb.lower():
                     pdb_files.append(file)
                     pdb_file_endings.append(file.split('/')[-1])
 
@@ -165,7 +166,7 @@ def process_files(input_dir, protein, pdb, proteins):
         structure_dict (dict): dictionary containing each structure, keyed by PDB code. Each PDB is a dict containing protein in Biopython format and ligand in RDKit Mol format
     """
     structure_dict = {}
-    pdb_files = get_pdb_files(input_dir, protein, pdb, proteins, 'pdb')
+    pdb_files = get_pdb_files(input_dir, protein, pdb, proteins, 'pdb')\
 
     for f in tqdm(pdb_files, desc='pdb files'):
         pdb_id = fi.get_pdb_code(f)
@@ -179,8 +180,8 @@ def process_files(input_dir, protein, pdb, proteins):
     lig_files = get_pdb_files(input_dir, protein, pdb, proteins, 'sdf')
     for f in tqdm(lig_files, desc='ligand files'):
         pdb_id = fi.get_pdb_code(f)
-        if fi.get_file_name(f) not in structure_dict[pdb_id]:
-            structure_dict[pdb_id][fi.get_file_name(f)] = get_ligand(f)
+        if fi.get_pdb_name(f) not in structure_dict[pdb_id]:
+            structure_dict[pdb_id][fi.get_pdb_name(f)] = get_ligand(f)
     
     return structure_dict
 
@@ -221,7 +222,7 @@ def produce_cleaned_dataset(structure_dict, out_path, dist):
             if ligand is None:
                 continue
             pocket_res = get_pocket_res(protein, ligand, dist)
-            write_files(pdb, protein, ligand, pocket_res, out_path, lig_name.strip('lig'))
+            write_files(pdb, protein, ligand, pocket_res, out_path, lig_name[3:])
 
 
 def main():
@@ -241,16 +242,16 @@ def main():
     if not os.path.exists(args.out_dir):
         os.mkdir(args.out_dir)
 
-    unfinished_proteins, all_proteins, ligands, dup_target = get_prots(args.prot_file, args.out_dir)
-    prot_names = sorted(list(unfinished_proteins.keys()))
-
-    grouped_files = []
-    n = 1
-
-    for i in range(0, len(prot_names), n):
-        grouped_files += [prot_names[i: i + n]]
-
     if args.task == 'all':
+        unfinished_proteins, all_proteins, ligands, dup_target = get_prots(args.prot_file, args.out_dir)
+        prot_names = sorted(list(unfinished_proteins.keys()))
+
+        grouped_files = []
+        n = 1
+
+        for i in range(0, len(prot_names), n):
+            grouped_files += [prot_names[i: i + n]]
+
         counter = 0
         for protein in unfinished_proteins:
             for code in unfinished_proteins[protein]:
@@ -264,6 +265,15 @@ def main():
                 counter += 1
 
     if args.task == 'group':
+        unfinished_proteins, all_proteins, ligands, dup_target = get_prots(args.prot_file, args.out_dir)
+        prot_names = sorted(list(unfinished_proteins.keys()))
+
+        grouped_files = []
+        n = 1
+
+        for i in range(0, len(prot_names), n):
+            grouped_files += [prot_names[i: i + n]]
+
         print(args.protein, args.pdb)
         structures = process_files(args.data_dir, args.protein, args.pdb, all_proteins)
         produce_cleaned_dataset(structures, args.out_dir, args.dist)
@@ -292,6 +302,12 @@ def main():
         #               '--protein {} --pdb {} --out_dir /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/processed"'
         #         os.system(cmd.format(os.path.join(run_path, 'process_{}.out'.format(ligand)), protein, ligand))
                 # print(cmd.format(os.path.join(run_path, 'process_{}.out'.format(code)), protein, code))
+    if args.task == 'MAPK14':
+        protein = 'MAPK14'
+        ligs = ['4F9Y']
+        for pdb in ligs:
+            structures = process_files(args.data_dir, protein,  pdb, {'MAPK14': ['4F9Y-to-3D83']})
+            produce_cleaned_dataset(structures, args.out_dir, args.dist)
 
 if __name__ == "__main__":
     main()
