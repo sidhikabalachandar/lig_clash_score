@@ -18,12 +18,12 @@ import os
 
 N = 25 #number of files in each group
 
-"""
-gets list of all protein, target ligands, and starting ligands in the index file
-:param docked_prot_file: (string) file listing proteins to process
-:return: process (list) list of all protein, target ligands, and starting ligands to process
-"""
 def get_prots(docked_prot_file):
+    """
+    gets list of all protein, target ligands, and starting ligands in the index file
+    :param docked_prot_file: (string) file listing proteins to process
+    :return: process (list) list of all protein, target ligands, and starting ligands to process
+    """
     process = []
     with open(docked_prot_file) as fp:
         for line in fp:
@@ -33,13 +33,13 @@ def get_prots(docked_prot_file):
 
     return process
 
-"""
-groups pairs into sublists of size n
-:param n: (int) sublist size
-:param process: (list) list of pairs to process
-:return: grouped_files (list) list of sublists of pairs
-"""
 def group_files(n, process):
+    """
+    groups pairs into sublists of size n
+    :param n: (int) sublist size
+    :param process: (list) list of pairs to process
+    :return: grouped_files (list) list of sublists of pairs
+    """
     grouped_files = []
 
     for i in range(0, len(process), n):
@@ -91,7 +91,8 @@ def main():
                     if not os.path.exists('{}/{}_lig0.mae'.format(pair_path, target)):
                         f.write('cp {}/{}_lig.mae {}/{}_lig0.mae\n'.format(struct_root, target, pose_path, target))
                     if not os.path.exists('{}/{}-to-{}_pv.maegz'.format(pair_path, target, start)):
-                        f.write('cp {}/{}-to-{}_pv.maegz {}/{}-to-{}_pv.maegz\n'.format(dock_root, target, start, pair_path, target, start))
+                        f.write('cp {}/{}-to-{}_pv.maegz {}/{}-to-{}_pv.maegz\n'.format(dock_root, target, start,
+                                                                                        pair_path, target, start))
 
             os.chdir(args.run_path)
             os.system('sbatch -p owners -t 02:00:00 -o structure{}.out structure{}_in.sh'.format(i, i))
@@ -143,14 +144,15 @@ def main():
 
                         f.write('#!/bin/bash\n')
                         if not os.path.exists('{}/{}_prot.mae'.format(pair_path, start)):
-                            f.write('cp {}/{}/{}_out.mae {}/{}_prot.mae\n'.format(struct_root, start, start, pair_path, start))
+                            f.write('cp {}/{}/{}_out.mae {}/{}_prot.mae\n'.format(struct_root, start, start, pair_path,
+                                                                                  start))
                         if not os.path.exists('{}/{}_lig.mae'.format(pair_path, start)):
                             f.write('cp {}/{}_lig.mae {}/{}_lig.mae\n'.format(lig_root, start, pair_path, start))
                         if not os.path.exists('{}/{}_lig0.mae'.format(pair_path, target)):
                             f.write('cp {}/{}_lig.mae {}/{}_lig0.mae\n'.format(lig_root, target, pair_path, target))
                         if not os.path.exists('{}/{}-to-{}_pv.maegz'.format(pair_path, target, start)):
-                            f.write('cp {}/{}_to_{}_pv.maegz {}/{}-to-{}_pv.maegz\n'.format(pv_root, target, start, pair_path,
-                                                                                            target, start))
+                            f.write('cp {}/{}_to_{}_pv.maegz {}/{}-to-{}_pv.maegz\n'.format(pv_root, target, start,
+                                                                                            pair_path, target, start))
 
         os.chdir(args.run_path)
         os.system('sbatch -p rondror -t 02:00:00 -o structure.out structure_in.sh')

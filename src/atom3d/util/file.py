@@ -24,6 +24,5 @@ def find_files(path, suffix, relative=None):
 def get_pdb_code(path_to_pdb):
     return path_to_pdb.split('/')[-1][:4].lower()
 
-
 def get_pdb_name(path_to_pdb):
     return path_to_pdb.split('/')[-1][5:-4]

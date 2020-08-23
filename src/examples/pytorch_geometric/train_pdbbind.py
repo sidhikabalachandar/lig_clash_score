@@ -1,11 +1,9 @@
 """
 The purpose of this code is to train the gnn model
-It can be run on sherlock using
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python train_pdbbind.py
-$ sbatch 1gpu.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python train_pdbbind.py --mode test --log_dir 2020-08-12-15-20-55 --split MAPK14
-"""
 
-#
+It can be run on sherlock using
+$ sbatch 1gpu.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python train_pdbbind.py /home/users/sidhikab/lig_clash_score/models /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d
+"""
 
 import os
 import time
@@ -27,8 +25,6 @@ from pdbbind_dataloader import pdbbind_dataloader
 
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
-
-data_path = '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d'
 
 class GCN(torch.nn.Module):
     def __init__(self, num_features, hidden_dim):
@@ -180,28 +176,22 @@ def save_weights(model, weight_dir):
     torch.save(model.state_dict(), weight_dir)
 
 
-def train_pdbbind(split, architecture, base_dir, device, log_dir, seed=None, test_mode=False):
+def train_pdbbind(split, architecture, device, log_dir, data_path, seed=None, test_mode=False):
     logger = logging.getLogger('pdbbind_log')
-    # logger.basicConfig(filename=os.path.join(log_dir, f'train_{split}_cv{fold}.log'),level=logging.INFO)
 
     num_epochs = 100
     batch_size = 700
     hidden_dim = 64
     learning_rate = 1e-4
     split_dir = os.path.join(data_path, 'splits')
-    if not os.path.exists(split_dir):
-        os.mkdir(split_dir)
-    split = 'random'
     train_split = os.path.join(split_dir, f'train_{split}.txt')
     val_split = os.path.join(split_dir, f'val_{split}.txt')
-    split = 'MAPK14'
     test_split = os.path.join(split_dir,f'test_{split}.txt')
-    graph_path = os.path.join(data_path, 'graph_data')
-    train_loader = pdbbind_dataloader(batch_size, data_dir=graph_path, split_file=train_split)
+    train_loader = pdbbind_dataloader(batch_size, data_dir=data_path, split_file=train_split)
     print(len(train_loader))
-    val_loader = pdbbind_dataloader(batch_size, data_dir=graph_path, split_file=val_split)
+    val_loader = pdbbind_dataloader(batch_size, data_dir=data_path, split_file=val_split)
     print(len(val_loader))
-    test_loader = pdbbind_dataloader(500, data_dir=graph_path, split_file=test_split)
+    test_loader = pdbbind_dataloader(500, data_dir=data_path, split_file=test_split)
     print(len(test_loader))
 
     if not os.path.exists(os.path.join(log_dir, 'params.txt')):
@@ -220,12 +210,11 @@ def train_pdbbind(split, architecture, base_dir, device, log_dir, seed=None, tes
     if architecture == 'GCN':
         model = GCN(num_features, hidden_dim=hidden_dim).to(device)
     elif architecture == 'GIN':
-        model = GIN(num_features, hidden_dim=hidden_dim).to(device) 
+        model = GIN(num_features, hidden_dim=hidden_dim).to(device)
     model.to(device)
 
     if test_mode:
         test_file = os.path.join(log_dir, f'test_results_{split}.txt')
-        split = 'random'
         model.load_state_dict(torch.load(os.path.join(log_dir, f'best_weights_{split}.pt')))
         rmse, pearson, spearman, y_true, y_pred = test(architecture, model, test_loader, device)
         plot_corr(y_true, y_pred, os.path.join(log_dir, f'corr_{split}_test.png'))
@@ -233,10 +222,15 @@ def train_pdbbind(split, architecture, base_dir, device, log_dir, seed=None, tes
         with open(test_file, 'a+') as out:
             out.write('{}\t{:.7f}\t{:.7f}\t{:.7f}\n'.format(seed, rmse, pearson, spearman))
 
-        split = 'MAPK14'
         outfile = open(os.path.join(log_dir, f'y_pred_{split}.pkl'), 'wb')
         pickle.dump(y_pred, outfile)
 
+        codes = []
+        for data in test_loader:
+            codes.extend(data.pdb)
+
+        outfile = open(os.path.join(log_dir, f'test_loader_codes{split}.pkl'), 'wb')
+        pickle.dump(codes, outfile)
         return
 
     best_val_loss = 999
@@ -261,53 +255,56 @@ def train_pdbbind(split, architecture, base_dir, device, log_dir, seed=None, tes
         print('\tTrain RMSE: {:.7f}, Val RMSE: {:.7f}, Pearson R: {:.7f}, Spearman R: {:.7f}'.format(train_loss, val_loss, r_p, r_s))
         logger.info('{:03d}\t{:.7f}\t{:.7f}\t{:.7f}\t{:.7f}\n'.format(epoch, train_loss, val_loss, r_p, r_s))
 
-    if test:
-        test_file = os.path.join(log_dir, f'test_results_{split}.txt')
-        model.load_state_dict(torch.load(os.path.join(log_dir, f'best_weights_{split}.pt')))
-        rmse, pearson, spearman, y_true, y_pred = test(architecture, model, test_loader, device)
-        plot_corr(y_true, y_pred, os.path.join(log_dir, f'corr_{split}_test.png'))
-        print('Test RMSE: {:.7f}, Pearson R: {:.7f}, Spearman R: {:.7f}'.format(rmse, pearson, spearman))
-        with open(test_file, 'a+') as out:
-            out.write('{}\t{:.7f}\t{:.7f}\t{:.7f}\n'.format(seed, rmse, pearson, spearman))
+    test_file = os.path.join(log_dir, f'test_results_{split}.txt')
+    model.load_state_dict(torch.load(os.path.join(log_dir, f'best_weights_{split}.pt')))
+    rmse, pearson, spearman, y_true, y_pred = test(architecture, model, test_loader, device)
+    plot_corr(y_true, y_pred, os.path.join(log_dir, f'corr_{split}_test.png'))
+    print('Test RMSE: {:.7f}, Pearson R: {:.7f}, Spearman R: {:.7f}'.format(rmse, pearson, spearman))
+    with open(test_file, 'a+') as out:
+        out.write('{}\t{:.7f}\t{:.7f}\t{:.7f}\n'.format(seed, rmse, pearson, spearman))
 
+    outfile = open(os.path.join(log_dir, f'y_pred_{split}.pkl'), 'wb')
+    pickle.dump(y_pred, outfile)
 
+    codes = []
+    for data in test_loader:
+        codes.extend(data.pdb)
+
+    outfile = open(os.path.join(log_dir, f'test_loader_codes{split}.pkl'), 'wb')
+    pickle.dump(codes, outfile)
 
     return best_val_loss, best_rp, best_rs
 
-
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', type=str, default='train')
-    parser.add_argument('--split', type=str, default='random')
-    parser.add_argument('--architecture', type=str, default='GCN')
-    parser.add_argument('--log_dir', type=str, default=None)
+    parser.add_argument('out_dir', type=str, help='directory where all logging data will be written')
+    parser.add_argument('root', type=str, help='directory where raw and processed directories can be found')
+    parser.add_argument('--mode', type=str, default='train', help='either train or test')
+    parser.add_argument('--split', type=str, default='random', help='name of split files')
+    parser.add_argument('--architecture', type=str, default='GCN', help='either GCN or GIN')
+    parser.add_argument('--log_dir', type=str, default=None, help='specific logging directory')
     args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    base_dir = '/home/users/sidhikab/lig_clash_score/models'
     log_dir = args.log_dir
 
 
     if args.mode == 'train':
         if log_dir is None:
             now = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-            log_dir = os.path.join(base_dir, 'logs', now)
+            log_dir = os.path.join(args.out_dir, 'logs', now)
         else:
-            log_dir = os.path.join(base_dir, 'logs', log_dir)
+            log_dir = os.path.join(args.out_dir, 'logs', log_dir)
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
-        train_pdbbind(args.split, args.architecture, base_dir, device, log_dir)
+        train_pdbbind(args.split, args.architecture, device, log_dir, args.root)
     elif args.mode == 'test':
-        for seed in np.random.randint(0, 1000, size=3):
-            print('seed:', seed)
-            # log_dir = os.path.join(base_dir, 'logs', f'test_{args.split}_{seed}')
-            log_dir = os.path.join(base_dir, 'logs', args.log_dir)
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-            np.random.seed(seed)
-            torch.manual_seed(seed)
-            train_pdbbind(args.split, args.architecture, base_dir, device, log_dir, seed, test_mode=True)
-            break
+        seed = np.random.randint(0, 1000)
+        print('seed:', seed)
+        log_dir = os.path.join(args.out_dir, 'logs', args.log_dir)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        train_pdbbind(args.split, args.architecture, device, log_dir, args.root, seed, test_mode=True)
     # elif args.mode == 'cv':
     #     log_dir = os.path.join(base_dir, 'logs', f'superfam_cv')
     #     if not os.path.exists(log_dir):

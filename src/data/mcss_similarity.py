@@ -1,14 +1,14 @@
 """
-The purpose of this code is to train the gnn model
+The purpose of this code is to calculate the mcss of every target/starting ligand pair
+
 It can be run on sherlock using
 $ ml load chemistry
 $ ml load schrodinger
-$ $SCHRODINGER/run python3 mcss_similarity.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/mcss /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
-$ $SCHRODINGER/run python3 mcss_similarity.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/mcss /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --group 0
-$ $SCHRODINGER/run python3 mcss_similarity.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/mcss /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
-$ $SCHRODINGER/run python3 mcss_similarity.py pdb /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/mcss /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --protein Q9ZMY2 --target 4ynb --start 4wkn
-$ $SCHRODINGER/run python3 mcss_similarity.py update /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/mcss /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random_mcss.txt --new_prot_file /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
-$ $SCHRODINGER/run python3 mcss_similarity.py MAPK14 /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/mcss /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+$ $SCHRODINGER/run python3 mcss_similarity.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 mcss_similarity.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0
+$ $SCHRODINGER/run python3 mcss_similarity.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 mcss_similarity.py update /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --new_prot_file /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random2.txt
+$ $SCHRODINGER/run python3 mcss_similarity.py MAPK14
 """
 
 import os
@@ -16,7 +16,7 @@ from schrodinger.structure import StructureReader, StructureWriter
 import argparse
 from tqdm import tqdm
 
-run_path = '/home/users/sidhikab/flexibility_project/atom3d/src/atom3d/protein_ligand/run'
+N = 1
 
 class MCSS:
     """
@@ -175,15 +175,15 @@ def modify_file(path, ligand, save_folder):
     return writing_path
 
 
-def compute_protein_mcss(protein, ligands, data_folder, save_folder):
-    init_file = '{}/{}-to-{}_mcss.csv'.format(save_folder, ligands[0], ligands[1])
+def compute_protein_mcss(ligands, pair_path):
+    init_file = '{}/{}-to-{}_mcss.csv'.format(pair_path, ligands[0], ligands[1])
     for i in range(len(ligands)):
         for j in range(i + 1, len(ligands)):
             l1, l2 = ligands[i], ligands[j]
-            l1_path = '{}/{}/{}-to-{}/{}_lig0.mae'.format(data_folder, protein, l1, l2, l1)
-            new_l1_path = modify_file(l1_path, l1, save_folder)
-            l2_path = '{}/{}/{}-to-{}/{}_lig.mae'.format(data_folder, protein, l1, l2, l2)
-            new_l2_path = modify_file(l2_path, l2, save_folder)
+            l1_path = '{}/ligand_poses/{}_lig0.mae'.format(pair_path, l1)
+            new_l1_path = modify_file(l1_path, l1, pair_path)
+            l2_path = '{}/{}_lig.mae'.format(pair_path, l2)
+            new_l2_path = modify_file(l2_path, l2, pair_path)
             mcss_types_file = 'mcss_type_file.typ'
             mcss = MCSS(l1, l2)
             with StructureReader(new_l1_path) as ligand1, StructureReader(new_l2_path) as ligand2:
@@ -191,84 +191,93 @@ def compute_protein_mcss(protein, ligands, data_folder, save_folder):
                 mcss.compute_mcss(ligands, init_file, mcss_types_file)
             os.system('rm {} {}'.format(new_l1_path, new_l2_path))
 
-def get_prots(fname, out_dir):
-    pairs = []
-    unfinished_pairs = []
-    with open(fname) as fp:
-        for line in tqdm(fp, desc='files'):
+def get_prots(docked_prot_file):
+    """
+    gets list of all protein, target ligands, and starting ligands in the index file
+    :param docked_prot_file: (string) file listing proteins to process
+    :return: process (list) list of all protein, target ligands, and starting ligands to process
+    """
+    process = []
+    with open(docked_prot_file) as fp:
+        for line in fp:
             if line[0] == '#': continue
             protein, target, start = line.strip().split()
-            pairs.append((protein, target, start))
-            if not os.path.exists(os.path.join(out_dir, '{}-to-{}_mcss.csv'.format(target, start))):
-                unfinished_pairs.append((protein, target, start))
+            process.append((protein, target, start))
 
-    return pairs, unfinished_pairs
+    return process
 
-if __name__ == '__main__':
+def group_files(n, process):
+    """
+    groups pairs into sublists of size n
+    :param n: (int) sublist size
+    :param process: (list) list of pairs to process
+    :return: grouped_files (list) list of sublists of pairs
+    """
+    grouped_files = []
+
+    for i in range(0, len(process), n):
+        grouped_files += [process[i: i + n]]
+
+    return grouped_files
+
+def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('task', type=str, help='either all or group')
-    parser.add_argument('data_dir', type=str, help='either all or group')
-    parser.add_argument('out_dir', type=str, help='either all or group')
-    parser.add_argument('prot_file', type=str, help='file listing proteins to process')
-    parser.add_argument('--group', type=int, default=-1, help='if type is group, argument indicates group index')
-    parser.add_argument('--protein', type=str, default='', help='if type is group, argument indicates group index')
-    parser.add_argument('--target', type=str, default='', help='if type is group, argument indicates group index')
-    parser.add_argument('--start', type=str, default='', help='if type is group, argument indicates group index')
-    parser.add_argument('--new_prot_file', type=str, default='', help='if type is group, argument indicates group index')
+    parser.add_argument('task', type=str, help='either all, group, check, update, or MAPK14')
+    parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
+    parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
+    parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
+    parser.add_argument('--index', type=int, default=-1, help='for group task, group number')
+    parser.add_argument('--new_prot_file', type=str, default=os.path.join(os.getcwd(), 'index.txt'),
+                        help='for update task, name of new prot file')
     args = parser.parse_args()
 
-    if not os.path.exists(args.out_dir):
-        os.mkdir(args.out_dir)
-
     if args.task == 'all':
-        pairs, unfinished_pairs = get_prots(args.prot_file, args.out_dir)
-        n = 30
-        grouped_files = []
+        process = get_prots(args.docked_prot_file)
+        grouped_files = group_files(N, process)
 
-        for i in range(0, len(unfinished_pairs), n):
-            grouped_files += [unfinished_pairs[i: i + n]]
-        for protein, target, start in unfinished_pairs:
-            cmd = 'sbatch -p rondror -t 5:00:00 -o {} --wrap="$SCHRODINGER/run python3 mcss_similarity.py pdb ' \
-                  '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw ' \
-                  '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/mcss ' \
-                  '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt ' \
-                  '--protein {} --target {} --start {}"'
-            os.system(cmd.format(os.path.join(run_path, 'mcss_{}-to-{}.out'.format(target, start)), protein, target, start))
-            # print(cmd.format(os.path.join(run_path, 'graph_{}.out'.format(i)), i))
-        print(len(grouped_files))
+        if not os.path.exists(args.run_path):
+            os.mkdir(args.run_path)
+
+        for i, group in enumerate(grouped_files):
+            cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 mcss_similarity.py group {} {} {} ' \
+                  '--index {}"'
+            os.system(cmd.format(os.path.join(args.run_path, 'mcss{}.out'.format(i)), args.docked_prot_file,
+                                 args.run_path, args.raw_root, i))
 
     if args.task == 'group':
-        pairs, unfinished_pairs = get_prots(args.prot_file, args.out_dir)
-        n = 30
-        grouped_files = []
+        process = get_prots(args.docked_prot_file)
+        grouped_files = group_files(N, process)
 
-        for i in range(0, len(unfinished_pairs), n):
-            grouped_files += [unfinished_pairs[i: i + n]]
-        for protein, target, start in grouped_files[args.group]:
-            print(protein, target, start)
-            compute_protein_mcss(protein, [target, start], args.data_dir, args.out_dir)
-
-    if args.task == 'pdb':
-        protein, target, start = args.protein, args.target, args.start
-        compute_protein_mcss(protein, [target, start], args.data_dir, args.out_dir)
+        for protein, target, start in grouped_files[args.index]:
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
+            compute_protein_mcss([target, start], pair_path)
 
     if args.task == 'check':
-        pairs, unfinished_pairs = get_prots(args.prot_file, args.out_dir)
-        n = 30
-        grouped_files = []
+        process = []
+        num_pairs = 0
+        with open(args.docked_prot_file) as fp:
+            for line in tqdm(fp, desc='going through protein, target, start groups'):
+                if line[0] == '#': continue
+                protein, target, start = line.strip().split()
+                num_pairs += 1
+                protein_path = os.path.join(args.raw_root, protein)
+                pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
+                if not os.path.exists(os.path.join(pair_path, '{}-to-{}_mcss.csv'.format(target, start))):
+                    process.append((protein, target, start))
 
-        for i in range(0, len(unfinished_pairs), n):
-            grouped_files += [unfinished_pairs[i: i + n]]
-        print('Missing:', len(unfinished_pairs), '/', len(pairs))
-        print(unfinished_pairs)
+        print('Missing', len(process), '/', num_pairs)
+        print(process)
 
     if args.task == 'update':
         text = []
-        with open(args.prot_file) as fp:
+        with open(args.docked_prot_file) as fp:
             for line in tqdm(fp, desc='files'):
                 if line[0] == '#': continue
                 protein, target, start = line.strip().split()
-                if os.path.exists(os.path.join(args.out_dir, '{}-to-{}_mcss.csv'.format(target, start))):
+                protein_path = os.path.join(args.raw_root, protein)
+                pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
+                if os.path.exists(os.path.join(pair_path, '{}-to-{}_mcss.csv'.format(target, start))):
                     text.append(line)
 
         file = open(args.new_prot_file, "w")
@@ -281,4 +290,9 @@ if __name__ == '__main__':
         for target in ligs:
             for start in ligs:
                 if target != start:
-                    compute_protein_mcss(protein, [target, start], args.data_dir, args.out_dir)
+                    protein_path = os.path.join(args.raw_root, protein)
+                    pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
+                    compute_protein_mcss([target, start], pair_path)
+
+if __name__ == '__main__':
+    main()

@@ -6,6 +6,7 @@ ml load chemistry
 ml load schrodinger
 $ $SCHRODINGER/run python3 decoy_creator.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 $ $SCHRODINGER/run python3 decoy_creator.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index <index>
+$ $SCHRODINGER/run python3 decoy_creator.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 $ $SCHRODINGER/run python3 decoy_creator.py MAPK14
 """
 
@@ -22,12 +23,12 @@ MEAN_TRANSLATION = 6
 STDEV_TRANSLATION = 4
 N = 3
 
-"""
-Generates a random 3D unit vector (direction) with a uniform spherical distribution
-Algo from http://stackoverflow.com/questions/5408276/python-uniform-spherical-distribution
-:return:
-"""
 def random_three_vector():
+    """
+    Generates a random 3D unit vector (direction) with a uniform spherical distribution
+    Algo from http://stackoverflow.com/questions/5408276/python-uniform-spherical-distribution
+    :return:
+    """
     phi = np.random.uniform(0,np.pi*2)
     costheta = np.random.uniform(-1,1)
 
@@ -37,12 +38,12 @@ def random_three_vector():
     z = np.cos(theta)
     return x, y, z
 
-"""
-creates MAX_DECOYS number of translated/rotated decoys
-:param lig_file: (string) file of glide ligand pose that will be translated/rotated
-:return: 
-"""
 def create_decoys(lig_file):
+    """
+    creates MAX_DECOYS number of translated/rotated decoys
+    :param lig_file: (string) file of glide ligand pose that will be translated/rotated
+    :return:
+    """
     s = list(structure.StructureReader(lig_file))[0]
     for i in range(MAX_DECOYS):
         #translation
@@ -62,12 +63,12 @@ def create_decoys(lig_file):
         with structure.StructureWriter(lig_file[:-4] + chr(ord('a')+i) + '.mae') as decoy:
             decoy.append(s)
 
-"""
-gets list of all protein, target ligands, and starting ligands in the index file
-:param docked_prot_file: (string) file listing proteins to process
-:return: process (list) list of all protein, target ligands, and starting ligands to process
-"""
 def get_prots(docked_prot_file):
+    """
+    gets list of all protein, target ligands, and starting ligands in the index file
+    :param docked_prot_file: (string) file listing proteins to process
+    :return: process (list) list of all protein, target ligands, and starting ligands to process
+    """
     process = []
     with open(docked_prot_file) as fp:
         for line in fp:
@@ -77,13 +78,13 @@ def get_prots(docked_prot_file):
 
     return process
 
-"""
-groups pairs into sublists of size n
-:param n: (int) sublist size
-:param process: (list) list of pairs to process
-:return: grouped_files (list) list of sublists of pairs
-"""
 def group_files(n, process):
+    """
+    groups pairs into sublists of size n
+    :param n: (int) sublist size
+    :param process: (list) list of pairs to process
+    :return: grouped_files (list) list of sublists of pairs
+    """
     grouped_files = []
 
     for i in range(0, len(process), n):
@@ -123,11 +124,12 @@ def main():
             pose_path = os.path.join(pair_path, 'ligand_poses')
             pv_file = os.path.join(pair_path, '{}-to-{}_pv.maegz'.format(target, start))
             num_poses = len(list(structure.StructureReader(pv_file)))
-            for i in range(1, num_poses):
+            for i in range(0, num_poses):
                 if i == MAX_POSES:
                     break
                 lig_file = os.path.join(pose_path, '{}_lig{}.mae'.format(target, i))
                 create_decoys(lig_file)
+                break
 
     if args.task == 'check':
         process = []
@@ -142,10 +144,12 @@ def main():
                 pose_path = os.path.join(pair_path, 'ligand_poses')
                 pv_file = os.path.join(pair_path, '{}-to-{}_pv.maegz'.format(target, start))
 
-                num_poses = min(MAX_POSES, len(list(structure.StructureReader(pv_file))))
+                # num_poses = min(MAX_POSES, len(list(structure.StructureReader(pv_file))))
+                num_poses = 0
                 for i in range(MAX_DECOYS):
                     if not os.path.join(pose_path, '{}_lig{}.mae'.format(target, str(num_poses) + chr(ord('a')+i))):
                         process.append((protein, target, start))
+                        print(os.path.join(pose_path, '{}_lig{}.mae'.format(target, str(num_poses) + chr(ord('a')+i))))
                         break
 
         print('Missing', len(process), '/', num_pairs)

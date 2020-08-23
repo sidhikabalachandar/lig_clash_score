@@ -1,148 +1,145 @@
 """
 The purpose of this code is to create the split files
+
 It can be run on sherlock using
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python split_file.py regular /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python split_file.py MAPK14 /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python split_file.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/pdbbind_refined_set_labels.csv /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits
 """
 
 import argparse
 import os
-from tqdm import tqdm
+import random
 import pickle
+import pandas as pd
+from tqdm import tqdm
 
-graph_root = '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/graphs'
-data_path = '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d'
-PROT_CUTOFF = 405
-TRAIN_CUTOFF = 0.7
-TEST_CUTOFF = 0.15
+CUTOFF = 0.1
 
-def get_prots(fname):
-    prots = {}
-    prots_pdb_codes = {}
+def get_code_dict(process, raw_root, label_file):
+    """
+    gets list of all indices and codes for each protein
+    :param process: (list) list of all protein, target ligands, and starting ligands to process
+    :param raw_root: (string) path to directory with data
+    :param label_file: (string) file containing rmsd label information
+    :return: code_dict (dict) dict of all protein : list of all indices and codes
+    :return: num_codes (int) total number of codes processed
+    """
+    code_dict = {}
     num_codes = 0
-    num_pairs = 0
-    with open(fname) as fp:
-        for line in tqdm(fp, desc='files'):
-            if line[0] == '#': continue
-            if num_pairs >= PROT_CUTOFF:
-                break
-            protein, target, start = line.strip().split()
-            num_pairs += 1
-            if protein not in prots_pdb_codes:
-                prots_pdb_codes[protein] = []
-            if protein not in prots:
-                prots[protein] = []
-            graph_dir = '{}/{}-to-{}_graph.pkl'.format(graph_root, target, start)
-            infile = open(graph_dir, 'rb')
-            graph_data = pickle.load(infile)
-            infile.close()
-            for pdb_code in graph_data:
-                prots[protein].append(str(num_codes) + '\n')
-                prots_pdb_codes[protein].append(pdb_code + '\n')
-                num_codes += 1
+    label_df = pd.read_csv(label_file)
 
-    return prots, prots_pdb_codes, num_codes - 1
+    for protein, target, start in tqdm(process, desc='going through protein, target, start groups'):
+        if num_codes / len(label_df) > CUTOFF:
+            break
+        indices = []
+        codes = []
+        protein_path = os.path.join(raw_root, protein)
+        pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
+        graph_dir = '{}/{}-to-{}_graph.pkl'.format(pair_path, target, start)
+        infile = open(graph_dir, 'rb')
+        graph_data = pickle.load(infile)
+        infile.close()
+        for pdb_code in graph_data:
+            indices.append(str(num_codes) + '\n')
+            codes.append(pdb_code + '\n')
+            num_codes += 1
+
+        if protein not in code_dict:
+            code_dict[protein] = [[], []]
+        code_dict[protein][0].extend(indices)
+        code_dict[protein][1].extend(codes)
+
+    return code_dict, num_codes
+
+def get_prots(docked_prot_file):
+    """
+    gets list of all protein, target ligands, and starting ligands in the index file
+    :param docked_prot_file: (string) file listing proteins to process
+    :return: process (list) list of all protein, target ligands, and starting ligands to process
+    """
+    process = []
+    with open(docked_prot_file) as fp:
+        for line in fp:
+            if line[0] == '#': continue
+            protein, target, start = line.strip().split()
+            process.append((protein, target, start))
+
+    return process
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('task', type=str, help='file listing proteins to process')
-    parser.add_argument('prot_file', type=str, help='file listing proteins to process')
-    parser.add_argument('--split', type=str, default='random', help='file listing proteins to process')
+    parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
+    parser.add_argument('raw_root', type=str, help='directory where raw data can be found')
+    parser.add_argument('label_file', type=str, help='file with rmsd labels')
+    parser.add_argument('split_dir', type=str, help='path to directory where split files will be saved')
+    parser.add_argument('--train', type=float, default=0.7, help='proportion of data in training set')
+    parser.add_argument('--test', type=float, default=0.15, help='proportion of data in testing set')
+    parser.add_argument('--split', type=str, default='random', help='split name')
     args = parser.parse_args()
 
-    if args.task == 'regular':
-        prots, codes, num_data = get_prots(args.prot_file)
-        print(len(prots))
-        # sorted_prots = sorted(prots.items())
-        # sorted_codes = sorted(codes.items())
-        # print(len(sorted_codes), len(sorted_prots))
-        #
-        # train_indices = []
-        # train_codes = []
-        # val_indices = []
-        # val_codes = []
-        # test_indices = []
-        # test_codes = []
-        # for i in range(len(sorted_prots)):
-        #     prot, indices = sorted_prots[i]
-        #     _, codes = sorted_codes[i]
-        #     if len(train_indices) / num_data <= TRAIN_CUTOFF:
-        #         train_indices.extend(indices)
-        #         train_codes.extend(codes)
-        #     elif len(test_indices) / num_data <= TEST_CUTOFF:
-        #         test_indices.extend(indices)
-        #         test_codes.extend(codes)
-        #     else:
-        #         val_indices.extend(indices)
-        #         val_codes.extend(codes)
-        #
-        # print('train split', len(train_indices) / num_data)
-        # print('val split', len(val_indices) / num_data)
-        # print('test split', len(test_indices) / num_data)
-        #
-        # split_dir = os.path.join(data_path, 'splits')
-        # if not os.path.exists(split_dir):
-        #     os.mkdir(split_dir)
-        # # train_split = os.path.join(split_dir, f'train_{args.split}.txt')
-        # # val_split = os.path.join(split_dir, f'val_{args.split}.txt')
-        # # test_split = os.path.join(split_dir, f'test_{args.split}.txt')
-        # #
-        # # train_file = open(train_split, "w")
-        # # train_file.writelines(train_indices)
-        # # train_file.close()
-        # #
-        # # val_file = open(val_split, "w")
-        # # val_file.writelines(val_indices)
-        # # val_file.close()
-        # #
-        # # test_file = open(test_split, "w")
-        # # test_file.writelines(test_indices)
-        # # test_file.close()
-        #
-        # train_split = os.path.join(split_dir, f'train_codes_{args.split}.txt')
-        # val_split = os.path.join(split_dir, f'val_codes_{args.split}.txt')
-        # test_split = os.path.join(split_dir, f'test_codes_{args.split}.txt')
-        #
-        # train_file = open(train_split, "w")
-        # train_file.writelines(train_codes)
-        # train_file.close()
-        #
-        # val_file = open(val_split, "w")
-        # val_file.writelines(val_codes)
-        # val_file.close()
-        #
-        # test_file = open(test_split, "w")
-        # test_file.writelines(test_codes)
-        # test_file.close()
+    random.seed(0)
+    assert(args.train + args.test <= 1)
 
-    elif args.task == 'MAPK14':
-        ligs = ['3D83', '4F9Y']
-        test_indices = []
-        test_codes = []
-        num_codes = 216775
-        for target in ligs:
-            for start in ligs:
-                if target != start:
-                    graph_dir = '{}/{}-to-{}_graph.pkl'.format(graph_root, target.lower(), start.lower())
-                    infile = open(graph_dir, 'rb')
-                    graph_data = pickle.load(infile)
-                    infile.close()
-                    for pdb_code in graph_data:
-                        test_indices.append(str(num_codes) + '\n')
-                        test_codes.append(pdb_code + '\n')
-                        num_codes += 1
+    process = get_prots(args.docked_prot_file)
+    random.shuffle(process)
+    code_dict, num_codes = get_code_dict(process, args.raw_root, args.label_file)
+    prots = list(code_dict.keys())
+    random.shuffle(prots)
 
-        split_dir = os.path.join(data_path, 'splits')
-        if not os.path.exists(split_dir):
-            os.mkdir(split_dir)
-        test_split = os.path.join(split_dir, f'test_MAPK14.txt')
-        test_file = open(test_split, "w")
-        test_file.writelines(test_indices)
-        test_file.close()
-        test_split = os.path.join(split_dir, f'test_codes_MAPK14.txt')
-        test_file = open(test_split, "w")
-        test_file.writelines(test_codes)
-        test_file.close()
+    train_indices = []
+    train_codes = []
+    val_indices = []
+    val_codes = []
+    test_indices = []
+    test_codes = []
+    for protein in prots:
+        indices, codes = code_dict[protein]
+        if len(train_indices) / num_codes <= args.train:
+            train_indices.extend(indices)
+            train_codes.extend(codes)
+        elif len(test_indices) / num_codes <= args.test:
+            test_indices.extend(indices)
+            test_codes.extend(codes)
+        else:
+            val_indices.extend(indices)
+            val_codes.extend(codes)
+
+    print('train split', len(train_indices) / num_codes)
+    print('val split', len(val_indices) / num_codes)
+    print('test split', len(test_indices) / num_codes)
+
+    if not os.path.exists(args.split_dir):
+        os.mkdir(args.split_dir)
+    train_split = os.path.join(args.split_dir, f'train_{args.split}.txt')
+    val_split = os.path.join(args.split_dir, f'val_{args.split}.txt')
+    test_split = os.path.join(args.split_dir, f'test_{args.split}.txt')
+
+    train_file = open(train_split, "w")
+    train_file.writelines(train_indices)
+    train_file.close()
+
+    val_file = open(val_split, "w")
+    val_file.writelines(val_indices)
+    val_file.close()
+
+    test_file = open(test_split, "w")
+    test_file.writelines(test_indices)
+    test_file.close()
+
+    train_split = os.path.join(args.split_dir, f'train_codes_{args.split}.txt')
+    val_split = os.path.join(args.split_dir, f'val_codes_{args.split}.txt')
+    test_split = os.path.join(args.split_dir, f'test_codes_{args.split}.txt')
+
+    train_file = open(train_split, "w")
+    train_file.writelines(train_codes)
+    train_file.close()
+
+    val_file = open(val_split, "w")
+    val_file.writelines(val_codes)
+    val_file.close()
+
+    test_file = open(test_split, "w")
+    test_file.writelines(test_codes)
+    test_file.close()
 
 if __name__=="__main__":
     main()

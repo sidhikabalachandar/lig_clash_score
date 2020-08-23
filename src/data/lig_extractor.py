@@ -17,12 +17,12 @@ import schrodinger.structure as structure
 MAX_POSES = 100
 N = 20
 
-"""
-gets list of all protein, target ligands, and starting ligands in the index file
-:param docked_prot_file: (string) file listing proteins to process
-:return: process (list) list of all protein, target ligands, and starting ligands to process
-"""
 def get_prots(docked_prot_file):
+    """
+    gets list of all protein, target ligands, and starting ligands in the index file
+    :param docked_prot_file: (string) file listing proteins to process
+    :return: process (list) list of all protein, target ligands, and starting ligands to process
+    """
     process = []
     with open(docked_prot_file) as fp:
         for line in fp:
@@ -32,13 +32,13 @@ def get_prots(docked_prot_file):
 
     return process
 
-"""
-groups pairs into sublists of size n
-:param n: (int) sublist size
-:param process: (list) list of pairs to process
-:return: grouped_files (list) list of sublists of pairs
-"""
 def group_files(n, process):
+    """
+    groups pairs into sublists of size n
+    :param n: (int) sublist size
+    :param process: (list) list of pairs to process
+    :return: grouped_files (list) list of sublists of pairs
+    """
     grouped_files = []
 
     for i in range(0, len(process), n):
@@ -117,8 +117,8 @@ def main():
                         if i > MAX_POSES:
                             break
                         with structure.StructureWriter(
-                                '{}/{}/{}-to-{}/{}_lig{}.mae'.format(args.save_root, protein, target.lower(), start.lower(), target.lower(),
-                                                                     str(i))) as all:
+                                '{}/{}/{}-to-{}/{}_lig{}.mae'.format(args.save_root, protein, target.lower(),
+                                                                     start.lower(), target.lower(), str(i))) as all:
                             all.append(list(structure.StructureReader(file))[i])
 
 if __name__=="__main__":

@@ -13,12 +13,12 @@ import argparse
 
 CUTOFF = 40
 
-"""
-gets rmsds of the docking runs of all protein, target ligands, and starting ligands in the index file
-:param docked_prot_file: (string) file listing proteins to process
-:return: process (list) list of all protein, target ligands, and starting ligands to process
-"""
 def get_prots(docked_prot_file, raw_root):
+    """
+    gets rmsds of the docking runs of all protein, target ligands, and starting ligands in the index file
+    :param docked_prot_file: (string) file listing proteins to process
+    :return: process (list) list of all protein, target ligands, and starting ligands to process
+    """
     rmsds = {}
     with open(docked_prot_file) as fp:
         for line in tqdm(fp, desc='going through protein, target, start groups'):
