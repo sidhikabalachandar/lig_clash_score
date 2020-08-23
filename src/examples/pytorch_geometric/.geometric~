@@ -1,0 +1,6 @@
+conda deactivate
+conda deactivate
+module load gcc/10.1.0
+module load py-pytorch/1.4.0_py36 
+module unload py-numpy
+conda activate geometric
