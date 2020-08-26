@@ -1,6 +1,0 @@
-Split method: random
-Model: GCN
-Epochs: 100
-Batch size: 1
-Hidden dim: 64
-Learning rate: 0.0001
