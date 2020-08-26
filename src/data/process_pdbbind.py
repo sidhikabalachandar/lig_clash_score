@@ -245,6 +245,15 @@ def main():
         print('Missing', len(process), '/', num_pairs)
         print(process)
 
+    if args.task == 'remove_pv':
+        with open(args.docked_prot_file) as fp:
+            for line in tqdm(fp, desc='going through protein, target, start groups'):
+                if line[0] == '#': continue
+                protein, target, start = line.strip().split()
+                protein_path = os.path.join(args.raw_root, protein)
+                pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
+                os.remove(os.path.join(pair_path, '{}-to-{}_pv.maegz'.format(target, start)))
+
     if args.task == 'MAPK14':
         protein = 'MAPK14'
         ligs = ['3D83', '4F9Y']
