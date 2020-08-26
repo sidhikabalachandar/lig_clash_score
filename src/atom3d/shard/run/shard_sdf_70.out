@@ -1,2 +1,0 @@
-2020-08-09 15:07:56,787 INFO 323137: Note: NumExpr detected 24 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
-1711108
