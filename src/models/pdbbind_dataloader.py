@@ -69,10 +69,13 @@ def pdbbind_dataloader(batch_size, data_dir='../../data/pdbbind', split_file=Non
     :param split_file: (string) file with pre-computed split information
     :return: (dataloader) dataloader for PDBBind dataset with specified split
     """
+    print('getting dataset')
     dataset = GraphPDBBind(root=data_dir)
     if split_file is None:
         return DataLoader(dataset, batch_size, shuffle=True)
+    print('reading split file')
     indices = sp.read_split_file(split_file)
+    print('returning')
     return DataLoader(dataset.index_select(indices), batch_size, shuffle=True)
 
 def create_graphs(target, start, pair_path):

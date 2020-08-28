@@ -2,25 +2,39 @@
 The purpose of this code is to train the gnn model
 
 It can be run on sherlock using
-$ sbatch 1gpu.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python train_pdbbind.py /home/users/sidhikab/lig_clash_score/models /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d
+$ sbatch 1gpu.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python train_pdbbind.py /home/users/sidhikab/lig_clash_score/models /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --log_dir v2
 """
-
+print('os')
 import os
+print('time')
 import time
+print('logging')
 import logging
+print('spearmanr')
 from scipy.stats import spearmanr
+print('matplotlib')
 import matplotlib.pyplot as plt
+print('seaborn')
 import seaborn as sns
+print('numpy')
 import numpy as np
+print('datetime')
 import datetime
+print('argparse')
 import argparse
+print('pickle')
 import pickle
 
+print('torch')
 import torch
+print('functional')
 import torch.nn.functional as F
+print('layers')
 from torch.nn import Sequential, Linear, ReLU, MSELoss
+print('conv')
 from torch_geometric.nn import GCNConv, GINConv, global_add_pool
 
+print('pdbbind_dataloader')
 from pdbbind_dataloader import pdbbind_dataloader
 
 torch.backends.cudnn.deterministic = True
@@ -177,6 +191,7 @@ def save_weights(model, weight_dir):
 
 
 def train_pdbbind(split, architecture, device, log_dir, data_path, seed=None, test_mode=False):
+    print('getting logger')
     logger = logging.getLogger('pdbbind_log')
 
     num_epochs = 100
@@ -187,6 +202,7 @@ def train_pdbbind(split, architecture, device, log_dir, data_path, seed=None, te
     train_split = os.path.join(split_dir, f'train_{split}.txt')
     val_split = os.path.join(split_dir, f'val_{split}.txt')
     test_split = os.path.join(split_dir,f'test_{split}.txt')
+    print('getting train_loader')
     train_loader = pdbbind_dataloader(batch_size, data_dir=data_path, split_file=train_split)
     print(len(train_loader))
     val_loader = pdbbind_dataloader(batch_size, data_dir=data_path, split_file=val_split)
@@ -276,6 +292,7 @@ def train_pdbbind(split, architecture, device, log_dir, data_path, seed=None, te
     return best_val_loss, best_rp, best_rs
 
 if __name__=="__main__":
+    print('start')
     parser = argparse.ArgumentParser()
     parser.add_argument('out_dir', type=str, help='directory where all logging data will be written')
     parser.add_argument('root', type=str, help='directory where raw and processed directories can be found')
@@ -297,6 +314,7 @@ if __name__=="__main__":
             log_dir = os.path.join(args.out_dir, 'logs', log_dir)
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
+        print('finished making logdir')
         train_pdbbind(args.split, args.architecture, device, log_dir, args.root)
     elif args.mode == 'test':
         seed = np.random.randint(0, 1000)
