@@ -1,7 +1,24 @@
-atom3d
+atom3d overview
 ==============================
 
 predicting protein flexibility for better ligand docking
+
+Steps
+==============================
+
+1. src/data_analysis/dock_check.py - sets index for dataset
+2. src/data/add_basic_files.py - adds protein structures and ground truth ligand structures
+3. src/data/lig_extractor.py - adds glide ligand poses
+4. src/data/translation_stats.py - determines mean and average for translation 
+5. src/data/decoy_creator.py - creates translated and rotated structures
+6. src/data/data_converter.py - converts protein mae files to pdb files and ligand mae files to sdf files
+7. src/data/process_pdbbind.py - finds binding pockets
+8. src/data/decoy_rmsd.py - 1st step to find rmsd of each ligand pose
+9. src/data/get_labels.py - 2nd step to find rmsd of each ligand pose
+10. src/data/mcss_similarity.py - finding mcss similarity for ligand pairs
+11. src/models/pdbbind_dataloader.py - create graphs and data files
+12. src/models/split_file.py - create train, val, and test splits
+13. src/models/train_pdbbind.py - train model
 
 Project Organization
 ------------
@@ -42,12 +59,12 @@ Project Organization
     │   │   └── build_features.py
     │   │
     │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
+    │   │                     predictions
     │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
+    │   ├── visualization  <- Scripts to create exploratory and results oriented visualizations
+    │   |   └── visualize.py
+    │   │  
+    │   └── utils  <- Files with functions used in data creation and training
     │
     └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
 
