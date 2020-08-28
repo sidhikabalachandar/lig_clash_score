@@ -1,10 +1,10 @@
-atom3d overview
+atom3d
 ==============================
 
 predicting protein flexibility for better ligand docking
 
 Steps
-==============================
+------------
 
 1. src/data_analysis/dock_check.py - sets index for dataset
 2. src/data/add_basic_files.py - adds protein structures and ground truth ligand structures
