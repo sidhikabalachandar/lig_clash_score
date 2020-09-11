@@ -5,20 +5,24 @@ predicting protein flexibility for better ligand docking
 
 Steps
 ------------
+Create decoys + get mcss:
+1. src/data_analysis/decoy.py task='all'
 
-1. src/data_analysis/dock_check.py - sets index for dataset
-2. src/data/add_basic_files.py - adds protein structures and ground truth ligand structures
-3. src/data/lig_extractor.py - adds glide ligand poses
-4. src/data/translation_stats.py - determines mean and average for translation 
-5. src/data/decoy_creator.py - creates translated and rotated structures
-6. src/data/data_converter.py - converts protein mae files to pdb files and ligand mae files to sdf files
-7. src/data/process_pdbbind.py - finds binding pockets
-8. src/data/decoy_rmsd.py - 1st step to find rmsd of each ligand pose
-9. src/data/get_labels.py - 2nd step to find rmsd of each ligand pose
-10. src/data/mcss_similarity.py - finding mcss similarity for ligand pairs
-11. src/models/pdbbind_dataloader.py - create graphs and data files
-12. src/models/split_file.py - create train, val, and test splits
-13. src/models/train_pdbbind.py - train model
+Get physics score and RMSD
+2. src/data/grid.py task='run' 
+3. src/data/score_and_rmsd.py task='run'
+4. src/data/get_csv.py task = 'all' - create csv with mcss, physics score, and rmsd data for each decoy
+
+Convert protein mae files to pdb files and ligand mae files to sdf files 
+5. src/data/data_converter.py task='run'
+
+Create graphs
+6. src/models/pdbbind_dataloader.py task='all' - create graphs
+7. src/models/pdbbind_dataloader.py task='combine_all' - create data files
+
+Train
+8. src/models/split_file.py - create train, val, and test splits
+9. src/models/train_pdbbind.py - train model
 
 Project Organization
 ------------
