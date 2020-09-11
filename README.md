@@ -9,19 +9,27 @@ Create decoys + get mcss:
 1. src/data_analysis/decoy.py task='all'
 
 Get physics score and RMSD
+
 2. src/data/grid.py task='run' 
+
 3. src/data/score_and_rmsd.py task='run'
+
 4. src/data/get_csv.py task = 'all' - create csv with mcss, physics score, and rmsd data for each decoy
 
 Convert protein mae files to pdb files and ligand mae files to sdf files 
+
 5. src/data/data_converter.py task='run'
 
 Create graphs
+
 6. src/models/pdbbind_dataloader.py task='all' - create graphs
+
 7. src/models/pdbbind_dataloader.py task='combine_all' - create data files
 
 Train
+
 8. src/models/split_file.py - create train, val, and test splits
+
 9. src/models/train_pdbbind.py - train model
 
 Project Organization
