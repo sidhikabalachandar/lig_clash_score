@@ -2,7 +2,7 @@
 The purpose of this code is to create the split files
 
 It can be run on sherlock using
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python split_file.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/pdbbind_refined_set_labels.csv /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python split_file.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits
 """
 
 import argparse
@@ -31,22 +31,19 @@ def get_code_dict(process, raw_root, label_file):
         if num_codes / len(label_df) > CUTOFF:
             break
         indices = []
-        codes = []
         protein_path = os.path.join(raw_root, protein)
         pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
         graph_dir = '{}/{}-to-{}_graph.pkl'.format(pair_path, target, start)
         infile = open(graph_dir, 'rb')
         graph_data = pickle.load(infile)
         infile.close()
-        for pdb_code in graph_data:
+        for _ in graph_data:
             indices.append(str(num_codes) + '\n')
-            codes.append(pdb_code + '\n')
             num_codes += 1
 
         if protein not in code_dict:
-            code_dict[protein] = [[], []]
-        code_dict[protein][0].extend(indices)
-        code_dict[protein][1].extend(codes)
+            code_dict[protein] = []
+        code_dict[protein].extend(indices)
 
     return code_dict, num_codes
 
@@ -86,22 +83,16 @@ def main():
     random.shuffle(prots)
 
     train_indices = []
-    train_codes = []
     val_indices = []
-    val_codes = []
     test_indices = []
-    test_codes = []
     for protein in prots:
-        indices, codes = code_dict[protein]
+        indices = code_dict[protein]
         if len(train_indices) / num_codes <= args.train:
             train_indices.extend(indices)
-            train_codes.extend(codes)
         elif len(test_indices) / num_codes <= args.test:
             test_indices.extend(indices)
-            test_codes.extend(codes)
         else:
             val_indices.extend(indices)
-            val_codes.extend(codes)
 
     print('train split', len(train_indices) / num_codes)
     print('val split', len(val_indices) / num_codes)
@@ -123,22 +114,6 @@ def main():
 
     test_file = open(test_split, "w")
     test_file.writelines(test_indices)
-    test_file.close()
-
-    train_split = os.path.join(args.split_dir, f'train_codes_{args.split}.txt')
-    val_split = os.path.join(args.split_dir, f'val_codes_{args.split}.txt')
-    test_split = os.path.join(args.split_dir, f'test_codes_{args.split}.txt')
-
-    train_file = open(train_split, "w")
-    train_file.writelines(train_codes)
-    train_file.close()
-
-    val_file = open(val_split, "w")
-    val_file.writelines(val_codes)
-    val_file.close()
-
-    test_file = open(test_split, "w")
-    test_file.writelines(test_codes)
     test_file.close()
 
 if __name__=="__main__":

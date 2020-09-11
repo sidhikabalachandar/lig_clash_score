@@ -2,9 +2,14 @@
 The purpose of this code is to obtain the binding pocket files for each pose
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 process_pdbbind.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/atom3d/protein_ligand/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
-$ $SCHRODINGER/run python3 process_pdbbind.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/atom3d/protein_ligand/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0
-$ $SCHRODINGER/run python3 process_pdbbind.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/atom3d/protein_ligand/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+ml load chemistry
+ml load schrodinger
+$ $SCHRODINGER/run python3 process_pdbbind.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 process_pdbbind.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0
+$ $SCHRODINGER/run python3 process_pdbbind.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 process_pdbbind.py remove_pv /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 process_pdbbind.py remove_pockets /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 process_pdbbind.py check_remove_pockets /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 $ $SCHRODINGER/run python3 process_pdbbind.py MAPK14 /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt --out_dir /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/processed
 """
 
@@ -20,10 +25,6 @@ from Bio.PDB.PDBIO import Select
 from tqdm import tqdm
 import argparse
 import schrodinger.structure as structure
-
-N = 3
-MAX_POSES = 100
-MAX_DECOYS = 10
 
 def get_prots(docked_prot_file):
     """
@@ -252,18 +253,41 @@ def main():
                 protein, target, start = line.strip().split()
                 protein_path = os.path.join(args.raw_root, protein)
                 pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-                os.remove(os.path.join(pair_path, '{}-to-{}_pv.maegz'.format(target, start)))
+                os.remove(os.path.join(pair_path, '{}-to-{}_glide_pv.maegz'.format(target, start)))
 
-    if args.task == 'MAPK14':
-        protein = 'MAPK14'
-        ligs = ['3D83', '4F9Y']
-        for target in ligs:
-            for start in ligs:
-                if target != start:
+    if args.task == 'remove_pockets':
+        process = get_prots(args.docked_prot_file)
+        grouped_files = group_files(N, process)
+        for i, group in enumerate(grouped_files):
+            with open(os.path.join(args.run_path, 'remove_pocket{}_in.sh'.format(i)), 'w') as f:
+                f.write('#!/bin/bash\n')
+                for protein, target, start in group:
                     protein_path = os.path.join(args.raw_root, protein)
                     pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-                    structures = process_files(pair_path)
-                    produce_cleaned_dataset(structures, pair_path, args.dist, target)
+                    pocket_path = os.path.join(pair_path, 'pockets')
+
+                    if os.path.exists(pocket_path):
+                        f.write('rm -r {}\n'.format(pocket_path))
+            os.chdir(args.run_path)
+            os.system('sbatch -p owners -t 00:30:00 -o remove_pocket{}.out remove_pocket{}_in.sh'.format(i, i))
+
+    if args.task == 'check_remove_pockets':
+        process = []
+        num_pairs = 0
+        with open(args.docked_prot_file) as fp:
+            for line in tqdm(fp, desc='going through protein, target, start groups'):
+                if line[0] == '#': continue
+                protein, target, start = line.strip().split()
+                num_pairs += 1
+                protein_path = os.path.join(args.raw_root, protein)
+                pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
+                pocket_path = os.path.join(pair_path, 'pockets')
+
+                if os.path.exists(pocket_path):
+                    process.append((protein, target, start))
+
+        print('Missing', len(process), '/', num_pairs)
+        print(process)
 
 if __name__ == "__main__":
     main()

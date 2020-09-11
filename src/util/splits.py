@@ -3,9 +3,11 @@ import math
 import random
 
 import numpy as np
-import file as fi
-import log as log
-import sequence as seq
+import sys
+sys.path[-2] = '/home/users/sidhikab/lig_clash_score/src'
+from util import file as fi
+from util import log as log
+from util import sequence as seq
 
 logger = log.get_logger('splits')
 

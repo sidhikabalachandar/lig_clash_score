@@ -15,7 +15,6 @@ import argparse
 from tqdm import tqdm
 import pickle
 
-PROTEIN_CUTOFF = 2000
 N = 3
 
 def get_prots(docked_prot_file):
@@ -70,6 +69,7 @@ def main():
                     protein_path = os.path.join(args.raw_root, protein)
                     pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
                     pose_path = os.path.join(pair_path, 'ligand_poses')
+
                     index = []
                     files = []
                     for file in os.listdir(pose_path):
@@ -85,7 +85,7 @@ def main():
                     with open(os.path.join(pair_path, '{}-to-{}_rmsd_index.pkl'.format(target, start)), 'wb') as pickle_f:
                         pickle.dump(index, pickle_f)
             os.chdir(args.run_path)
-            os.system('sbatch -p owners -t 02:00:00 -o rmsd{}.out rmsd{}_in.sh'.format(i, i))
+            os.system('sbatch -p owners -t 01:00:00 -o rmsd{}.out rmsd{}_in.sh'.format(i, i))
 
         print(len(grouped_files))
 
@@ -104,33 +104,6 @@ def main():
 
         print('Missing', len(process), '/', num_pairs)
         print(process)
-
-    if args.task == 'MAPK14':
-        protein = 'MAPK14'
-        ligs = ['3D83', '4F9Y']
-        with open(os.path.join(args.run_path, 'rmsd_in.sh'), 'w') as f:
-            f.write('#!/bin/bash\n')
-            for target in ligs:
-                for start in ligs:
-                    if target != start:
-                        pair_path = os.path.join(args.datapath, '{}/{}-to-{}'.format(protein, target, start))
-                        f.write('cd {}\n'.format(pair_path))
-                        files = []
-                        for file in os.listdir(os.path.join(args.datapath, pair_path)):
-                            if '{}_lig'.format(target) in file and file[-3:] == 'mae':
-                                files.append(file)
-                        f.write('cat {}_prot.mae {} > {}-to-{}_merge_pv.mae\n'.format(start, ' '.join(files), target,
-                                                                                      start))
-                        f.write(
-                            '$SCHRODINGER/run rmsd.py -use_neutral_scaffold -pv second -c {}-to-{}_rmsd.out {}_lig0.mae '
-                            '{}-to-{}_merge_pv.mae\n'.format(
-                                target, start, target, target, start))
-                        with open(os.path.join(pair_path, '{}-to-{}_rmsd_index.pkl'.format(target, start)),
-                                  'wb') as pickle_f:
-                            pickle.dump(files, pickle_f)
-
-        os.chdir(args.run_path)
-        os.system('sbatch -p rondror -t 02:00:00 -o rmsd.out rmsd_in.sh')
 
 if __name__ == "__main__":
     main()

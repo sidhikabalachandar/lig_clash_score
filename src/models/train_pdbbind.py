@@ -2,39 +2,25 @@
 The purpose of this code is to train the gnn model
 
 It can be run on sherlock using
-$ sbatch 1gpu.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python train_pdbbind.py /home/users/sidhikab/lig_clash_score/models /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --log_dir v2
+$ sbatch 1gpu.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python train_pdbbind.py /home/users/sidhikab/lig_clash_score/models /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --log_dir hybrid
+$ sbatch 1gpu.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python train_pdbbind.py /home/users/sidhikab/lig_clash_score/models /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --mode test --log_dir v1
 """
-print('os')
 import os
-print('time')
 import time
-print('logging')
 import logging
-print('spearmanr')
 from scipy.stats import spearmanr
-print('matplotlib')
 import matplotlib.pyplot as plt
-print('seaborn')
 import seaborn as sns
-print('numpy')
 import numpy as np
-print('datetime')
 import datetime
-print('argparse')
 import argparse
-print('pickle')
 import pickle
 
-print('torch')
 import torch
-print('functional')
 import torch.nn.functional as F
-print('layers')
 from torch.nn import Sequential, Linear, ReLU, MSELoss
-print('conv')
 from torch_geometric.nn import GCNConv, GINConv, global_add_pool
 
-print('pdbbind_dataloader')
 from pdbbind_dataloader import pdbbind_dataloader
 
 torch.backends.cudnn.deterministic = True
@@ -55,9 +41,10 @@ class GCN(torch.nn.Module):
         self.bn5 = torch.nn.BatchNorm1d(hidden_dim*8)
         self.fc1 = Linear(hidden_dim*8, hidden_dim*4)
         self.fc2 = Linear(hidden_dim*4, 1)
+        self.hybrid_score = Linear(2, 1)
 
 
-    def forward(self, x, edge_index, edge_weight, batch):
+    def forward(self, x, edge_index, edge_weight, batch, physics_score):
         x = self.conv1(x, edge_index, edge_weight)
         x = F.relu(x)
         x = self.bn1(x)
@@ -76,7 +63,10 @@ class GCN(torch.nn.Module):
         x = F.relu(x)
         x = F.relu(self.fc1(x))
         x = F.dropout(x, p=0.25, training=self.training)
-        return self.fc2(x).view(-1)
+        gnn_score = self.fc2(x).view(-1)
+        combined = torch.cat((torch.unsqueeze(gnn_score, 1), torch.unsqueeze(physics_score, 1)), dim=1)
+        output = self.hybrid_score(combined)
+        return output
 
 class GIN(torch.nn.Module):
     def __init__(self, num_features, hidden_dim):
@@ -136,7 +126,7 @@ def train(epoch, arch, model, loader, optimizer, device):
         data = data.to(device)
         optimizer.zero_grad()
         if arch == 'GCN':
-            output = model(data.x, data.edge_index, data.edge_attr.view(-1), data.batch)
+            output = model(data.x, data.edge_index, data.edge_attr.view(-1), data.batch, data.physics_score)
         elif arch == 'GIN':
             output = model(data.x, data.edge_index, data.batch)
         loss = F.mse_loss(output, data.y)
@@ -160,7 +150,7 @@ def test(arch, model, loader, device):
     for data in loader:
         data = data.to(device)
         if arch == 'GCN':
-            output = model(data.x, data.edge_index, data.edge_attr.view(-1), data.batch)
+            output = model(data.x, data.edge_index, data.edge_attr.view(-1), data.batch, data.physics_score)
         elif arch == 'GIN':
             output = model(data.x, data.edge_index, data.batch)
         loss = F.mse_loss(output, data.y)
@@ -191,7 +181,6 @@ def save_weights(model, weight_dir):
 
 
 def train_pdbbind(split, architecture, device, log_dir, data_path, seed=None, test_mode=False):
-    print('getting logger')
     logger = logging.getLogger('pdbbind_log')
 
     num_epochs = 100
@@ -202,13 +191,21 @@ def train_pdbbind(split, architecture, device, log_dir, data_path, seed=None, te
     train_split = os.path.join(split_dir, f'train_{split}.txt')
     val_split = os.path.join(split_dir, f'val_{split}.txt')
     test_split = os.path.join(split_dir,f'test_{split}.txt')
-    print('getting train_loader')
+    f = open(os.path.join(log_dir, 'output.txt'), "a")
+    f.write('starting building loaders\n')
+    f.close()
     train_loader = pdbbind_dataloader(batch_size, data_dir=data_path, split_file=train_split)
-    print(len(train_loader))
+    f = open(os.path.join(log_dir, 'output.txt'), "a")
+    f.write('Train size:' + str(len(train_loader)) + '\n')
+    f.close()
     val_loader = pdbbind_dataloader(batch_size, data_dir=data_path, split_file=val_split)
-    print(len(val_loader))
+    f = open(os.path.join(log_dir, 'output.txt'), "a")
+    f.write('Val size:' + str(len(val_loader)) + '\n')
+    f.close()
     test_loader = pdbbind_dataloader(500, data_dir=data_path, split_file=test_split)
-    print(len(test_loader))
+    f = open(os.path.join(log_dir, 'output.txt'), "a")
+    f.write('Test size:' + str(len(test_loader)) + '\n')
+    f.close()
 
     if not os.path.exists(os.path.join(log_dir, 'params.txt')):
         with open(os.path.join(log_dir, 'params.txt'), 'w') as f:
@@ -234,6 +231,9 @@ def train_pdbbind(split, architecture, device, log_dir, data_path, seed=None, te
         model.load_state_dict(torch.load(os.path.join(log_dir, f'best_weights_{split}.pt')))
         rmse, pearson, spearman, y_true, y_pred = test(architecture, model, test_loader, device)
         plot_corr(y_true, y_pred, os.path.join(log_dir, f'corr_{split}_test.png'))
+        f = open(os.path.join(log_dir, 'output.txt'), "a")
+        f.write('Test RMSE: {:.7f}, Pearson R: {:.7f}, Spearman R: {:.7f}\n'.format(rmse, pearson, spearman))
+        f.close()
         print('Test RMSE: {:.7f}, Pearson R: {:.7f}, Spearman R: {:.7f}'.format(rmse, pearson, spearman))
         with open(test_file, 'a+') as out:
             out.write('{}\t{:.7f}\t{:.7f}\t{:.7f}\n'.format(seed, rmse, pearson, spearman))
@@ -245,7 +245,7 @@ def train_pdbbind(split, architecture, device, log_dir, data_path, seed=None, te
         for data in test_loader:
             codes.extend(data.pdb)
 
-        outfile = open(os.path.join(log_dir, f'test_loader_codes{split}.pkl'), 'wb')
+        outfile = open(os.path.join(log_dir, f'test_loader_codes_{split}.pkl'), 'wb')
         pickle.dump(codes, outfile)
         return
 
@@ -267,7 +267,13 @@ def train_pdbbind(split, architecture, device, log_dir, data_path, seed=None, te
             best_rp = r_p
             best_rs = r_s
         elapsed = (time.time() - start)
+        f = open(os.path.join(log_dir, 'output.txt'), "a")
+        f.write('Epoch: {:03d}, Time: {:.3f} s\n'.format(epoch, elapsed))
+        f.close()
         print('Epoch: {:03d}, Time: {:.3f} s'.format(epoch, elapsed))
+        f = open(os.path.join(log_dir, 'output.txt'), "a")
+        f.write('\tTrain RMSE: {:.7f}, Val RMSE: {:.7f}, Pearson R: {:.7f}, Spearman R: {:.7f}\n'.format(train_loss, val_loss, r_p, r_s))
+        f.close()
         print('\tTrain RMSE: {:.7f}, Val RMSE: {:.7f}, Pearson R: {:.7f}, Spearman R: {:.7f}'.format(train_loss, val_loss, r_p, r_s))
         logger.info('{:03d}\t{:.7f}\t{:.7f}\t{:.7f}\t{:.7f}\n'.format(epoch, train_loss, val_loss, r_p, r_s))
 
@@ -275,6 +281,9 @@ def train_pdbbind(split, architecture, device, log_dir, data_path, seed=None, te
     model.load_state_dict(torch.load(os.path.join(log_dir, f'best_weights_{split}.pt')))
     rmse, pearson, spearman, y_true, y_pred = test(architecture, model, test_loader, device)
     plot_corr(y_true, y_pred, os.path.join(log_dir, f'corr_{split}_test.png'))
+    f = open(os.path.join(log_dir, 'output.txt'), "a")
+    f.write('Test RMSE: {:.7f}, Pearson R: {:.7f}, Spearman R: {:.7f}\n'.format(rmse, pearson, spearman))
+    f.close()
     print('Test RMSE: {:.7f}, Pearson R: {:.7f}, Spearman R: {:.7f}'.format(rmse, pearson, spearman))
     with open(test_file, 'a+') as out:
         out.write('{}\t{:.7f}\t{:.7f}\t{:.7f}\n'.format(seed, rmse, pearson, spearman))
@@ -286,13 +295,12 @@ def train_pdbbind(split, architecture, device, log_dir, data_path, seed=None, te
     for data in test_loader:
         codes.extend(data.pdb)
 
-    outfile = open(os.path.join(log_dir, f'test_loader_codes{split}.pkl'), 'wb')
+    outfile = open(os.path.join(log_dir, f'test_loader_codes_{split}.pkl'), 'wb')
     pickle.dump(codes, outfile)
 
     return best_val_loss, best_rp, best_rs
 
-if __name__=="__main__":
-    print('start')
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('out_dir', type=str, help='directory where all logging data will be written')
     parser.add_argument('root', type=str, help='directory where raw and processed directories can be found')
@@ -314,7 +322,6 @@ if __name__=="__main__":
             log_dir = os.path.join(args.out_dir, 'logs', log_dir)
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
-        print('finished making logdir')
         train_pdbbind(args.split, args.architecture, device, log_dir, args.root)
     elif args.mode == 'test':
         seed = np.random.randint(0, 1000)
@@ -329,6 +336,8 @@ if __name__=="__main__":
     #         os.makedirs(log_dir)
     #     train_cv_pdbbind(args.architecture, base_dir, device, log_dir)
 
+if __name__=="__main__":
+    main()
 
 
 

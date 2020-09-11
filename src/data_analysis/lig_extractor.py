@@ -75,14 +75,15 @@ def main():
         for protein, target, start in grouped_files[args.index]:
             protein_path = os.path.join(args.raw_root, protein)
             pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-            pose_path = os.path.join(pair_path, 'ligand_poses')
-            pv_file = os.path.join(pair_path, '{}-to-{}_pv.maegz'.format(target, start))
+            pose_path = os.path.join(pair_path, 'cartesian_ligand_poses')
+            pv_file = os.path.join(pair_path, '{}-to-{}_glide_pv.maegz'.format(target, start))
             num_poses = len(list(structure.StructureReader(pv_file)))
             for i in range(1, num_poses):
                 if i == MAX_POSES:
                     break
                 with structure.StructureWriter(os.path.join(pose_path, '{}_lig{}.mae'.format(target, i))) as all:
                     all.append(list(structure.StructureReader(pv_file))[i])
+            break
 
     if args.task == 'check':
         process = []

@@ -9,8 +9,10 @@ import dotenv as de
 import numpy as np
 import tqdm
 
-import log as log
-import file as fi
+import sys
+sys.path[-2] = '/home/users/sidhikab/lig_clash_score/src'
+from util import log as log
+from util import file as fi
 
 
 project_root = os.path.abspath(os.path.join(__file__, '../../..'))

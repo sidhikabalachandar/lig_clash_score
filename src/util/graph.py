@@ -1,6 +1,8 @@
 import numpy as np
 
-import datatypes as dt
+import sys
+sys.path[-2] = '/home/users/sidhikab/lig_clash_score/src'
+from util import datatypes as dt
 import torch
 from scipy.spatial import KDTree
 import statistics
@@ -37,6 +39,7 @@ def prot_df_to_graph(df, mcss, edge_dist_cutoff=4.5):
     edge_tuples = list(kd_tree.query_pairs(edge_dist_cutoff))
     edges = torch.LongTensor(edge_tuples).t().contiguous()
     node_feats = []
+    print(no_h['bfactor'])
     mean, stdev = statistics.mean(no_h['bfactor']), statistics.stdev(no_h['bfactor'])
     for e, b in zip(no_h['element'], no_h['bfactor']):
         feats = one_of_k_encoding_unk(e, prot_atoms)

@@ -1,0 +1,5 @@
+conda deactivate
+conda deactivate
+module load py-pytorch/1.4.0_py36 
+module unload py-numpy
+conda activate test_env

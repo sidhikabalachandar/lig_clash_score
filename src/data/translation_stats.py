@@ -2,7 +2,7 @@
 The purpose of this code is to find the mean and stdev of the set of all rmsds of all outputted glide poses
 
 It can be run on sherlock using
-/home/groups/rondror/software/sidhikab/miniconda/envs/geometric/bin/python translation_stats.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures/lig_translation.png
+/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python translation_stats.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /oak/stanford/groups/rondror/projects/ligand-docking/pdbbind_2019/data /home/users/sidhikab/lig_clash_score/reports/figures/lig_translation.png
 """
 
 import pandas as pd
@@ -12,6 +12,7 @@ from tqdm import tqdm
 import argparse
 
 CUTOFF = 40
+MAX_POSES = 100
 
 def get_prots(docked_prot_file, raw_root):
     """
@@ -30,7 +31,7 @@ def get_prots(docked_prot_file, raw_root):
                 rmsds[protein] = {}
             if start not in rmsds[protein]:
                 rmsds[protein][start] = {}
-            rmsds[protein][start][target] = df['RMSD']
+            rmsds[protein][start][target] = df['RMSD'][:MAX_POSES]
 
     return rmsds
 
@@ -51,6 +52,7 @@ def main():
 
     print("Average rmsd is:", statistics.mean(rmsds_ls))
     print("Stdev of rmsd is:", statistics.stdev(rmsds_ls))
+    print('Max is:', max(rmsds_ls))
 
     ax = sns.distplot(rmsds_ls)
     fig = ax.get_figure()

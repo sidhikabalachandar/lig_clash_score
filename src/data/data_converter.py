@@ -6,18 +6,30 @@ ml load chemistry
 ml load schrodinger
 $ $SCHRODINGER/run python3 data_converter.py run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 $ $SCHRODINGER/run python3 data_converter.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
-$ $SCHRODINGER/run python3 data_converter.py remove_pv /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
-$ $SCHRODINGER/run python3 data_converter.py MAPK14
 '''
 
 import os
 from tqdm import tqdm
 import argparse
 import schrodinger.structure as structure
+from rdkit import Chem
 
-N = 4000
-MAX_POSES = 100
-MAX_DECOYS = 10
+def get_ligand(ligfile):
+    """
+    Read ligand from PDB dataset into RDKit Mol. Assumes input is sdf format.
+    :param ligfile: (string) ligand file
+    :return: lig: (RDKit Mol object) co-crystallized ligand
+    """
+    lig=Chem.SDMolSupplier(ligfile)[0]
+    # Many SDF in PDBBind do not parse correctly. If SDF fails, try loading the mol2 file instead
+    if lig is None:
+        print('trying mol2...')
+        lig=Chem.MolFromMol2File(ligfile[:-4] + '.mol2')
+    if lig is None:
+        print('failed')
+        return None
+    lig = Chem.RemoveHs(lig)
+    return lig
 
 def find_files(docked_prot_file, raw_root):
     '''
@@ -35,40 +47,30 @@ def find_files(docked_prot_file, raw_root):
             pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
             pose_path = os.path.join(pair_path, 'ligand_poses')
 
-            # stage basic files
-            for file in os.listdir(pair_path):
-                if file == 'ligand_poses':
-                    continue
-                if 'prot' in file and not os.path.exists(os.path.join(pair_path, file)[:-4] + '.pdb'):
-                    process.append(os.path.join(pair_path, file)[:-4])
-                if 'lig' in file and not os.path.exists(os.path.join(pair_path, file)[:-4] + '.sdf'):
-                    process.append(os.path.join(pair_path, file)[:-4])
+            # stage starting protein receptor file
+            process.append(os.path.join(pair_path, '{}_prot'.format(start)))
 
             # stage ligand pose files
             for file in os.listdir(pose_path):
-                if 'lig' in file and not os.path.exists(os.path.join(pose_path, file)[:-4] + '.sdf'):
+                if file[-3:] == 'mae':
                     process.append(os.path.join(pose_path, file)[:-4])
-
-
 
     return process
 
-def find_MAPK14_files(save_root):
-    '''
-    Get the files for all MAPK14 target, start groups=
-    :return: ls (list) list of all files to convert
-    '''
-    ls = []
-    protein = 'MAPK14'
-    protein_root = os.path.join(save_root, protein)
-    for pair in os.listdir(protein_root):
-        pair_root = os.path.join(protein_root, pair)
-        for file in tqdm(os.listdir(pair_root), desc='files in protein directory'):
-            if 'prot' in file and not os.path.exists(os.path.join(pair_root, file)[:-4] + '.pdb'):
-                ls.append(os.path.join(pair_root, file)[:-4])
-            if 'lig' in file and not os.path.exists(os.path.join(pair_root, file)[:-4] + '.sdf'):
-                ls.append(os.path.join(pair_root, file)[:-4])
-    return ls
+def get_prots(docked_prot_file):
+    """
+    gets list of all protein, target ligands, and starting ligands in the index file
+    :param docked_prot_file: (string) file listing proteins to process
+    :return: process (list) list of all protein, target ligands, and starting ligands to process
+    """
+    process = []
+    with open(docked_prot_file) as fp:
+        for line in fp:
+            if line[0] == '#': continue
+            protein, target, start = line.strip().split()
+            process.append((protein, target, start))
+
+    return process
 
 def group_files(n, process):
     """
@@ -84,14 +86,15 @@ def group_files(n, process):
 
     return grouped_files
 
-def write_files(files, run_path):
+def write_files(files, run_path, n):
     '''
     Writes a script to convert batches of files
     :param: files (list) list of all files to convert
     :param: run_path (string) path to directory where scripts and outputs will be written
     :return:
     '''
-    grouped_files = group_files(N, files)
+    grouped_files = group_files(n, files)
+    print(len(grouped_files))
 
     if not os.path.exists(run_path):
         os.mkdir(run_path)
@@ -104,8 +107,7 @@ def write_files(files, run_path):
                     f.write('$SCHRODINGER/utilities/structconvert -imae {}.mae -opdb {}.pdb \n'.format(
                         file, file))
                 else:
-                    f.write('$SCHRODINGER/utilities/sdconvert -imae {}.mae -osd {}.sdf \n'.format(
-                        file, file))
+                    f.write('$SCHRODINGER/utilities/sdconvert -imae {}.mae -osdf {}.sdf \n'.format(file, file))
 
         os.chdir(run_path)
         os.system('sbatch -p owners -t 02:00:00 -o convert{}.out convert{}_in.sh'.format(i, i))
@@ -113,21 +115,26 @@ def write_files(files, run_path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('task', type=str, help='either run, check, remove_pv, or MAPK14')
+    parser.add_argument('task', type=str, help='either run or check')
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
+    parser.add_argument('--index', type=int, default=-1, help='for group_dist_check task, group number')
+    parser.add_argument('--n', type=int, default=4000, help='number of protein, target, start groups processed in '
+                                                         'group task')
+    parser.add_argument('--max_poses', type=int, default=100, help='maximum number of glide poses considered')
+    parser.add_argument('--max_decoys', type=int, default=10, help='maximum number of decoys created per glide pose')
     args = parser.parse_args()
 
     if args.task == 'run':
         files = find_files(args.docked_prot_file, args.raw_root)
-        write_files(files, args.run_path)
+        write_files(files, args.run_path, args.n)
 
     if args.task == 'check':
         process = []
         num_pairs = 0
         with open(args.docked_prot_file) as fp:
-            for line in tqdm(fp, desc='going through protein, target, start groups'):
+            for line in tqdm(fp, desc='protein, target, start groups'):
                 if line[0] == '#': continue
                 protein, target, start = line.strip().split()
                 num_pairs += 1
@@ -136,26 +143,20 @@ def main():
                 pose_path = os.path.join(pair_path, 'ligand_poses')
 
                 # check basic files
-                if not os.path.exists('{}/{}_prot.pdb'.format(pair_path, start)) or not os.path.exists(
-                        '{}/{}_lig.sdf'.format(pair_path, start)):
+                if not os.path.exists('{}/{}_prot.pdb'.format(pair_path, start)):
                     process.append((protein, start, target))
                     continue
 
                 # check ligand pose files
-                pv_file = os.path.join(pair_path, '{}-to-{}_pv.maegz'.format(target, start))
-                # num_poses = min(MAX_POSES, len(list(structure.StructureReader(pv_file))))
-                num_poses = 0
-                for i in range(MAX_DECOYS):
+                pv_file = os.path.join(pair_path, '{}-to-{}_glide_pv.maegz'.format(target, start))
+                num_poses = min(args.max_poses, len(list(structure.StructureReader(pv_file))))
+                for i in range(args.max_decoys):
                     if not os.path.join(pose_path, '{}_lig{}.sdf'.format(target, str(num_poses) + chr(ord('a') + i))):
                         process.append((protein, target, start))
                         break
 
         print('Missing', len(process), '/', num_pairs)
-        print(process)
-
-    elif args.task == 'MAPK14':
-        files = find_MAPK14_files(args.raw_root)
-        write_files(files, args.run_path)
+        # print(process)
 
 if __name__ == '__main__':
     main()

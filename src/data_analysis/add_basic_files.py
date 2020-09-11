@@ -84,14 +84,14 @@ def main():
                         os.mkdir(pose_path)
 
                     f.write('#!/bin/bash\n')
-                    if not os.path.exists('{}/{}_prot.mae'.format(pair_path, start)):
-                        f.write('cp {}/{}_prot.mae {}/{}_prot.mae\n'.format(struct_root, start, pair_path, start))
-                    if not os.path.exists('{}/{}_lig.mae'.format(pair_path, start)):
-                        f.write('cp {}/{}_lig.mae {}/{}_lig.mae\n'.format(struct_root, start, pair_path, start))
-                    if not os.path.exists('{}/{}_lig0.mae'.format(pair_path, target)):
-                        f.write('cp {}/{}_lig.mae {}/{}_lig0.mae\n'.format(struct_root, target, pose_path, target))
-                    if not os.path.exists('{}/{}-to-{}_pv.maegz'.format(pair_path, target, start)):
-                        f.write('cp {}/{}-to-{}_pv.maegz {}/{}-to-{}_pv.maegz\n'.format(dock_root, target, start,
+                    # if not os.path.exists('{}/{}_prot.mae'.format(pair_path, start)):
+                    #     f.write('cp {}/{}_prot.mae {}/{}_prot.mae\n'.format(struct_root, start, pair_path, start))
+                    # if not os.path.exists('{}/{}_lig.mae'.format(pair_path, start)):
+                    #     f.write('cp {}/{}_lig.mae {}/{}_lig.mae\n'.format(struct_root, start, pair_path, start))
+                    # if not os.path.exists('{}/{}_lig0.mae'.format(pair_path, target)):
+                    #     f.write('cp {}/{}_lig.mae {}/{}_lig0.mae\n'.format(struct_root, target, pose_path, target))
+                    if not os.path.exists('{}/{}-to-{}_glide_pv.maegz'.format(pair_path, target, start)):
+                        f.write('cp {}/{}-to-{}_pv.maegz {}/{}-to-{}_glide_pv.maegz\n'.format(dock_root, target, start,
                                                                                         pair_path, target, start))
 
             os.chdir(args.run_path)
@@ -119,7 +119,7 @@ def main():
                     if not os.path.exists('{}/{}_lig0.mae'.format(pose_path, target)):
                         process.append('{}/{}_lig0.mae'.format(pose_path, target))
                 elif args.type == 'pv':
-                    if not os.path.exists('{}/{}-to-{}_pv.maegz'.format(pair_path, target, start)):
+                    if not os.path.exists('{}/{}-to-{}_glide_pv.maegz'.format(pair_path, target, start)):
                         process.append((protein, target, start))
 
         print('Missing', len(process), '/', num_pairs)
