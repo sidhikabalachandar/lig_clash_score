@@ -3,14 +3,14 @@ The purpose of this code is to create the pytorch-geometric graphs, create the D
 train/val/test data
 
 It can be run on sherlock using
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --index 0
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --score_feature
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --index 0 --score_feature
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --score_feature
 $ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py update /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --new_prot_file /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random2.txt
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py combine_all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py combine_group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --index 0
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py combine_check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py pdbbind_dataloader /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py combine_all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --score_feature
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py combine_group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --index 0 --score_feature
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py combine_check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --score_feature
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py pdbbind_dataloader /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --score_feature
 """
 
 import sys
@@ -233,7 +233,7 @@ def get_ligand(ligfile):
     lig = Chem.RemoveHs(lig)
     return lig
 
-def create_graphs(target, start, pair_path, dist, label_file):
+def create_graphs(target, start, pair_path, dist, label_file, include_score):
     """
     Creates pytorch-geometric graph objects for target, start pair
     :param target: (string) name of target ligand
@@ -262,7 +262,7 @@ def create_graphs(target, start, pair_path, dist, label_file):
                 io.save(os.path.join(pair_path, f"{target}_pocket{index}.mmcif"), PocketSelect(pocket))
                 prot_graph = graph.prot_df_to_graph(dt.bp_to_df(dt.read_any(
                     os.path.join(pair_path, f"{target}_pocket{index}.mmcif"), name=pdb_code)),
-                    get_mcss(pdb_code, label_df))
+                    get_mcss(pdb_code, label_df), get_score_no_vdw(pdb_code, label_df), include_score=include_score)
                 mol_graph = graph.mol_to_graph(dt.read_sdf_to_mol(os.path.join(pose_path, file))[0])
                 node_feats, edge_index, edge_feats, pos = graph.combine_graphs(prot_graph, mol_graph, edges_between=True)
                 data[pdb_code] = (node_feats, edge_index, edge_feats, pos)
@@ -272,10 +272,13 @@ def create_graphs(target, start, pair_path, dist, label_file):
 
     print(len(data))
     print(error_count)
-    outfile = open(os.path.join(pair_path, '{}-to-{}_graph.pkl'.format(target, start)), 'wb')
+    if not include_score:
+        outfile = open(os.path.join(pair_path, '{}-to-{}_graph.pkl'.format(target, start)), 'wb')
+    else:
+        outfile = open(os.path.join(pair_path, '{}-to-{}_graph_with_score.pkl'.format(target, start)), 'wb')
     pickle.dump(data, outfile)
 
-def split_process(protein, target, start, label_file, pair_path, processed_root, start_index):
+def split_process(protein, target, start, label_file, pair_path, processed_root, start_index, include_score):
     """
     creates Data file for target/start pair
     :param target: (string) name of target ligand
@@ -287,7 +290,10 @@ def split_process(protein, target, start, label_file, pair_path, processed_root,
     :return: grouped_files (list) list of sublists of pairs
     """
     label_df = pd.read_csv(label_file)
-    graph_dir = '{}/{}-to-{}_graph.pkl'.format(pair_path, target, start)
+    if not include_score:
+        graph_dir = '{}/{}-to-{}_graph.pkl'.format(pair_path, target, start)
+    else:
+        graph_dir = '{}/{}-to-{}_graph_with_score.pkl'.format(pair_path, target, start)
     infile = open(graph_dir, 'rb')
     graph_data = pickle.load(infile)
     infile.close()
@@ -329,21 +335,28 @@ def pdbbind_dataloader(batch_size, output_file, data_dir='../../data/pdbbind', s
     f.close()
     return dl
 
-def run_all(docked_prot_file, run_path, root, label_file, grouped_files, n):
+def run_all(docked_prot_file, run_path, root, label_file, grouped_files, n, include_score):
     for i, group in enumerate(grouped_files):
-        cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="' \
-              '/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py group ' \
-              '{} {} {} {} --n {} --index {}"'
-        os.system(cmd.format(os.path.join(run_path, 'graph{}.out'.format(i)), docked_prot_file, run_path, root,
-                             label_file, n, i))
+        if include_score:
+            cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="' \
+                  '/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py group ' \
+                  '{} {} {} {} --score_feature --n {} --index {}"'
+            os.system(cmd.format(os.path.join(run_path, 'graph{}.out'.format(i)), docked_prot_file, run_path, root,
+                                 label_file, n, i))
+        else:
+            cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="' \
+                  '/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py group ' \
+                  '{} {} {} {} --n {} --index {}"'
+            os.system(cmd.format(os.path.join(run_path, 'graph{}.out'.format(i)), docked_prot_file, run_path, root,
+                                 label_file, n, i))
 
-def run_group(grouped_files, raw_root, label_file, index, dist):
+def run_group(grouped_files, raw_root, label_file, index, dist, include_score):
     for protein, target, start in grouped_files[index]:
         protein_path = os.path.join(raw_root, protein)
         pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-        create_graphs(target, start, pair_path, dist, label_file)
+        create_graphs(target, start, pair_path, dist, label_file, include_score)
 
-def run_check(raw_root, docked_prot_file):
+def run_check(raw_root, docked_prot_file, include_score):
     process = []
     num_pairs = 0
     with open(docked_prot_file) as fp:
@@ -353,7 +366,9 @@ def run_check(raw_root, docked_prot_file):
             num_pairs += 1
             protein_path = os.path.join(raw_root, protein)
             pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-            if not os.path.exists(os.path.join(pair_path, '{}-to-{}_graph.pkl'.format(target, start))):
+            if not include_score and not os.path.exists(os.path.join(pair_path, '{}-to-{}_graph.pkl'.format(target, start))):
+                process.append((protein, target, start))
+            if include_score and not os.path.exists(os.path.join(pair_path, '{}-to-{}_graph_with_score.pkl'.format(target, start))):
                 process.append((protein, target, start))
 
     print('Missing', len(process), '/', num_pairs)
@@ -381,21 +396,27 @@ def update(docked_prot_file, raw_root, new_prot_file):
     file.writelines(text)
     file.close()
 
-def run_combine_all(docked_prot_file, run_path, root, label_file, grouped_files, n):
+def run_combine_all(docked_prot_file, run_path, root, label_file, grouped_files, n, include_score):
     for i, group in enumerate(grouped_files):
-        cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="' \
-              '/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py ' \
-              'combine_group {} {} {} {} --n {} --index {}"'
+        if include_score:
+            cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="' \
+                  '/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py ' \
+                  'combine_group {} {} {} {} --score_feature --n {} --index {}"'
+        else:
+            cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="' \
+                  '/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python pdbbind_dataloader.py ' \
+                  'combine_group {} {} {} {} --n {} --index {}"'
         os.system(cmd.format(os.path.join(run_path, 'processed{}.out'.format(i)), docked_prot_file, run_path, root,
                              label_file, n, i))
 
-def run_combine_group(grouped_files, raw_root, processed_root, label_file, index):
+def run_combine_group(grouped_files, raw_root, processed_root, label_file, index, include_score):
     for protein, target, start, start_index in grouped_files[index]:
+        print(protein, target, start)
         protein_path = os.path.join(raw_root, protein)
         pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-        split_process(protein, target, start, label_file, pair_path, processed_root, start_index)
+        split_process(protein, target, start, label_file, pair_path, processed_root, start_index, include_score)
 
-def run_combine_check(raw_root, processed_root, docked_prot_file, label_file, cutoff):
+def run_combine_check(raw_root, processed_root, docked_prot_file, label_file, cutoff, include_score):
     process = get_prots(docked_prot_file)
     random.shuffle(process)
 
@@ -413,7 +434,10 @@ def run_combine_check(raw_root, processed_root, docked_prot_file, label_file, cu
         # update num_codes
         protein_path = os.path.join(raw_root, protein)
         pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-        graph_dir = '{}/{}-to-{}_graph.pkl'.format(pair_path, target, start)
+        if not include_score:
+            graph_dir = '{}/{}-to-{}_graph.pkl'.format(pair_path, target, start)
+        else:
+            graph_dir = '{}/{}-to-{}_graph_with_score.pkl'.format(pair_path, target, start)
         infile = open(graph_dir, 'rb')
         graph_data = pickle.load(infile)
         infile.close()
@@ -444,10 +468,20 @@ def main():
                                                          'group task')
     parser.add_argument('--new_prot_file', type=str, default=os.path.join(os.getcwd(), 'index.txt'),
                         help='for update task, name of new prot file')
+    parser.add_argument('--score_feature', dest='include_score', action='store_true')
+    parser.add_argument('--no_score_feature', dest='include_score', action='store_false')
+    parser.set_defaults(include_score=False)
     args = parser.parse_args()
 
     raw_root = os.path.join(args.root, 'raw')
-    processed_root = os.path.join(args.root, 'processed')
+    if not args.include_score:
+        processed_root = os.path.join(args.root, 'processed')
+    else:
+        processed_root = os.path.join(args.root, 'processed_score', 'processed')
+        if not os.path.exists(os.path.join(args.root, 'processed_score')):
+            os.mkdir(os.path.join(args.root, 'processed_score'))
+        if not os.path.exists(os.path.join(args.root, 'processed_score', 'raw')):
+            os.mkdir(os.path.join(args.root, 'processed_score', 'raw'))
     random.seed(0)
 
     if not os.path.exists(processed_root):
@@ -459,15 +493,16 @@ def main():
     if args.task == 'all':
         process = get_prots(args.docked_prot_file)
         grouped_files = group_files(args.n, process)
-        run_all(args.docked_prot_file, args.run_path, args.root, args.label_file, grouped_files, args.n)
+        run_all(args.docked_prot_file, args.run_path, args.root, args.label_file, grouped_files, args.n,
+                args.include_score)
 
     if args.task == 'group':
         process = get_prots(args.docked_prot_file)
         grouped_files = group_files(args.n, process)
-        run_group(grouped_files, raw_root, args.label_file, args.index, args.dist)
+        run_group(grouped_files, raw_root, args.label_file, args.index, args.dist, args.include_score)
 
     if args.task == 'check':
-        run_check(raw_root, args.docked_prot_file)
+        run_check(raw_root, args.docked_prot_file, args.include_score)
 
     if args.task == 'update':
         update(args.docked_prot_file, raw_root, args.new_prot_file)
@@ -477,20 +512,27 @@ def main():
         random.shuffle(process)
         index_groups = get_index_groups(process, args.index_file, args.label_file, raw_root, args.cutoff)
         grouped_files = group_files(args.n, index_groups)
-        run_combine_all(args.docked_prot_file, args.run_path, args.root, args.label_file, grouped_files, args.n)
+        print(len(grouped_files))
+        # run_combine_all(args.docked_prot_file, args.run_path, args.root, args.label_file, grouped_files, args.n,
+        #                 args.include_score)
 
     if args.task == 'combine_group':
         process = get_prots(args.docked_prot_file)
         random.shuffle(process)
         index_groups = get_index_groups(process, args.index_file, args.label_file, raw_root, args.cutoff)
         grouped_files = group_files(args.n, index_groups)
-        run_combine_group(grouped_files, raw_root, processed_root, args.label_file, args.index)
+        run_combine_group(grouped_files, raw_root, processed_root, args.label_file, args.index, args.include_score)
 
     if args.task == 'combine_check':
-        run_combine_check(raw_root, processed_root, args.docked_prot_file, args.label_file, args.cutoff)
+        run_combine_check(raw_root, processed_root, args.docked_prot_file, args.label_file, args.cutoff,
+                          args.include_score)
 
     if args.task == 'pdbbind_dataloader':
-        loader = pdbbind_dataloader(1, "/home/users/sidhikab/lig_clash_score/src/models/out/test.out", data_dir=args.root)
+        if not args.include_score:
+            loader = pdbbind_dataloader(1, "/home/users/sidhikab/lig_clash_score/src/models/out/test.out", data_dir=args.root)
+        else:
+            loader = pdbbind_dataloader(1, "/home/users/sidhikab/lig_clash_score/src/models/out/test.out",
+                                        data_dir=os.path.join(args.root, 'processed_score'))
         print(len(loader))
         for data in loader:
             print(data)

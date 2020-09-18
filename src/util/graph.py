@@ -17,7 +17,7 @@ mol_atoms = ['C', 'N', 'O', 'S', 'F', 'Si', 'P', 'Cl', 'Br', 'Mg', 'Na',
                                        'Li', 'Ge', 'Cu', 'Au', 'Ni', 'Cd', 'In', 'Mn', 'Zr',
                                        'Cr', 'Pt', 'Hg', 'Pb', 'Unknown']
 
-def prot_df_to_graph(df, mcss, edge_dist_cutoff=4.5):
+def prot_df_to_graph(df, mcss, score, edge_dist_cutoff=4.5, include_score=False):
     """
     Converts protein in dataframe representation to a graph compatible with Pytorch-Geometric
 
@@ -39,12 +39,13 @@ def prot_df_to_graph(df, mcss, edge_dist_cutoff=4.5):
     edge_tuples = list(kd_tree.query_pairs(edge_dist_cutoff))
     edges = torch.LongTensor(edge_tuples).t().contiguous()
     node_feats = []
-    print(no_h['bfactor'])
     mean, stdev = statistics.mean(no_h['bfactor']), statistics.stdev(no_h['bfactor'])
     for e, b in zip(no_h['element'], no_h['bfactor']):
         feats = one_of_k_encoding_unk(e, prot_atoms)
         feats.append((b - mean) / stdev)
         feats.append(mcss)
+        if include_score:
+            feats.append(score)
         node_feats.append(feats)
     node_feats = torch.FloatTensor(node_feats)
     edge_feats = torch.FloatTensor([1.0 / (np.linalg.norm(node_pos[i]-node_pos[j]) + 1e-5) for i,j in edge_tuples]).view(-1,1)

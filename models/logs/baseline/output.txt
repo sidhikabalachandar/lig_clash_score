@@ -1,0 +1,217 @@
+starting building loaders
+initializing graph
+reading split file
+creating data loader
+finished creating data loader
+Train size:241
+initializing graph
+reading split file
+creating data loader
+finished creating data loader
+Val size:50
+initializing graph
+reading split file
+creating data loader
+finished creating data loader
+Test size:74
+Epoch: 001, Time: 3386.612 s
+	Train RMSE: 3.9916017, Val RMSE: 4.6684160, Pearson R: 0.0775626, Spearman R: 0.1886586
+Epoch: 002, Time: 667.948 s
+	Train RMSE: 2.5606844, Val RMSE: 4.6260708, Pearson R: 0.0911758, Spearman R: 0.2253003
+Epoch: 003, Time: 867.775 s
+	Train RMSE: 2.3061293, Val RMSE: 4.6695492, Pearson R: 0.0832139, Spearman R: 0.1881014
+Epoch: 004, Time: 585.780 s
+	Train RMSE: 2.1593798, Val RMSE: 4.5424539, Pearson R: 0.1684604, Spearman R: 0.2665340
+Epoch: 005, Time: 623.134 s
+	Train RMSE: 2.0550041, Val RMSE: 4.6190927, Pearson R: 0.1281882, Spearman R: 0.2233954
+Epoch: 006, Time: 566.351 s
+	Train RMSE: 1.9915152, Val RMSE: 4.5465623, Pearson R: 0.1760323, Spearman R: 0.2680211
+Epoch: 007, Time: 559.776 s
+	Train RMSE: 1.9273905, Val RMSE: 4.5698661, Pearson R: 0.1890409, Spearman R: 0.2791310
+Epoch: 008, Time: 563.907 s
+	Train RMSE: 1.8788256, Val RMSE: 4.4150474, Pearson R: 0.2355717, Spearman R: 0.3430123
+Epoch: 009, Time: 1339.407 s
+	Train RMSE: 1.8376758, Val RMSE: 4.6954986, Pearson R: 0.1023137, Spearman R: 0.2226505
+Epoch: 010, Time: 2001.774 s
+	Train RMSE: 1.8032451, Val RMSE: 4.4110316, Pearson R: 0.2325700, Spearman R: 0.3292420
+Epoch: 011, Time: 766.860 s
+	Train RMSE: 1.7621487, Val RMSE: 4.5672798, Pearson R: 0.1535810, Spearman R: 0.2817747
+Epoch: 012, Time: 951.611 s
+	Train RMSE: 1.7383611, Val RMSE: 4.5227174, Pearson R: 0.1881541, Spearman R: 0.2925299
+Epoch: 013, Time: 727.506 s
+	Train RMSE: 1.7069720, Val RMSE: 4.6330250, Pearson R: 0.1509119, Spearman R: 0.2595641
+Epoch: 014, Time: 852.483 s
+	Train RMSE: 1.6889327, Val RMSE: 4.5347472, Pearson R: 0.1915985, Spearman R: 0.3002804
+Epoch: 015, Time: 876.715 s
+	Train RMSE: 1.6597957, Val RMSE: 4.5832723, Pearson R: 0.1737907, Spearman R: 0.3029566
+Epoch: 016, Time: 844.076 s
+	Train RMSE: 1.6411605, Val RMSE: 4.5471121, Pearson R: 0.1834026, Spearman R: 0.2995326
+Epoch: 017, Time: 904.714 s
+	Train RMSE: 1.6203604, Val RMSE: 4.4444798, Pearson R: 0.2186212, Spearman R: 0.3378747
+Epoch: 018, Time: 851.964 s
+	Train RMSE: 1.6029556, Val RMSE: 4.5653069, Pearson R: 0.1695929, Spearman R: 0.3001267
+Epoch: 019, Time: 868.615 s
+	Train RMSE: 1.5831888, Val RMSE: 4.4710444, Pearson R: 0.2254910, Spearman R: 0.3475106
+Epoch: 020, Time: 849.458 s
+	Train RMSE: 1.5741211, Val RMSE: 4.5819492, Pearson R: 0.1626614, Spearman R: 0.3037266
+Epoch: 021, Time: 841.477 s
+	Train RMSE: 1.5490689, Val RMSE: 4.6133048, Pearson R: 0.1835522, Spearman R: 0.2992809
+Epoch: 022, Time: 858.790 s
+	Train RMSE: 1.5360367, Val RMSE: 4.5654854, Pearson R: 0.1646544, Spearman R: 0.2956354
+Epoch: 023, Time: 883.408 s
+	Train RMSE: 1.5100517, Val RMSE: 4.5587587, Pearson R: 0.2033789, Spearman R: 0.3162245
+Epoch: 024, Time: 873.760 s
+	Train RMSE: 1.5097208, Val RMSE: 4.4545507, Pearson R: 0.2145261, Spearman R: 0.3461129
+Epoch: 025, Time: 971.444 s
+	Train RMSE: 1.4892806, Val RMSE: 4.5595647, Pearson R: 0.1903905, Spearman R: 0.3073371
+Epoch: 026, Time: 921.764 s
+	Train RMSE: 1.4703865, Val RMSE: 4.5423255, Pearson R: 0.1906763, Spearman R: 0.3065714
+Epoch: 027, Time: 1051.203 s
+	Train RMSE: 1.4573342, Val RMSE: 4.5799785, Pearson R: 0.1771270, Spearman R: 0.2997583
+Epoch: 028, Time: 955.975 s
+	Train RMSE: 1.4432306, Val RMSE: 4.5448223, Pearson R: 0.1959378, Spearman R: 0.3150111
+Epoch: 029, Time: 897.203 s
+	Train RMSE: 1.4319292, Val RMSE: 4.4955972, Pearson R: 0.2034453, Spearman R: 0.3199044
+Epoch: 030, Time: 863.514 s
+	Train RMSE: 1.4215709, Val RMSE: 4.5227151, Pearson R: 0.1850092, Spearman R: 0.3049656
+Epoch: 031, Time: 858.407 s
+	Train RMSE: 1.4061454, Val RMSE: 4.4476248, Pearson R: 0.2514652, Spearman R: 0.3491411
+Epoch: 032, Time: 858.961 s
+	Train RMSE: 1.3962113, Val RMSE: 4.5950222, Pearson R: 0.1901532, Spearman R: 0.3206829
+Epoch: 033, Time: 922.660 s
+	Train RMSE: 1.3839452, Val RMSE: 4.5011113, Pearson R: 0.1981000, Spearman R: 0.3170259
+Epoch: 034, Time: 883.250 s
+	Train RMSE: 1.3742231, Val RMSE: 4.5137350, Pearson R: 0.2087844, Spearman R: 0.3301656
+Epoch: 035, Time: 1137.400 s
+	Train RMSE: 1.3662725, Val RMSE: 4.5971372, Pearson R: 0.1746045, Spearman R: 0.2872978
+Epoch: 036, Time: 1031.027 s
+	Train RMSE: 1.3466148, Val RMSE: 4.4901009, Pearson R: 0.2162271, Spearman R: 0.3490561
+Epoch: 037, Time: 950.756 s
+	Train RMSE: 1.3519747, Val RMSE: 4.5260955, Pearson R: 0.2050466, Spearman R: 0.3180191
+Epoch: 038, Time: 858.345 s
+	Train RMSE: 1.3312938, Val RMSE: 4.5095908, Pearson R: 0.2195829, Spearman R: 0.3216090
+Epoch: 039, Time: 865.355 s
+	Train RMSE: 1.3262124, Val RMSE: 4.4176169, Pearson R: 0.2489194, Spearman R: 0.3600401
+Epoch: 040, Time: 877.004 s
+	Train RMSE: 1.3162615, Val RMSE: 4.4665236, Pearson R: 0.2404090, Spearman R: 0.3544521
+Epoch: 041, Time: 940.827 s
+	Train RMSE: 1.3097057, Val RMSE: 4.4782938, Pearson R: 0.2316387, Spearman R: 0.3476222
+Epoch: 042, Time: 956.377 s
+	Train RMSE: 1.2936112, Val RMSE: 4.4678070, Pearson R: 0.2250092, Spearman R: 0.3384881
+Epoch: 043, Time: 1158.451 s
+	Train RMSE: 1.2884810, Val RMSE: 4.7118096, Pearson R: 0.1644878, Spearman R: 0.2760148
+Epoch: 044, Time: 1034.136 s
+	Train RMSE: 1.2846039, Val RMSE: 4.5462882, Pearson R: 0.1955504, Spearman R: 0.3138644
+Epoch: 045, Time: 923.257 s
+	Train RMSE: 1.2702199, Val RMSE: 4.5211428, Pearson R: 0.2306894, Spearman R: 0.3471239
+Epoch: 046, Time: 889.752 s
+	Train RMSE: 1.2669926, Val RMSE: 4.6104252, Pearson R: 0.1735632, Spearman R: 0.2825523
+Epoch: 047, Time: 844.078 s
+	Train RMSE: 1.2596105, Val RMSE: 4.5912535, Pearson R: 0.1988433, Spearman R: 0.3171053
+Epoch: 048, Time: 835.362 s
+	Train RMSE: 1.2515832, Val RMSE: 4.5612579, Pearson R: 0.2035006, Spearman R: 0.3302252
+Epoch: 049, Time: 951.483 s
+	Train RMSE: 1.2486482, Val RMSE: 4.5717137, Pearson R: 0.1940179, Spearman R: 0.3274921
+Epoch: 050, Time: 913.990 s
+	Train RMSE: 1.2404869, Val RMSE: 4.5554378, Pearson R: 0.2091627, Spearman R: 0.3263325
+Epoch: 051, Time: 1062.424 s
+	Train RMSE: 1.2345488, Val RMSE: 4.4986697, Pearson R: 0.2011954, Spearman R: 0.3289413
+Epoch: 052, Time: 957.094 s
+	Train RMSE: 1.2273321, Val RMSE: 4.4906759, Pearson R: 0.2177417, Spearman R: 0.3153246
+Epoch: 053, Time: 938.173 s
+	Train RMSE: 1.2133219, Val RMSE: 4.5148365, Pearson R: 0.2165444, Spearman R: 0.3374138
+Epoch: 054, Time: 819.670 s
+	Train RMSE: 1.2077326, Val RMSE: 4.6107927, Pearson R: 0.1752330, Spearman R: 0.3035299
+Epoch: 055, Time: 800.200 s
+	Train RMSE: 1.2033468, Val RMSE: 4.5202660, Pearson R: 0.2080536, Spearman R: 0.3184203
+Epoch: 056, Time: 781.114 s
+	Train RMSE: 1.1892897, Val RMSE: 4.4617476, Pearson R: 0.2342606, Spearman R: 0.3430260
+Epoch: 057, Time: 822.524 s
+	Train RMSE: 1.1877502, Val RMSE: 4.4932087, Pearson R: 0.2207622, Spearman R: 0.3260429
+Epoch: 058, Time: 850.000 s
+	Train RMSE: 1.1856241, Val RMSE: 4.4961180, Pearson R: 0.2229644, Spearman R: 0.3180136
+Epoch: 059, Time: 1012.375 s
+	Train RMSE: 1.1786535, Val RMSE: 4.5431249, Pearson R: 0.1795225, Spearman R: 0.3061848
+Epoch: 060, Time: 991.734 s
+	Train RMSE: 1.1735125, Val RMSE: 4.5096613, Pearson R: 0.2135767, Spearman R: 0.3361973
+Epoch: 061, Time: 950.251 s
+	Train RMSE: 1.1656882, Val RMSE: 4.4646969, Pearson R: 0.2200732, Spearman R: 0.3353838
+Epoch: 062, Time: 885.567 s
+	Train RMSE: 1.1613105, Val RMSE: 4.3995886, Pearson R: 0.2479297, Spearman R: 0.3620983
+Epoch: 063, Time: 861.278 s
+	Train RMSE: 1.1544231, Val RMSE: 4.6007061, Pearson R: 0.2085146, Spearman R: 0.3202265
+Epoch: 064, Time: 923.090 s
+	Train RMSE: 1.1499173, Val RMSE: 4.5084814, Pearson R: 0.2115694, Spearman R: 0.3431661
+Epoch: 065, Time: 937.009 s
+	Train RMSE: 1.1435767, Val RMSE: 4.5571265, Pearson R: 0.1928766, Spearman R: 0.3092850
+Epoch: 066, Time: 932.558 s
+	Train RMSE: 1.1344255, Val RMSE: 4.4878091, Pearson R: 0.2248112, Spearman R: 0.3381433
+Epoch: 067, Time: 1156.833 s
+	Train RMSE: 1.1307416, Val RMSE: 4.6028880, Pearson R: 0.1704802, Spearman R: 0.2794651
+Epoch: 068, Time: 1130.074 s
+	Train RMSE: 1.1272950, Val RMSE: 4.4768102, Pearson R: 0.2306822, Spearman R: 0.3455230
+Epoch: 069, Time: 1040.305 s
+	Train RMSE: 1.1276626, Val RMSE: 4.5922311, Pearson R: 0.1956180, Spearman R: 0.3046931
+Epoch: 070, Time: 958.119 s
+	Train RMSE: 1.1184298, Val RMSE: 4.5620663, Pearson R: 0.2289993, Spearman R: 0.3279231
+Epoch: 071, Time: 947.877 s
+	Train RMSE: 1.1227669, Val RMSE: 4.5951560, Pearson R: 0.1930562, Spearman R: 0.2976751
+Epoch: 072, Time: 933.488 s
+	Train RMSE: 1.1080674, Val RMSE: 4.5276364, Pearson R: 0.2143772, Spearman R: 0.3147917
+Epoch: 073, Time: 1028.562 s
+	Train RMSE: 1.1048746, Val RMSE: 4.5580724, Pearson R: 0.2203410, Spearman R: 0.3279639
+Epoch: 074, Time: 940.260 s
+	Train RMSE: 1.0909462, Val RMSE: 4.6136280, Pearson R: 0.1726686, Spearman R: 0.2731388
+Epoch: 075, Time: 1090.701 s
+	Train RMSE: 1.0948213, Val RMSE: 4.4619278, Pearson R: 0.2219426, Spearman R: 0.3199791
+Epoch: 076, Time: 1057.864 s
+	Train RMSE: 1.0872040, Val RMSE: 4.5042465, Pearson R: 0.1983068, Spearman R: 0.2985949
+Epoch: 077, Time: 965.078 s
+	Train RMSE: 1.0838873, Val RMSE: 4.5193070, Pearson R: 0.2203525, Spearman R: 0.3393720
+Epoch: 078, Time: 923.823 s
+	Train RMSE: 1.0751819, Val RMSE: 4.6350175, Pearson R: 0.1760307, Spearman R: 0.2818882
+Epoch: 079, Time: 914.395 s
+	Train RMSE: 1.0681639, Val RMSE: 4.4509814, Pearson R: 0.2278206, Spearman R: 0.3335582
+Epoch: 080, Time: 895.998 s
+	Train RMSE: 1.0781183, Val RMSE: 4.5213739, Pearson R: 0.2087906, Spearman R: 0.3151116
+Epoch: 081, Time: 951.419 s
+	Train RMSE: 1.0695717, Val RMSE: 4.4937954, Pearson R: 0.2000148, Spearman R: 0.3088385
+Epoch: 082, Time: 907.480 s
+	Train RMSE: 1.0653862, Val RMSE: 4.5257566, Pearson R: 0.2148697, Spearman R: 0.3003765
+Epoch: 083, Time: 1038.410 s
+	Train RMSE: 1.0559165, Val RMSE: 4.5250232, Pearson R: 0.1962806, Spearman R: 0.3017729
+Epoch: 084, Time: 1033.689 s
+	Train RMSE: 1.0597977, Val RMSE: 4.5411918, Pearson R: 0.2063322, Spearman R: 0.3147394
+Epoch: 085, Time: 932.754 s
+	Train RMSE: 1.0535864, Val RMSE: 4.5494553, Pearson R: 0.2208482, Spearman R: 0.3313602
+Epoch: 086, Time: 883.493 s
+	Train RMSE: 1.0406493, Val RMSE: 4.6082161, Pearson R: 0.1776432, Spearman R: 0.2890321
+Epoch: 087, Time: 892.723 s
+	Train RMSE: 1.0391445, Val RMSE: 4.6400413, Pearson R: 0.1504689, Spearman R: 0.2593386
+Epoch: 088, Time: 872.997 s
+	Train RMSE: 1.0406601, Val RMSE: 4.5210795, Pearson R: 0.2410280, Spearman R: 0.3461498
+Epoch: 089, Time: 950.695 s
+	Train RMSE: 1.0404141, Val RMSE: 4.6038875, Pearson R: 0.2082504, Spearman R: 0.3050892
+Epoch: 090, Time: 906.416 s
+	Train RMSE: 1.0369041, Val RMSE: 4.4409582, Pearson R: 0.2401454, Spearman R: 0.3350706
+Epoch: 091, Time: 1093.231 s
+	Train RMSE: 1.0247807, Val RMSE: 4.6383806, Pearson R: 0.1654585, Spearman R: 0.2768360
+Epoch: 092, Time: 1058.893 s
+	Train RMSE: 1.0233752, Val RMSE: 4.4485249, Pearson R: 0.2266815, Spearman R: 0.3283212
+Epoch: 093, Time: 996.536 s
+	Train RMSE: 1.0259209, Val RMSE: 4.5605083, Pearson R: 0.1969272, Spearman R: 0.3171744
+Epoch: 094, Time: 904.675 s
+	Train RMSE: 1.0155935, Val RMSE: 4.4958814, Pearson R: 0.2072244, Spearman R: 0.2973609
+Epoch: 095, Time: 876.318 s
+	Train RMSE: 1.0120300, Val RMSE: 4.4524665, Pearson R: 0.2254586, Spearman R: 0.3130828
+Epoch: 096, Time: 879.468 s
+	Train RMSE: 1.0108772, Val RMSE: 4.5408396, Pearson R: 0.1982461, Spearman R: 0.3064558
+Epoch: 097, Time: 957.619 s
+	Train RMSE: 1.0049756, Val RMSE: 4.4834585, Pearson R: 0.2287121, Spearman R: 0.3315411
+Epoch: 098, Time: 909.266 s
+	Train RMSE: 0.9987187, Val RMSE: 4.6099415, Pearson R: 0.2037747, Spearman R: 0.3045633
+Epoch: 099, Time: 1101.224 s
+	Train RMSE: 0.9979025, Val RMSE: 4.5240896, Pearson R: 0.1865304, Spearman R: 0.2977892
+Epoch: 100, Time: 1042.241 s
+	Train RMSE: 0.9935282, Val RMSE: 4.5611900, Pearson R: 0.2036532, Spearman R: 0.3114077
+Test RMSE: 3.6515684, Pearson R: 0.4608720, Spearman R: 0.4080005

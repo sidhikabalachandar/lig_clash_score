@@ -2,7 +2,7 @@
 The purpose of this code is to train the gnn model
 
 It can be run on sherlock using
-$ sbatch 1gpu_hybrid_score_feat.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python train_pdbbind.py /home/users/sidhikab/lig_clash_score/models /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/processed_score /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits --log_dir hybrid_score_feat
+$ sbatch 1gpu_gnn_score_feat.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python train_pdbbind.py /home/users/sidhikab/lig_clash_score/models /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/processed_score /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits --log_dir gnn_score_feat
 $ sbatch 1gpu.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python train_pdbbind.py /home/users/sidhikab/lig_clash_score/models /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --mode test --log_dir v1
 """
 import os
@@ -41,7 +41,6 @@ class GCN(torch.nn.Module):
         self.bn5 = torch.nn.BatchNorm1d(hidden_dim*8)
         self.fc1 = Linear(hidden_dim*8, hidden_dim*4)
         self.fc2 = Linear(hidden_dim*4, 1)
-        self.hybrid_score = Linear(2, 1)
 
 
     def forward(self, x, edge_index, edge_weight, batch, physics_score):
@@ -63,10 +62,7 @@ class GCN(torch.nn.Module):
         x = F.relu(x)
         x = F.relu(self.fc1(x))
         x = F.dropout(x, p=0.25, training=self.training)
-        gnn_score = self.fc2(x).view(-1)
-        combined = torch.cat((torch.unsqueeze(gnn_score, 1), torch.unsqueeze(physics_score, 1)), dim=1)
-        output = torch.squeeze(self.hybrid_score(combined))
-        return output
+        return self.fc2(x).view(-1)
 
 class GIN(torch.nn.Module):
     def __init__(self, num_features, hidden_dim):
