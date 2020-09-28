@@ -12,6 +12,7 @@ $SCHRODINGER/run python3 clash_analysis.py all_glide_data /oak/stanford/groups/r
 $SCHRODINGER/run python3 clash_analysis.py group_glide_data /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --index 0
 $SCHRODINGER/run python3 clash_analysis.py check_glide_data /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv
 $SCHRODINGER/run python3 clash_analysis.py graph /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv
+$SCHRODINGER/run python3 clash_analysis.py index /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --clash_prot_file /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random_clash.txt --non_clash_prot_file /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random_non_clash.txt
 """
 
 import argparse
@@ -256,8 +257,14 @@ def main():
     parser.add_argument('--glide_dir', type=str, default=os.path.join(os.getcwd(), 'glide'),
                         help='directory in which gnn data saved')
     parser.add_argument('--max_poses', type=int, default=100, help='maximum number of glide poses considered')
-    parser.add_argument('--cutoff', type=int, default=2, help='rmsd accuracy cutoff between predicted ligand pose and '
+    parser.add_argument('--rmsd_cutoff', type=int, default=2, help='rmsd accuracy cutoff between predicted ligand pose and '
                                                               'true ligand pose')
+    parser.add_argument('--clash_cutoff', type=int, default=40, help='rmsd accuracy cutoff between predicted ligand pose and '
+                                                              'true ligand pose')
+    parser.add_argument('--clash_prot_file', type=str, default=os.path.join(os.getcwd(), 'index.txt'),
+                        help='for update task, name of prot file where clashing pairs will be placed')
+    parser.add_argument('--non_clash_prot_file', type=str, default=os.path.join(os.getcwd(), 'index.txt'),
+                        help='for update task, name of prot file where non-clashing pairs will be placed')
     args = parser.parse_args()
 
     if not os.path.exists(args.run_path):
@@ -337,7 +344,30 @@ def main():
             combined.update(clash_dict)
 
         glide_data = get_glide_data(args.glide_dir)
-        run_graph(combined, glide_data, args.save_path, args.cutoff)
+        run_graph(combined, glide_data, args.save_path, args.rmsd_cutoff)
+
+    if args.task == 'index':
+        combined = {}
+        for file in os.listdir(args.clash_dir):
+            infile = open(os.path.join(args.clash_dir, file), 'rb')
+            clash_dict = pickle.load(infile)
+            infile.close()
+            combined.update(clash_dict)
+
+        clash_text = []
+        non_clash_text = []
+        for protein, target, start in tqdm(combined, desc='protein, target, start groups'):
+            if combined[(protein, target, start)] > args.clash_cutoff:
+                clash_text.append('{} {} {}\n'.format(protein, target, start))
+            else:
+                non_clash_text.append('{} {} {}\n'.format(protein, target, start))
+
+        file = open(args.clash_prot_file, "w")
+        file.writelines(clash_text)
+        file.close()
+        file = open(args.non_clash_prot_file, "w")
+        file.writelines(non_clash_text)
+        file.close()
 
 if __name__=="__main__":
     main()

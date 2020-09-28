@@ -11,6 +11,8 @@ $ $SCHRODINGER/run python3 get_csv.py group /oak/stanford/groups/rondror/project
 $ $SCHRODINGER/run python3 get_csv.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d
 $ $SCHRODINGER/run python3 get_csv.py combine /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d
 $ $SCHRODINGER/run python3 get_csv.py update /home/users/sidhikab/plep/index/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --new_prot_file /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+$ $SCHRODINGER/run python3 get_csv.py remove /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d
+$ $SCHRODINGER/run python3 get_csv.py check_ordering /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d
 """
 
 import pandas as pd
@@ -52,6 +54,15 @@ def group_files(n, process):
 
     return grouped_files
 
+def get_glide_score(pdb, label_df):
+    """
+    searches for pdb's rmsd in combined rmsd df
+    :param pdb: (string) {target}_lig{id}
+    :param label_df: (df) combined rmsd df
+    :return: (float) rmsd value
+    """
+    return label_df[label_df['target'] == pdb]['glide_score'].iloc[0]
+
 def to_df(data, out_dir, pair):
     '''
     write list of rmsds to csv file
@@ -60,7 +71,7 @@ def to_df(data, out_dir, pair):
     :param pair: (string) {target}-to-{start}
     :return: all_rmsds: (list) list of all rmsds
     '''
-    df = pd.DataFrame(data, columns=['protein', 'start', 'target', 'rmsd', 'score_no_vdw', 'mcss'])
+    df = pd.DataFrame(data, columns=['protein', 'start', 'target', 'rmsd', 'score_no_vdw', 'mcss', 'glide_score'])
     df.to_csv(os.path.join(out_dir, pair + '.csv'))
 
 def get_rmsd_results(rmsd_file_path):
@@ -81,10 +92,10 @@ def get_rmsd_results(rmsd_file_path):
 
 def run_all(docked_prot_file, run_path, raw_root, out_dir, grouped_files, n):
     for i, group in enumerate(grouped_files):
-        cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 get_csv.py group {} {} {} {} --n {}' \
+        cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 get_csv.py group {} {} {} {} --n {} ' \
               '--index {}"'
         os.system(cmd.format(os.path.join(run_path, 'labels{}.out'.format(i)), docked_prot_file,
-                             run_path, raw_root, out_dir, i))
+                             run_path, raw_root, out_dir, n, i))
 
 def run_group(grouped_files, raw_root, index):
     for protein, target, start in grouped_files[index]:
@@ -112,9 +123,10 @@ def run_group(grouped_files, raw_root, index):
         results = dock_set.get_docking_gscores(docking_config, mode='multi')
         results_by_ligand = results[pair]
         for file in results_by_ligand:
+            glide_score = results_by_ligand[file][0]['Score']
             score = score_no_vdW(results_by_ligand[file][0])
             rmsd = rmsds[rmsds['Title'] == file]['RMSD'].iloc[0]
-            pair_data.append([protein, start, file[:-4], rmsd, score, mcss])
+            pair_data.append([protein, start, file[:-4], rmsd, score, mcss, glide_score])
 
         to_df(pair_data, pair_path, pair)
         # os.remove(os.path.join(pair_path, '{}_mcss.csv'.format(pair)))
@@ -138,6 +150,8 @@ def run_check(docked_prot_file, raw_root):
         for line in tqdm(fp, desc='going through protein, target, start groups'):
             if line[0] == '#': continue
             protein, target, start = line.strip().split()
+            if target == '4azc':
+                print(protein, target, start)
             num_pairs += 1
             protein_path = os.path.join(raw_root, protein)
             pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
@@ -190,10 +204,11 @@ def main():
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
     parser.add_argument('out_dir', type=str, help='directory where the combined rmsd csv file will be placed')
     parser.add_argument('--index', type=int, default=-1, help='for group task, group number')
-    parser.add_argument('--n', type=int, default=3, help='number of protein, target, start groups processed in '
+    parser.add_argument('--n', type=int, default=10, help='number of protein, target, start groups processed in '
                                                          'group task')
     parser.add_argument('--new_prot_file', type=str, default=os.path.join(os.getcwd(), 'index.txt'),
                         help='for update task, name of new prot file')
+    parser.add_argument('--max_poses', type=int, default=100, help='maximum number of glide poses considered')
     args = parser.parse_args()
 
     if not os.path.exists(args.run_path):
@@ -217,6 +232,39 @@ def main():
 
     if args.task == 'update':
         update(args.docked_prot_file, args.raw_root, args.new_prot_file)
+
+    if args.task == 'remove':
+        with open(args.docked_prot_file) as fp:
+            for line in tqdm(fp, desc='files'):
+                if line[0] == '#': continue
+                protein, target, start = line.strip().split()
+                protein_path = os.path.join(args.raw_root, protein)
+                pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
+                file = os.path.join(pair_path, '{}-to-{}.csv'.format(target, start))
+                if os.path.exists(file):
+                    os.remove(file)
+
+    if args.task == 'check_ordering':
+        process = get_prots(args.docked_prot_file)
+        # grouped_files = group_files(args.n, process)
+        error = []
+        for protein, target, start in tqdm(process, desc='protein, target, start groups'):
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
+            file = os.path.join(pair_path, '{}-to-{}.csv'.format(target, start))
+            label_df = pd.read_csv(file)
+            prev_pdb_code = '{}_lig1'.format(target)
+            for i in range(2, args.max_poses):
+                pdb_code = '{}_lig{}'.format(target, i)
+                if len(label_df[label_df['target'] == pdb_code]) != 0 \
+                        and get_glide_score(prev_pdb_code, label_df) > get_glide_score(pdb_code, label_df):
+                    error.append((protein, target, start))
+                    print(prev_pdb_code, pdb_code)
+                    break
+                prev_pdb_code = pdb_code
+
+        print(len(error))
+        print(error)
 
 if __name__ == "__main__":
     main()

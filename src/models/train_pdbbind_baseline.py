@@ -2,7 +2,7 @@
 The purpose of this code is to train the gnn model
 
 It can be run on sherlock using
-$ sbatch 1gpu_gnn_score_feat.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python train_pdbbind.py /home/users/sidhikab/lig_clash_score/models /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/processed_score /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits --log_dir gnn_score_feat
+$ sbatch 1gpu_baseline.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python train_pdbbind.py /home/users/sidhikab/lig_clash_score/models /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/processed_clustered /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits --split balance_clash --log_dir baseline_clustered
 $ sbatch 1gpu.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python train_pdbbind.py /home/users/sidhikab/lig_clash_score/models /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --mode test --log_dir v1
 """
 import os
