@@ -5,6 +5,9 @@ how to run this file:
 ml load chemistry
 ml load schrodinger
 $ $SCHRODINGER/run python3 data_converter.py run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+
+$ $SCHRODINGER/run python3 data_converter.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/combined_index_balance_clash_large.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --decoy_type conformer_poses
+
 $ $SCHRODINGER/run python3 data_converter.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 '''
 
@@ -31,7 +34,7 @@ def get_ligand(ligfile):
     lig = Chem.RemoveHs(lig)
     return lig
 
-def find_files(docked_prot_file, raw_root):
+def find_files(docked_prot_file, raw_root, decoy_type):
     '''
     Get the files for all protein, target, start groups
     :param docked_prot_file: (string) file listing proteins to process
@@ -45,7 +48,7 @@ def find_files(docked_prot_file, raw_root):
             protein, target, start = line.strip().split()
             protein_path = os.path.join(raw_root, protein)
             pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-            pose_path = os.path.join(pair_path, 'ligand_poses')
+            pose_path = os.path.join(pair_path, decoy_type)
 
             # stage starting protein receptor file
             process.append(os.path.join(pair_path, '{}_prot'.format(start)))
@@ -124,10 +127,12 @@ def main():
                                                          'group task')
     parser.add_argument('--max_poses', type=int, default=100, help='maximum number of glide poses considered')
     parser.add_argument('--max_decoys', type=int, default=10, help='maximum number of decoys created per glide pose')
+    parser.add_argument('--decoy_type', type=str, default='ligand_poses', help='either cartesian_poses, ligand_poses, '
+                                                                               'or conformer_poses')
     args = parser.parse_args()
 
     if args.task == 'run':
-        files = find_files(args.docked_prot_file, args.raw_root)
+        files = find_files(args.docked_prot_file, args.raw_root, args.decoy_type)
         write_files(files, args.run_path, args.n)
 
     if args.task == 'check':
@@ -140,7 +145,7 @@ def main():
                 num_pairs += 1
                 protein_path = os.path.join(args.raw_root, protein)
                 pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-                pose_path = os.path.join(pair_path, 'ligand_poses')
+                pose_path = os.path.join(pair_path, args.decoy_type)
 
                 # check basic files
                 if not os.path.exists('{}/{}_prot.pdb'.format(pair_path, start)):
@@ -148,15 +153,15 @@ def main():
                     continue
 
                 # check ligand pose files
-                pv_file = os.path.join(pair_path, '{}-to-{}_glide_pv.maegz'.format(target, start))
-                num_poses = min(args.max_poses, len(list(structure.StructureReader(pv_file))))
-                for i in range(args.max_decoys):
-                    if not os.path.join(pose_path, '{}_lig{}.sdf'.format(target, str(num_poses) + chr(ord('a') + i))):
-                        process.append((protein, target, start))
-                        break
+                for file in os.listdir(pose_path):
+                    if file[-3:] == 'mae':
+                        file_name = file[:-3]
+                        if not os.path.exists(os.path.join(pose_path, file_name + 'sdf')):
+                            process.append((protein, target, start))
+                            break
 
         print('Missing', len(process), '/', num_pairs)
-        # print(process)
+        print(process)
 
 if __name__ == '__main__':
     main()

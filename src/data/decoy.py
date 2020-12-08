@@ -10,10 +10,13 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 decoy.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/ligand-docking/pdbbind_2019/data
-$ $SCHRODINGER/run python3 decoy.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/ligand-docking/pdbbind_2019/data --index 0
-$ $SCHRODINGER/run python3 decoy.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/ligand-docking/pdbbind_2019/data
-$ $SCHRODINGER/run python3 decoy.py delete /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/ligand-docking/pdbbind_2019/data
+$ $SCHRODINGER/run python3 decoy.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/ligand-docking/pdbbind_2019/data --decoy_type conformer_poses
+$ $SCHRODINGER/run python3 decoy.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/ligand-docking/pdbbind_2019/data --index 0 --decoy_type conformer_poses
+$ $SCHRODINGER/run python3 decoy.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/ligand-docking/pdbbind_2019/data --decoy_type conformer_poses
+
+$ $SCHRODINGER/run python3 decoy.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random_clash.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/ligand-docking/pdbbind_2019/data --decoy_type conformer_poses --index 0
+
+$ $SCHRODINGER/run python3 decoy.py delete /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/ligand-docking/pdbbind_2019/data --n 10 --decoy_type conformer_poses
 """
 
 import argparse
@@ -21,10 +24,17 @@ import os
 import schrodinger.structure as structure
 import schrodinger.structutils.transform as transform
 from schrodinger.structutils.transform import get_centroid
+import schrodinger.structutils.interactions.steric_clash as steric_clash
 import numpy as np
 import statistics
 import pickle
 from tqdm import tqdm
+import subprocess
+import random
+
+_CONFGEN_CMD = ("$SCHRODINGER/confgenx -WAIT -optimize -drop_problematic -num_conformers {num_conformers} "
+                "-max_num_conformers {num_conformers} {input_file}")
+_ALIGN_CMD = "$SCHRODINGER/run rmsd.py {ref_file} {conf_file} -m -o {output_file}"
 
 class MCSS:
     """
@@ -90,7 +100,7 @@ class MCSS:
         """
         structure_file = '{}.ligands.mae'.format(init_file)
         mcss_file = '{}.mcss.csv'.format(init_file)
-        stwr = StructureWriter(structure_file)
+        stwr = structure.StructureWriter(structure_file)
         stwr.append(ligands[self.l1])
         stwr.append(ligands[self.l2])
         stwr.close()
@@ -112,7 +122,7 @@ class MCSS:
 
     def _set_ligand_sizes(self, structure_file):
         try:
-            refs = [st for st in StructureReader(structure_file)]
+            refs = [st for st in structure.StructureReader(structure_file)]
         except:
             print('Unable to read MCSS structure file for', self.l1, self.l2)
             return None
@@ -175,7 +185,7 @@ def get_prots(docked_prot_file):
     """
     process = []
     with open(docked_prot_file) as fp:
-        for line in fp:
+        for line in tqdm(fp, desc='index file'):
             if line[0] == '#': continue
             protein, target, start = line.strip().split()
             process.append((protein, target, start))
@@ -341,7 +351,88 @@ def create_cartesian_decoys(lig_file):
         else:
             modify_file(decoy_file, lig_file.split('/')[-1])
 
-def run_all(docked_prot_file, run_path, raw_root, data_root, grouped_files, n):
+def run_cmd(cmd, error_msg=None, raise_except=False):
+    try:
+        return subprocess.check_output(
+            cmd,
+            universal_newlines=True,
+            shell=True)
+    except Exception as e:
+        if error_msg is not None:
+            print(error_msg)
+        if raise_except:
+            raise e
+
+def gen_ligand_conformers(path, output_dir, num_conformers):
+    current_dir = os.getcwd()
+    os.chdir(output_dir)
+    basename = os.path.basename(path)
+    ### Note: For some reason, confgen isn't able to find the .mae file,
+    # unless it is in working directory. So, we need to copy it over.
+    ### Note: There may be duplicated ligand names (for different targets).
+    # Since it only happens for CHEMBL ligand, just ignore it for now.
+    # Otherwise, might want consider to generate the conformers to separate
+    # folders for each (target, ligand) pair.
+    # Run ConfGen
+    run_cmd(f'cp {path:} ./{basename:}')
+    command = _CONFGEN_CMD.format(num_conformers=num_conformers,
+                                  input_file=f'./{basename:}')
+    run_cmd(command, f'Failed to run ConfGen on {path:}')
+    run_cmd(f'rm ./{basename:}')
+    os.chdir(current_dir)
+
+def get_aligned_conformers(conformer_file, pair_path, start_file):
+    aligned_file = os.path.join(pair_path, "aligned_conformers.mae")
+    run_cmd(_ALIGN_CMD.format(ref_file=start_file, conf_file=conformer_file, output_file=aligned_file))
+    return list(structure.StructureReader(aligned_file))
+
+
+def create_conformer_decoys(conformers, grid_size, start_lig_center, prot, pose_path, target, max_poses, min_angle,
+                            max_angle):
+    num_iter_without_pose = 0
+    num_valid_poses = 1
+    grid = []
+    for dx in range(-grid_size, grid_size):
+        for dy in range(-grid_size, grid_size):
+            for dz in range(-grid_size, grid_size):
+                grid.append([[dx, dy, dz], 0])
+
+    while num_valid_poses < max_poses:
+        num_iter_without_pose += 1
+        conformer = random.choice(conformers)
+        conformer_center = list(get_centroid(conformer))
+
+        # translation
+        index = random.randint(0, len(grid) - 1)
+        grid_loc = grid[index][0]
+        transform.translate_structure(conformer, start_lig_center[0] - conformer_center[0] + grid_loc[0],
+                                      start_lig_center[1] - conformer_center[1] + grid_loc[1],
+                                      start_lig_center[2] - conformer_center[2] + grid_loc[2])
+        conformer_center = list(get_centroid(conformer))
+
+        # rotation
+        x_angle = np.random.uniform(min_angle, max_angle)
+        y_angle = np.random.uniform(min_angle, max_angle)
+        z_angle = np.random.uniform(min_angle, max_angle)
+        transform.rotate_structure(conformer, x_angle, y_angle, z_angle, conformer_center)
+
+        if steric_clash.clash_volume(prot, struc2=conformer) < 200:
+            decoy_file = os.path.join(pose_path, "{}_lig{}.mae".format(target, num_valid_poses))
+            with structure.StructureWriter(decoy_file) as decoy:
+                decoy.append(conformer)
+            modify_file(decoy_file, '_pro_ligand')
+            modify_file(decoy_file, '{}_lig0.mae'.format(target))
+            num_valid_poses += 1
+            grid[index][1] = 0
+            num_iter_without_pose = 0
+        elif num_iter_without_pose == 5 and len(grid) > 1:
+            max_val = max(grid, key=lambda x: x[1])
+            grid.remove(max_val)
+            num_iter_without_pose = 0
+        else:
+            grid[index][1] += 1
+
+def run_all(docked_prot_file, run_path, raw_root, data_root, grouped_files, n, decoy_type):
     """
     submits sbatch script to create decoys for each protein, target, start group
     :param docked_prot_file: (string) file listing proteins to process
@@ -353,12 +444,12 @@ def run_all(docked_prot_file, run_path, raw_root, data_root, grouped_files, n):
     """
     for i, group in enumerate(grouped_files):
         cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 decoy.py group {} {} {} {} --n {} ' \
-              '--index {}"'
+              '--index {} --decoy_type {}"'
         os.system(cmd.format(os.path.join(run_path, 'decoy{}.out'.format(i)), docked_prot_file,
-                             run_path, raw_root, data_root, n, i))
+                             run_path, raw_root, data_root, n, i, decoy_type))
 
 def run_group(grouped_files, raw_root, data_root, index, max_poses, decoy_type, max_decoys, mean_translation,
-              stdev_translation, min_angle, max_angle):
+              stdev_translation, min_angle, max_angle, num_conformers, grid_size):
     """
     creates decoys for each protein, target, start group
     :param grouped_files: (list) list of protein, target, start groups
@@ -378,61 +469,88 @@ def run_group(grouped_files, raw_root, data_root, index, max_poses, decoy_type, 
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
-        pose_path = os.path.join(pair_path, 'ligand_poses')
+        pose_path = os.path.join(pair_path, decoy_type)
         dock_root = os.path.join(data_root, '{}/docking/sp_es4/{}'.format(protein, pair))
         struct_root = os.path.join(data_root, '{}/structures/aligned'.format(protein))
 
-        # # create folders
-        # if not os.path.exists(raw_root):
-        #     os.mkdir(raw_root)
-        # if not os.path.exists(protein_path):
-        #     os.mkdir(protein_path)
-        # if not os.path.exists(pair_path):
-        #     os.mkdir(pair_path)
-        # if not os.path.exists(pose_path):
-        #     os.mkdir(pose_path)
-        #
-        # # add basic files
-        # if not os.path.exists('{}/{}_prot.mae'.format(pair_path, start)):
-        #     os.system('cp {}/{}_prot.mae {}/{}_prot.mae'.format(struct_root, start, pair_path, start))
-        # if not os.path.exists('{}/{}_lig.mae'.format(pair_path, start)):
-        #     os.system('cp {}/{}_lig.mae {}/{}_lig.mae'.format(struct_root, start, pair_path, start))
-        # if not os.path.exists('{}/{}_lig0.mae'.format(pair_path, target)):
-        #     os.system('cp {}/{}_lig.mae {}/{}_lig0.mae'.format(struct_root, target, pose_path, target))
+        # create folders
+        if not os.path.exists(raw_root):
+            os.mkdir(raw_root)
+        if not os.path.exists(protein_path):
+            os.mkdir(protein_path)
+        if not os.path.exists(pair_path):
+            os.mkdir(pair_path)
+        if not os.path.exists(pose_path):
+            os.mkdir(pose_path)
+
+        # add basic files
+        if not os.path.exists('{}/{}_prot.mae'.format(pair_path, start)):
+            os.system('cp {}/{}_prot.mae {}/{}_prot.mae'.format(struct_root, start, pair_path, start))
+        if not os.path.exists('{}/{}_prot.mae'.format(pair_path, target)):
+            os.system('cp {}/{}_prot.mae {}/{}_prot.mae'.format(struct_root, target, pair_path, target))
+        if not os.path.exists('{}/{}_lig.mae'.format(pair_path, start)):
+            os.system('cp {}/{}_lig.mae {}/{}_lig.mae'.format(struct_root, start, pair_path, start))
+        if not os.path.exists('{}/{}_lig0.mae'.format(pose_path, target)):
+            os.system('cp {}/{}_lig.mae {}/{}_lig0.mae'.format(struct_root, target, pose_path, target))
+        modify_file('{}/{}_lig0.mae'.format(pose_path, target), '_pro_ligand')
 
         # add combine glide poses
         pv_file = '{}/{}_glide_pv.maegz'.format(pair_path, pair)
         if not os.path.exists(pv_file):
             os.system('cp {}/{}_pv.maegz {}'.format(dock_root, pair, pv_file))
 
-        # # extract glide poses and create decoys
-        # num_poses = len(list(structure.StructureReader(pv_file)))
-        # for i in range(num_poses):
-        #     if i == max_poses:
-        #         break
-        #     lig_file = os.path.join(pose_path, '{}_lig{}.mae'.format(target, i))
-        #     if i != 0:
-        #         with structure.StructureWriter(lig_file) as all_file:
-        #             all_file.append(list(structure.StructureReader(pv_file))[i])
-        #     if decoy_type == 'cartesian':
-        #         create_cartesian_decoys(lig_file)
-        #     elif decoy_type == 'random':
-        #         create_decoys(lig_file, max_decoys, mean_translation, stdev_translation, min_angle, max_angle)
-        #
-        # # combine ligands
-        # with structure.StructureWriter('{}/{}_merge_pv.mae'.format(pair_path, pair)) as all_file:
-        #     for file in os.listdir(pose_path):
-        #         if file[-3:] == 'mae':
-        #             pv = list(structure.StructureReader(os.path.join(pose_path, file)))
-        #             all_file.append(pv[0])
-        #
-        # # compute mcss
-        # compute_protein_mcss([target, start], pair_path)
-        #
-        # # zip file
-        # os.system('gzip -f {}/{}_merge_pv.mae'.format(pair_path, pair, pair_path, pair))
+        if decoy_type == "ligand_poses" or decoy_type == "cartesian_poses":
+            # extract glide poses and create decoys
+            num_poses = len(list(structure.StructureReader(pv_file)))
+            for i in range(num_poses):
+                if i == max_poses:
+                    break
+                lig_file = os.path.join(pose_path, '{}_lig{}.mae'.format(target, i))
+                if i != 0:
+                    with structure.StructureWriter(lig_file) as all_file:
+                        all_file.append(list(structure.StructureReader(pv_file))[i])
+                if decoy_type == 'cartesian_poses':
+                    create_cartesian_decoys(lig_file)
+                elif decoy_type == 'ligand_poses':
+                    create_decoys(lig_file, max_decoys, mean_translation, stdev_translation, min_angle, max_angle)
 
-def run_check(docked_prot_file, raw_root, max_poses, max_decoys):
+        elif decoy_type == "conformer_poses":
+            start_lig_file = os.path.join(pair_path, '{}_lig.mae'.format(start))
+            start_lig = list(structure.StructureReader(start_lig_file))[0]
+            target_lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
+            start_lig_center = list(get_centroid(start_lig))
+            prot_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
+            prot = list(structure.StructureReader(prot_file))[0]
+
+            aligned_file = os.path.join(pair_path, "aligned_conformers.mae")
+            if not os.path.exists(aligned_file):
+                if not os.path.exists(os.path.join(pair_path, "{}_lig0-out.maegz".format(target))):
+                    gen_ligand_conformers(target_lig_file, pair_path, num_conformers)
+                conformer_file = os.path.join(pair_path, "{}_lig0-out.maegz".format(target))
+                get_aligned_conformers(conformer_file, pair_path, target_lig_file)
+
+            conformers = list(structure.StructureReader(aligned_file))
+            create_conformer_decoys(conformers, grid_size, start_lig_center, prot, pose_path, target, max_poses, min_angle,
+                                    max_angle)
+            if os.path.exists(os.path.join(pair_path, '{}_lig0.log'.format(target))):
+                os.remove(os.path.join(pair_path, '{}_lig0.log'.format(target)))
+            if os.path.exists(os.path.join(pair_path, "{}_lig0-out.maegz".format(target))):
+                os.remove(os.path.join(pair_path, "{}_lig0-out.maegz".format(target)))
+
+        # combine ligands
+        if os.path.exists('{}/{}_{}_merge_pv.mae'.format(pair_path, pair, decoy_type)):
+            os.remove('{}/{}_{}_merge_pv.mae'.format(pair_path, pair, decoy_type))
+        with structure.StructureWriter('{}/{}_{}_merge_pv.mae'.format(pair_path, pair, decoy_type)) as all_file:
+            for file in os.listdir(pose_path):
+                if file[-3:] == 'mae':
+                    pv = list(structure.StructureReader(os.path.join(pose_path, file)))
+                    all_file.append(pv[0])
+
+        # compute mcss
+        if not os.path.exists(os.path.join(pair_path, '{}_mcss.csv'.format(pair))):
+            compute_protein_mcss([target, start], pair_path)
+
+def run_check(docked_prot_file, raw_root, max_poses, max_decoys, decoy_type):
     """
     check if all files are created
     :param docked_prot_file: (string) file listing proteins to process
@@ -451,48 +569,60 @@ def run_check(docked_prot_file, raw_root, max_poses, max_decoys):
             num_pairs += 1
             protein_path = os.path.join(raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
-            pose_path = os.path.join(pair_path, 'ligand_poses')
+            pose_path = os.path.join(pair_path, decoy_type)
             pv_file = os.path.join(pair_path, '{}_glide_pv.maegz'.format(pair))
 
-            # if not os.path.exists('{}/{}_prot.mae'.format(pair_path, start)):
-            #     process.append((protein, target, start))
-            #     print('{}/{}_prot.mae'.format(pair_path, start))
-            #     continue
-            # if not os.path.exists('{}/{}_lig.mae'.format(pair_path, start)):
-            #     process.append((protein, target, start))
-            #     print('{}/{}_lig.mae'.format(pair_path, start))
-            #     continue
-            # if not os.path.exists('{}/{}_lig0.mae'.format(pose_path, target)):
-            #     process.append((protein, target, start))
-            #     print('{}/{}_lig0.mae'.format(pose_path, target))
-            #     continue
+            if not os.path.exists('{}/{}_prot.mae'.format(pair_path, start)):
+                process.append((protein, target, start))
+                print('{}/{}_prot.mae'.format(pair_path, start))
+                continue
+            if not os.path.exists('{}/{}_lig.mae'.format(pair_path, start)):
+                process.append((protein, target, start))
+                print('{}/{}_lig.mae'.format(pair_path, start))
+                continue
+            if not os.path.exists('{}/{}_lig0.mae'.format(pose_path, target)):
+                process.append((protein, target, start))
+                print('{}/{}_lig0.mae'.format(pose_path, target))
+                continue
             if not os.path.exists(pv_file):
                 process.append((protein, target, start))
-                # print(pv_file)
+                print(pv_file)
                 # continue
 
-            # num_poses = min(max_poses, len(list(structure.StructureReader(pv_file))))
-            # if not os.path.exists(os.path.join(pose_path, '{}_lig{}.mae'.format(target, num_poses - 1))):
-            #     process.append((protein, target, start))
-            #     print(os.path.join(pose_path, '{}_lig{}.mae'.format(target, num_poses - 1)))
-            #     continue
-            # for i in range(max_decoys):
-            #     if not os.path.exists(os.path.join(pose_path, '{}_lig{}.mae'.format(target, str(num_poses - 1) +
-            #                                                                                 chr(ord('a') + i)))):
-            #         process.append((protein, target, start))
-            #         print(os.path.join(pose_path, '{}_lig{}.mae'.format(target, str(num_poses - 1) + chr(ord('a') + i))))
-            #         break
-            #
-            # if not os.path.exists(os.path.join(pair_path, '{}_mcss.csv'.format(pair))):
-            #     process.append((protein, target, start))
-            #     continue
-            # if not os.path.exists(os.path.join(pair_path, '{}/{}_merge_pv.mae.gz'.format(pair_path, pair))):
-            #     process.append((protein, target, start))
-            #     continue
+            if decoy_type == 'ligand_poses' or decoy_type == 'cartesian-poses':
+                num_poses = min(max_poses, len(list(structure.StructureReader(pv_file))))
+                if not os.path.exists(os.path.join(pose_path, '{}_lig{}.mae'.format(target, num_poses - 1))):
+                    process.append((protein, target, start))
+                    print(os.path.join(pose_path, '{}_lig{}.mae'.format(target, num_poses - 1)))
+                    continue
+                for i in range(max_decoys):
+                    if not os.path.exists(os.path.join(pose_path, '{}_lig{}.mae'.format(target, str(num_poses - 1) +
+                                                                                                chr(ord('a') + i)))):
+                        process.append((protein, target, start))
+                        print(os.path.join(pose_path, '{}_lig{}.mae'.format(target, str(num_poses - 1) + chr(ord('a') + i))))
+                        break
+            elif decoy_type == 'conformer_poses':
+                finish = False
+                for i in range(max_poses):
+                    if not os.path.exists(os.path.join(pose_path, '{}_lig{}.mae'.format(target, i))):
+                        process.append((protein, target, start))
+                        print(os.path.join(pose_path, '{}_lig{}.mae'.format(target, i)))
+                        finish = True
+                        break
+                if finish:
+                    continue
 
+            if not os.path.exists(os.path.join(pair_path, '{}_mcss.csv'.format(pair))):
+                process.append((protein, target, start))
+                print(os.path.join(pair_path, '{}_mcss.csv'.format(pair)))
+                continue
+            if not os.path.exists(os.path.join(pair_path, '{}/{}_{}_merge_pv.mae'.format(pair_path, pair, decoy_type))):
+                process.append((protein, target, start))
+                print(os.path.join(pair_path, '{}/{}_{}_merge_pv.mae'.format(pair_path, pair, decoy_type)))
+                continue
 
     print('Missing', len(process), '/', num_pairs)
-    # print(process)
+    print(process)
 
 def run_all_dist_check(docked_prot_file, run_path, raw_root, data_root, grouped_files):
     """
@@ -579,7 +709,7 @@ def run_check_dist_check(grouped_files, dist_dir):
     print(errors)
 
 
-def run_all_name_check(docked_prot_file, run_path, raw_root, data_root, grouped_files):
+def run_all_name_check(docked_prot_file, run_path, raw_root, data_root, decoy_type, grouped_files):
     """
     submits sbatch script to check names of decoys for each protein, target, start group
     :param docked_prot_file: (string) file listing proteins to process
@@ -591,12 +721,12 @@ def run_all_name_check(docked_prot_file, run_path, raw_root, data_root, grouped_
     """
     for i, group in enumerate(grouped_files):
         cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 decoy.py group_name_check {} {} {} {} ' \
-              '--index {}"'
+              '--index {} --decoy_type {}"'
         os.system(cmd.format(os.path.join(run_path, 'name{}.out'.format(i)), docked_prot_file,
-                             run_path, raw_root, data_root, i))
+                             run_path, raw_root, data_root, i, decoy_type))
 
 
-def run_group_name_check(grouped_files, raw_root, index, name_dir, max_poses, max_decoys):
+def run_group_name_check(grouped_files, raw_root, index, name_dir, decoy_type, max_poses, max_decoys):
     """
     checks names of decoys for each protein, target, start group
     :param grouped_files: (list) list of protein, target, start groups
@@ -611,13 +741,9 @@ def run_group_name_check(grouped_files, raw_root, index, name_dir, max_poses, ma
     for protein, target, start in grouped_files[index]:
         protein_path = os.path.join(raw_root, protein)
         pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-        pose_path = os.path.join(pair_path, 'ligand_poses')
-        pv_file = os.path.join(pair_path, '{}-to-{}_glide_pv.maegz'.format(target, start))
-        num_poses = len(list(structure.StructureReader(pv_file)))
+        pose_path = os.path.join(pair_path, decoy_type)
 
-        for i in range(num_poses):
-            if i == max_poses:
-                break
+        for i in range(max_poses):
             lig_file = os.path.join(pose_path, '{}_lig{}.mae'.format(target, i))
             found = False
             with open(lig_file, "r") as f:
@@ -629,26 +755,10 @@ def run_group_name_check(grouped_files, raw_root, index, name_dir, max_poses, ma
                 print(lig_file)
                 unfinished.append((protein, target, start))
                 break
-            else:
-                for j in range(max_decoys):
-                    decoy_file = lig_file[:-4] + chr(ord('a') + j) + '.mae'
-                    found = False
-                    with open(decoy_file, "r") as f:
-                        file_name = decoy_file.split('/')[-1]
-                        for line in f:
-                            if line.strip() == file_name:
-                                found = True
-                    if not found:
-                        print(decoy_file)
-                        unfinished.append((protein, target, start))
-                        break
-            if not found:
-                break
-        break
 
     outfile = open(os.path.join(name_dir, '{}.pkl'.format(index)), 'wb')
     pickle.dump(unfinished, outfile)
-    print(unfinished)
+    # print(unfinished)
 
 
 def run_check_name_check(process, grouped_files, name_dir):
@@ -659,7 +769,9 @@ def run_check_name_check(process, grouped_files, name_dir):
     :param name_dir: (string) directiory to place unfinished protein, target, start groups
     :return:
     """
+    print(name_dir)
     if len(os.listdir(name_dir)) != len(grouped_files):
+        print(len(os.listdir(name_dir)), len(grouped_files))
         print('Not all files created')
     else:
         print('All files created')
@@ -668,13 +780,15 @@ def run_check_name_check(process, grouped_files, name_dir):
     for i in range(len(grouped_files)):
         infile = open(os.path.join(name_dir, '{}.pkl'.format(i)), 'rb')
         unfinished = pickle.load(infile)
+        if len(unfinished) != 0:
+            print(i)
         infile.close()
         errors.extend(unfinished)
 
     print('Errors', len(errors), '/', len(process))
     print(errors)
 
-def run_delete(grouped_files, run_path, raw_root):
+def run_delete(grouped_files, run_path, raw_root, decoy_type):
     """
     delete all folders in raw_root
     :param grouped_files: (list) list of protein, target, start groups
@@ -685,11 +799,51 @@ def run_delete(grouped_files, run_path, raw_root):
     for i, group in enumerate(grouped_files):
         with open(os.path.join(run_path, 'delete{}_in.sh'.format(i)), 'w') as f:
             f.write('#!/bin/bash\n')
-            for protein in group:
-                f.write('rm -r {}\n'.format(os.path.join(raw_root, protein)))
+            for protein, target, start in grouped_files[i]:
+                protein_path = os.path.join(raw_root, protein)
+                pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
+                pose_path = os.path.join(pair_path, decoy_type)
+                if os.path.exists(pose_path):
+                    f.write('rm -r {}\n'.format(pose_path))
 
         os.chdir(run_path)
         os.system('sbatch -p owners -t 02:00:00 -o delete{}.out delete{}_in.sh'.format(i, i))
+
+def run_update(docked_prot_file, raw_root, new_prot_file, max_poses, decoy_type):
+    """
+    update index by removing protein, target, start that could not create grids
+    :param docked_prot_file: (string) file listing proteins to process
+    :param raw_root: (string) directory where raw data will be placed
+    :param new_prot_file: (string) name of new prot file
+    :param max_poses: (int) maximum number of glide poses considered
+    :param max_decoys: (int) maximum number of decoys created per glide pose
+    :return:
+    """
+    if decoy_type != 'conformer_poses':
+        return
+
+    text = []
+    with open(docked_prot_file) as fp:
+        for line in tqdm(fp, desc='protein, target, start groups'):
+            if line[0] == '#': continue
+            protein, target, start = line.strip().split()
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+            pose_path = os.path.join(pair_path, decoy_type)
+
+            keep = True
+            for i in range(max_poses):
+                if not os.path.exists(os.path.join(pose_path, '{}_lig{}.mae'.format(target, i))):
+                    keep = False
+                    break
+
+            if keep:
+                text.append(line)
+
+    file = open(new_prot_file, "w")
+    file.writelines(text)
+    file.close()
 
 def main():
     parser = argparse.ArgumentParser()
@@ -706,15 +860,20 @@ def main():
     parser.add_argument('--name_dir', type=str, default=os.path.join(os.getcwd(), 'names'),
                         help='for all_name_check and group_name_check task, directiory to place unfinished protein, '
                              'target, start groups')
+    parser.add_argument('--new_prot_file', type=str, default=os.path.join(os.getcwd(), 'index.txt'),
+                        help='for update task, name of new prot file')
     parser.add_argument('--n', type=int, default=3, help='number of protein, target, start groups processed in '
                                                           'group task')
-    parser.add_argument('--max_poses', type=int, default=100, help='maximum number of glide poses considered')
-    parser.add_argument('--decoy_type', type=str, default='random', help='either cartesian or random')
+    parser.add_argument('--max_poses', type=int, default=100, help='maximum number of poses considered')
+    parser.add_argument('--decoy_type', type=str, default='ligand_poses', help='either cartesian_poses, ligand_poses, '
+                                                                               'or conformer_poses')
     parser.add_argument('--max_decoys', type=int, default=10, help='maximum number of decoys created per glide pose')
     parser.add_argument('--mean_translation', type=int, default=0, help='mean distance decoys are translated')
     parser.add_argument('--stdev_translation', type=int, default=1, help='stdev of distance decoys are translated')
     parser.add_argument('--min_angle', type=float, default=- np.pi / 6, help='minimum angle decoys are rotated')
     parser.add_argument('--max_angle', type=float, default=np.pi / 6, help='maximum angle decoys are rotated')
+    parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
+    parser.add_argument('--grid_size', type=int, default=6, help='grid size in positive and negative x, y, z directions')
     args = parser.parse_args()
 
     if not os.path.exists(args.run_path):
@@ -723,16 +882,18 @@ def main():
     if args.task == 'all':
         process = get_prots(args.docked_prot_file)
         grouped_files = group_files(args.n, process)
-        run_all(args.docked_prot_file, args.run_path, args.raw_root, args.data_root, grouped_files, args.n)
+        run_all(args.docked_prot_file, args.run_path, args.raw_root, args.data_root, grouped_files, args.n,
+                args.decoy_type)
 
     if args.task == 'group':
         process = get_prots(args.docked_prot_file)
         grouped_files = group_files(args.n, process)
         run_group(grouped_files, args.raw_root, args.data_root, args.index, args.max_poses, args.decoy_type,
-                  args.max_decoys, args.mean_translation, args.stdev_translation, args.min_angle, args.max_angle)
+                  args.max_decoys, args.mean_translation, args.stdev_translation, args.min_angle, args.max_angle,
+                  args.num_conformers, args.grid_size)
 
     if args.task == 'check':
-        run_check(args.docked_prot_file, args.raw_root, args.max_poses, args.max_decoys)
+        run_check(args.docked_prot_file, args.raw_root, args.max_poses, args.max_decoys, args.decoy_type)
 
     if args.task == 'all_dist_check':
         if not os.path.exists(args.dist_dir):
@@ -760,23 +921,26 @@ def main():
             os.mkdir(args.name_dir)
 
         process = get_prots(args.docked_prot_file)
-        grouped_files = group_files(args.N, process)
-        run_all_name_check(args.docked_prot_file, args.run_path, args.raw_root, args.data_root, grouped_files)
+        grouped_files = group_files(args.n, process)
+        run_all_name_check(args.docked_prot_file, args.run_path, args.raw_root, args.data_root, args.decoy_type, grouped_files)
 
     if args.task == 'group_name_check':
         process = get_prots(args.docked_prot_file)
         grouped_files = group_files(args.n, process)
-        run_group_name_check(grouped_files, args.raw_root, args.index, args.name_dir, args.max_poses, args.max_decoys)
+        run_group_name_check(grouped_files, args.raw_root, args.index, args.name_dir, args.decoy_type, args.max_poses, args.max_decoys)
 
     if args.task == 'check_name_check':
         process = get_prots(args.docked_prot_file)
         grouped_files = group_files(args.n, process)
-        run_check_name_check(process, grouped_files, args.dist_dir)
+        run_check_name_check(process, grouped_files, args.name_dir)
 
     if args.task == 'delete':
-        process = os.listdir(args.raw_root)
+        process = get_prots(args.docked_prot_file)
         grouped_files = group_files(args.n, process)
-        run_delete(grouped_files, args.run_path, args.raw_root)
+        run_delete(grouped_files, args.run_path, args.raw_root, args.decoy_type)
+
+    if args.task == 'update':
+        run_update(args.docked_prot_file, args.raw_root, args.new_prot_file, args.max_poses, args.decoy_type)
 
 if __name__=="__main__":
     main()

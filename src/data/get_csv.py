@@ -7,6 +7,9 @@ It can be run on sherlock using
 ml load chemistry
 ml load schrodinger
 $ $SCHRODINGER/run python3 get_csv.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d
+
+$ $SCHRODINGER/run python3 get_csv.py combine /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/combined_index_balance_clash_large.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --decoy_type conformer_poses
+
 $ $SCHRODINGER/run python3 get_csv.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --index 0
 $ $SCHRODINGER/run python3 get_csv.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d
 $ $SCHRODINGER/run python3 get_csv.py combine /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d
@@ -63,7 +66,7 @@ def get_glide_score(pdb, label_df):
     """
     return label_df[label_df['target'] == pdb]['glide_score'].iloc[0]
 
-def to_df(data, out_dir, pair):
+def to_df(data, out_dir, pair, decoy_type):
     '''
     write list of rmsds to csv file
     :param data: (list) list of rmsds
@@ -71,8 +74,9 @@ def to_df(data, out_dir, pair):
     :param pair: (string) {target}-to-{start}
     :return: all_rmsds: (list) list of all rmsds
     '''
-    df = pd.DataFrame(data, columns=['protein', 'start', 'target', 'rmsd', 'score_no_vdw', 'mcss', 'glide_score'])
-    df.to_csv(os.path.join(out_dir, pair + '.csv'))
+    df = pd.DataFrame(data, columns=['protein', 'start', 'target', 'rmsd', 'modified_rmsd', 'mcss',
+                                     'target_start_glide_score', 'target_start_score_no_vdw'])
+    df.to_csv(os.path.join(out_dir, '{}_{}.csv'.format(pair, decoy_type)))
 
 def get_rmsd_results(rmsd_file_path):
     '''
@@ -90,19 +94,20 @@ def get_rmsd_results(rmsd_file_path):
             all_rmsds.append(float(rmsd))
     return all_rmsds
 
-def run_all(docked_prot_file, run_path, raw_root, out_dir, grouped_files, n):
+def run_all(docked_prot_file, run_path, raw_root, out_dir, grouped_files, n, decoy_type):
     for i, group in enumerate(grouped_files):
         cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 get_csv.py group {} {} {} {} --n {} ' \
-              '--index {}"'
+              '--index {} --decoy_type {}"'
         os.system(cmd.format(os.path.join(run_path, 'labels{}.out'.format(i)), docked_prot_file,
-                             run_path, raw_root, out_dir, n, i))
+                             run_path, raw_root, out_dir, n, i, decoy_type))
 
-def run_group(grouped_files, raw_root, index):
+def run_group(grouped_files, raw_root, index, rmsd_cutoff, decoy_type):
     for protein, target, start in grouped_files[index]:
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
-        pose_path = os.path.join(pair_path, 'ligand_poses')
+        print(pair_path)
+        pose_path = os.path.join(pair_path, decoy_type)
         pair_data = []
 
         # get mcss
@@ -110,58 +115,61 @@ def run_group(grouped_files, raw_root, index):
             mcss = int(f.readline().strip().split(',')[4])
 
         # get rmsd
-        rmsds = pd.read_csv('{}/{}_rmsd.csv'.format(pair_path, pair))
+        rmsds = pd.read_csv('{}/{}_{}_rmsd.csv'.format(pair_path, pair, decoy_type))
 
         # get physics score
         docking_config = [{'folder': pair_path,
-                           'name': pair,
-                           'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
-                           'prepped_ligand_file': os.path.join(pair_path, '{}_merge_pv.mae.gz'.format(pair)),
-                           'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
-                           'ligand_file': os.path.join(pose_path, '{}_lig0.mae'.format(target))}]
+                                   'name': '{}_{}'.format(pair, decoy_type),
+                                   'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
+                                   'prepped_ligand_file': os.path.join(pair_path, '{}_{}_merge_pv.mae'.format(pair, decoy_type)),
+                                   'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
+                                   'ligand_file': os.path.join(pose_path, '{}_lig0.mae'.format(target))}]
         dock_set = Docking_Set()
         results = dock_set.get_docking_gscores(docking_config, mode='multi')
-        results_by_ligand = results[pair]
-        for file in results_by_ligand:
-            glide_score = results_by_ligand[file][0]['Score']
-            score = score_no_vdW(results_by_ligand[file][0])
+        for file in results['{}_{}'.format(pair, decoy_type)]:
+            target_start_results = results['{}_{}'.format(pair, decoy_type)]
+            target_start_glide_score = target_start_results[file][0]['Score']
+            target_start_score_no_vdw = score_no_vdW(target_start_results[file][0])
             rmsd = rmsds[rmsds['Title'] == file]['RMSD'].iloc[0]
-            pair_data.append([protein, start, file[:-4], rmsd, score, mcss, glide_score])
+            if rmsd > rmsd_cutoff:
+                modified_rmsd = rmsd ** 3
+            else:
+                modified_rmsd = rmsd
+            pair_data.append([protein, start, file[:-4], rmsd, modified_rmsd, mcss, target_start_glide_score,
+                              target_start_score_no_vdw])
 
-        to_df(pair_data, pair_path, pair)
+        to_df(pair_data, pair_path, pair, decoy_type)
         # os.remove(os.path.join(pair_path, '{}_mcss.csv'.format(pair)))
         # os.remove(os.path.join(pair_path, '{}_mege_pv.mae.gz'.format(pair)))
-        if os.path.exists(os.path.join(pair_path, '{}.in'.format(pair))):
-            os.remove(os.path.join(pair_path, '{}.in'.format(pair)))
-        if os.path.exists(os.path.join(pair_path, '{}.log'.format(pair))):
-            os.remove(os.path.join(pair_path, '{}.log'.format(pair)))
-        if os.path.exists(os.path.join(pair_path, '{}_pv.maegz'.format(pair))):
-            os.remove(os.path.join(pair_path, '{}_pv.maegz'.format(pair)))
+        if os.path.exists(os.path.join(pair_path, '{}_{}.in'.format(pair, decoy_type))):
+            os.remove(os.path.join(pair_path, '{}_{}.in'.format(pair, decoy_type)))
+        if os.path.exists(os.path.join(pair_path, '{}_{}.log'.format(pair, decoy_type))):
+            os.remove(os.path.join(pair_path, '{}_{}.log'.format(pair, decoy_type)))
+        if os.path.exists(os.path.join(pair_path, '{}_{}_pv.maegz'.format(pair, decoy_type))):
+            os.remove(os.path.join(pair_path, '{}_{}_pv.maegz'.format(pair, decoy_type)))
         # os.remove(os.path.join(pair_path, '{}_rmsd.csv'.format(pair)))
         # os.remove(os.path.join(pair_path, '{}.scor'.format(pair)))
         # os.remove(os.path.join(pair_path, '{}.zip'.format(pair)))
-        if os.path.exists(os.path.join(pair_path, '{}_state.json'.format(pair))):
-            os.remove(os.path.join(pair_path, '{}_state.json'.format(pair)))
+        if os.path.exists(os.path.join(pair_path, '{}_{}_state.json'.format(pair, decoy_type))):
+            os.remove(os.path.join(pair_path, '{}_{}_state.json'.format(pair, decoy_type)))
 
-def run_check(docked_prot_file, raw_root):
+def run_check(docked_prot_file, raw_root, decoy_type):
     process = []
     num_pairs = 0
     with open(docked_prot_file) as fp:
         for line in tqdm(fp, desc='going through protein, target, start groups'):
             if line[0] == '#': continue
             protein, target, start = line.strip().split()
-            if target == '4azc':
-                print(protein, target, start)
             num_pairs += 1
             protein_path = os.path.join(raw_root, protein)
             pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-            if not os.path.exists(os.path.join(pair_path, '{}-to-{}.csv'.format(target, start))):
+            if not os.path.exists(os.path.join(pair_path, '{}-to-{}_{}.csv'.format(target, start, decoy_type))):
                 process.append((protein, target, start))
 
     print('Missing', len(process), '/', num_pairs)
     print(process)
 
-def run_combine(docked_prot_file, raw_root, out_dir):
+def run_combine(docked_prot_file, raw_root, out_dir, decoy_type):
     dfs = []
     with open(docked_prot_file) as fp:
         for line in tqdm(fp, desc='going through protein, target, start groups'):
@@ -169,10 +177,10 @@ def run_combine(docked_prot_file, raw_root, out_dir):
             protein, target, start = line.strip().split()
             protein_path = os.path.join(raw_root, protein)
             pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-            dfs.append(pd.read_csv(os.path.join(pair_path, '{}-to-{}.csv'.format(target, start))))
+            dfs.append(pd.read_csv(os.path.join(pair_path, '{}-to-{}_{}.csv'.format(target, start, decoy_type))))
 
     combined_csv_data = pd.concat(dfs)
-    combined_csv_data.to_csv(os.path.join(out_dir, 'combined.csv'))
+    combined_csv_data.to_csv(os.path.join(out_dir, 'combined_{}.csv'.format(decoy_type)))
 
 def update(docked_prot_file, raw_root, new_prot_file):
     """
@@ -209,6 +217,9 @@ def main():
     parser.add_argument('--new_prot_file', type=str, default=os.path.join(os.getcwd(), 'index.txt'),
                         help='for update task, name of new prot file')
     parser.add_argument('--max_poses', type=int, default=100, help='maximum number of glide poses considered')
+    parser.add_argument('--rmsd_cutoff', type=int, default=2, help='maximum number of glide poses considered')
+    parser.add_argument('--decoy_type', type=str, default='ligand_poses', help='either cartesian_poses, ligand_poses, '
+                                                                               'or conformer_poses')
     args = parser.parse_args()
 
     if not os.path.exists(args.run_path):
@@ -217,18 +228,19 @@ def main():
     if args.task == 'all':
         process = get_prots(args.docked_prot_file)
         grouped_files = group_files(args.n, process)
-        run_all(args.docked_prot_file, args.run_path, args.raw_root, args.out_dir, grouped_files, args.n)
+        run_all(args.docked_prot_file, args.run_path, args.raw_root, args.out_dir, grouped_files, args.n,
+                args.decoy_type)
 
     if args.task == 'group':
         process = get_prots(args.docked_prot_file)
         grouped_files = group_files(args.n, process)
-        run_group(grouped_files, args.raw_root, args.index)
+        run_group(grouped_files, args.raw_root, args.index, args.rmsd_cutoff, args.decoy_type)
 
     if args.task == 'check':
-        run_check(args.docked_prot_file, args.raw_root)
+        run_check(args.docked_prot_file, args.raw_root, args.decoy_type)
 
     if args.task == 'combine':
-        run_combine(args.docked_prot_file, args.raw_root, args.out_dir)
+        run_combine(args.docked_prot_file, args.raw_root, args.out_dir, args.decoy_type)
 
     if args.task == 'update':
         update(args.docked_prot_file, args.raw_root, args.new_prot_file)
@@ -240,7 +252,7 @@ def main():
                 protein, target, start = line.strip().split()
                 protein_path = os.path.join(args.raw_root, protein)
                 pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-                file = os.path.join(pair_path, '{}-to-{}.csv'.format(target, start))
+                file = os.path.join(pair_path, '{}-to-{}_{}.csv'.format(target, start, args.decoy_type))
                 if os.path.exists(file):
                     os.remove(file)
 

@@ -1,0 +1,499 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="7b169dd2-ff34-4a1f-a094-56b3fca91c40" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/reports/figures/all_baseline_clustered.png" beforeDir="false" afterPath="$PROJECT_DIR$/reports/figures/all_baseline_clustered.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/figures/glide_vs_gnn_baseline_clustered.png" beforeDir="false" afterPath="$PROJECT_DIR$/reports/figures/glide_vs_gnn_baseline_clustered.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/figures/glide_vs_gnn_gnn_score_clustered.png" beforeDir="false" afterPath="$PROJECT_DIR$/reports/figures/glide_vs_gnn_gnn_score_clustered.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/figures/glide_vs_gnn_hybrid_clustered.png" beforeDir="false" afterPath="$PROJECT_DIR$/reports/figures/glide_vs_gnn_hybrid_clustered.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/figures/glide_vs_gnn_hybrid_score_feat_clustered.png" beforeDir="false" afterPath="$PROJECT_DIR$/reports/figures/glide_vs_gnn_hybrid_score_feat_clustered.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/figures/top_100_baseline_clustered.png" beforeDir="false" afterPath="$PROJECT_DIR$/reports/figures/top_100_baseline_clustered.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/figures/top_100_gnn_score_clustered.png" beforeDir="false" afterPath="$PROJECT_DIR$/reports/figures/top_100_gnn_score_clustered.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/figures/top_100_hybrid_clustered.png" beforeDir="false" afterPath="$PROJECT_DIR$/reports/figures/top_100_hybrid_clustered.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/figures/top_100_hybrid_score_feat_clustered.png" beforeDir="false" afterPath="$PROJECT_DIR$/reports/figures/top_100_hybrid_score_feat_clustered.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/figures/top_1_baseline_clustered.png" beforeDir="false" afterPath="$PROJECT_DIR$/reports/figures/top_1_baseline_clustered.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/figures/top_1_gnn_score_clustered.png" beforeDir="false" afterPath="$PROJECT_DIR$/reports/figures/top_1_gnn_score_clustered.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/figures/top_1_hybrid_clustered.png" beforeDir="false" afterPath="$PROJECT_DIR$/reports/figures/top_1_hybrid_clustered.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/data/decoy.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/data/decoy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/data/grid.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/data/grid.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/data/score_and_rmsd.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/data/score_and_rmsd.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/graph.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/models/graph.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/pdbbind_dataloader.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/models/pdbbind_dataloader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/split_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/models/split_file.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/train_pdbbind_no_score_layer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/train_pdbbind_score_layer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/visualization/cum_freq.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/visualization/cum_freq.py" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/data/decoy.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="215">
+              <caret line="176" selection-start-line="176" selection-end-line="189" selection-end-column="18" />
+              <folding>
+                <element signature="e#1647#1662#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/data/grid.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="463">
+              <caret line="147" column="30" lean-forward="true" selection-start-line="138" selection-start-column="4" selection-end-line="147" selection-end-column="30" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/models/pdbbind_dataloader.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="987">
+              <caret line="300" column="63" selection-start-line="300" selection-start-column="63" selection-end-line="300" selection-end-column="63" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/data/data_converter.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="197">
+              <caret line="106" column="65" selection-start-line="106" selection-start-column="52" selection-end-line="106" selection-end-column="65" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/models/train_pdbbind.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="765">
+              <caret line="78" column="53" selection-start-line="78" selection-start-column="53" selection-end-line="78" selection-end-column="53" />
+              <folding>
+                <element signature="e#766#775#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>test_mode</find>
+      <find>test</find>
+      <find>get_label</find>
+      <find>rdkit</find>
+      <find>split_pr</find>
+      <find>vdw</find>
+      <find>clash_prot_file</find>
+      <find>processed_clustered</find>
+      <find>transla</find>
+      <find>steric_clash</find>
+      <find>transform</find>
+      <find>save</find>
+      <find>get_prots</find>
+      <find>pickle</find>
+      <find>print</find>
+      <find>processed</find>
+      <find>atom</find>
+      <find>train</find>
+    </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/src/examples/pytorch_geometric/train_pdbbind.py" />
+        <option value="$PROJECT_DIR$/src/examples/pytorch_geometric/cum_freq.py" />
+        <option value="$PROJECT_DIR$/src/data_analysis/decoy_analysis.py" />
+        <option value="$PROJECT_DIR$/src/examples/pytorch_geometric/pdbbind_dataloader.py" />
+        <option value="$PROJECT_DIR$/src/data/data_converter.py" />
+        <option value="$PROJECT_DIR$/src/data/process_pdbbind.py" />
+        <option value="$PROJECT_DIR$/src/util/splits.py" />
+        <option value="$PROJECT_DIR$/src/util/sequence.py" />
+        <option value="$PROJECT_DIR$/src/util/graph.py" />
+        <option value="$PROJECT_DIR$/src/data_analysis/clash_analysis.py" />
+        <option value="$PROJECT_DIR$/src/visualization/cum_freq.py" />
+        <option value="$PROJECT_DIR$/src/models/split_file.py" />
+        <option value="$PROJECT_DIR$/src/models/train_pdbbind_baseline.py" />
+        <option value="$PROJECT_DIR$/src/data/conformer_decoys.py" />
+        <option value="$PROJECT_DIR$/src/data_analysis/conformer_decoys.py" />
+        <option value="$PROJECT_DIR$/src/models/train_pdbbind_score_layer.py" />
+        <option value="$PROJECT_DIR$/src/models/train_pdbbind_no_score_layer.py" />
+        <option value="$PROJECT_DIR$/src/models/pdbbind_dataloader.py" />
+        <option value="$PROJECT_DIR$/src/models/train_pdbbind.py" />
+        <option value="$PROJECT_DIR$/src/data/decoy.py" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="x" value="2" />
+    <option name="y" value="23" />
+    <option name="width" value="1347" />
+    <option name="height" value="934" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="lig_clash_score" type="b2602c69:ProjectViewProjectNode" />
+              <item name="lig_clash_score" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="7b169dd2-ff34-4a1f-a094-56b3fca91c40" name="Default Changelist" comment="" />
+      <created>1596741608034</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1596741608034</updated>
+    </task>
+    <task id="LOCAL-00001" summary="condensed code">
+      <created>1599851473551</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1599851473551</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
+    <servers />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="2" y="23" width="1347" height="934" extended-state="0" />
+    <layout>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.20739065" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.3295063" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Version Control" order="7" weight="0.4852768" />
+      <window_info anchor="bottom" id="Terminal" order="8" />
+      <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
+      <window_info anchor="bottom" id="Python Console" order="10" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+    </layout>
+    <layout-to-restore>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.25322282" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Version Control" order="7" weight="0.4852768" />
+      <window_info anchor="bottom" id="Terminal" order="8" />
+      <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
+      <window_info anchor="bottom" id="Python Console" order="10" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+    </layout-to-restore>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="RECENTLY_FILTERED_USER_GROUPS">
+                <collection />
+              </option>
+              <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
+                <collection />
+              </option>
+              <option name="COLUMN_ORDER">
+                <list>
+                  <option value="0" />
+                  <option value="1" />
+                  <option value="2" />
+                  <option value="3" />
+                </list>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list />
+          </value>
+        </entry>
+        <entry key="User">
+          <value>
+            <list />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="fixed decoy creator, cleaned and commented code" />
+    <MESSAGE value="condensed code" />
+    <option name="LAST_COMMIT_MESSAGE" value="condensed code" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/data/decoy_creator.py" />
+    <entry file="file://$PROJECT_DIR$/src/examples/pytorch_geometric/cum_freq.py" />
+    <entry file="file://$PROJECT_DIR$/src/examples/pytorch_geometric/train_pdbbind.py" />
+    <entry file="file://$PROJECT_DIR$/src/atom3d/protein_ligand/get_labels.py" />
+    <entry file="file://$PROJECT_DIR$/src/atom3d/protein_ligand/process_pdbbind.py" />
+    <entry file="file://$PROJECT_DIR$/src/examples/pytorch_geometric/pdbbind_dataloader.py" />
+    <entry file="file://$PROJECT_DIR$/src/atom3d/util/datatypes.py" />
+    <entry file="file://$PROJECT_DIR$/src/data/lig_extractor.py" />
+    <entry file="file://$PROJECT_DIR$/src/data_analysis/decoy_analysis.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="345">
+          <caret line="31" lean-forward="true" selection-start-line="31" selection-end-line="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/models/splits.py" />
+    <entry file="file://$PROJECT_DIR$/src/util/datatypes.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="15">
+          <caret line="1" lean-forward="true" selection-start-line="1" selection-end-line="1" />
+          <folding>
+            <element signature="e#57#82#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/util/file.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="15">
+          <caret line="1" lean-forward="true" selection-start-line="1" selection-end-line="1" />
+          <folding>
+            <element signature="e#30#39#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/util/log.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <folding>
+            <element signature="e#0#14#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/mcss_similarity.py" />
+    <entry file="file://$PROJECT_DIR$/src/data/decoy_rmsd.py" />
+    <entry file="file://$PROJECT_DIR$/src/data/process_pdbbind.py" />
+    <entry file="file://$PROJECT_DIR$/src/data/get_labels.py" />
+    <entry file="file://$PROJECT_DIR$/src/util/splits.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="7" selection-start-line="7" selection-end-line="7" selection-end-column="10" />
+          <folding>
+            <element signature="e#77#88#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/util/graph.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="60">
+          <caret line="4" column="10" selection-start-line="4" selection-start-column="10" selection-end-line="4" selection-end-column="10" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/util/sequence.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="195">
+          <caret line="13" selection-start-line="13" selection-end-line="13" selection-end-column="10" />
+          <folding>
+            <element signature="e#46#55#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor />
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/models/1gpu.sbatch">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/get_csv.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="266">
+          <caret line="73" column="88" selection-start-line="73" selection-start-column="85" selection-end-line="73" selection-end-column="88" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/visualization/cum_freq.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret lean-forward="true" selection-end-line="328" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/models/split_file.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="7" column="56" selection-start-line="7" selection-start-column="56" selection-end-line="7" selection-end-column="56" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/conformer_decoys.py" />
+    <entry file="file://$PROJECT_DIR$/src/data_analysis/clash_analysis.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3195">
+          <caret line="213" column="28" selection-start-line="213" selection-start-column="4" selection-end-line="213" selection-end-column="28" />
+          <folding>
+            <element signature="e#3862#3877#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data_analysis/add_basic_files.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="22">
+          <caret line="8" selection-start-line="8" selection-end-line="8" selection-end-column="73" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data_analysis/conformer_decoys.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1710">
+          <caret line="120" column="64" selection-start-line="120" selection-start-column="64" selection-end-line="120" selection-end-column="64" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/models/graph.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3534">
+          <caret line="5" column="380" lean-forward="true" selection-start-line="5" selection-start-column="2" selection-end-line="5" selection-end-column="380" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/cluster.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/score_and_rmsd.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/translation_stats.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/models/train_pdbbind_score_layer.py" />
+    <entry file="file://$PROJECT_DIR$/src/models/train_pdbbind_no_score_layer.py" />
+    <entry file="file://$PROJECT_DIR$/src/data_analysis/center_of_mass.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="600">
+          <caret line="44" column="24" lean-forward="true" selection-start-line="44" selection-start-column="24" selection-end-line="44" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/decoy.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="215">
+          <caret line="176" selection-start-line="176" selection-end-line="189" selection-end-column="18" />
+          <folding>
+            <element signature="e#1647#1662#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/grid.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="463">
+          <caret line="147" column="30" lean-forward="true" selection-start-line="138" selection-start-column="4" selection-end-line="147" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/data_converter.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="197">
+          <caret line="106" column="65" selection-start-line="106" selection-start-column="52" selection-end-line="106" selection-end-column="65" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/models/train_pdbbind.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="765">
+          <caret line="78" column="53" selection-start-line="78" selection-start-column="53" selection-end-line="78" selection-end-column="53" />
+          <folding>
+            <element signature="e#766#775#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/models/pdbbind_dataloader.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="987">
+          <caret line="300" column="63" selection-start-line="300" selection-start-column="63" selection-end-line="300" selection-end-column="63" />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

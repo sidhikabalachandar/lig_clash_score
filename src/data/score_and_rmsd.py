@@ -3,8 +3,11 @@ The purpose of this code is to get the physics scores and the rmsds
 
 It can be run on sherlock using
 $ $SCHRODINGER/run python3 score_and_rmsd.py run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+
+$ $SCHRODINGER/run python3 score_and_rmsd.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/combined_index_balance_clash_large.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw  --decoy_type conformer_poses
+
 $ $SCHRODINGER/run python3 score_and_rmsd.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
-$ $SCHRODINGER/run python3 score_and_rmsd.py delete_json /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 score_and_rmsd.py delete /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 """
 
 import argparse
@@ -23,11 +26,10 @@ def get_prots(docked_prot_file):
     """
     process = []
     with open(docked_prot_file) as fp:
-        for line in fp:
+        for line in tqdm(fp, desc='protein, target, start groups'):
             if line[0] == '#': continue
             protein, target, start = line.strip().split()
             process.append((protein, target, start))
-
     return process
 
 def group_files(n, process):
@@ -44,7 +46,7 @@ def group_files(n, process):
 
     return grouped_files
 
-def run(process, run_path, raw_root, n, max_num_concurrent_jobs):
+def run(process, run_path, raw_root, decoy_type, n, max_num_concurrent_jobs):
     """
     get scores and rmsds
     :param process: (list) list of all protein, target, start
@@ -54,31 +56,33 @@ def run(process, run_path, raw_root, n, max_num_concurrent_jobs):
     :return:
     """
     docking_config = []
+    print(len(process))
     for protein, target, start in process:
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
-        pose_path = os.path.join(pair_path, 'ligand_poses')
-        docking_config.append({'folder': pair_path,
-                               'name': pair,
+        pose_path = os.path.join(pair_path, decoy_type)
+        if not os.path.exists(os.path.join(pair_path, '{}_{}.scor'.format(pair, decoy_type))):
+            docking_config.append({'folder': pair_path,
+                               'name': '{}_{}'.format(pair, decoy_type),
                                'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
-                               'prepped_ligand_file': os.path.join(pair_path, '{}_merge_pv.mae'.format(pair)),
+                               'prepped_ligand_file': os.path.join(pair_path, '{}_{}_merge_pv.mae'.format(pair,
+                                                                                                          decoy_type)),
                                'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
                                'ligand_file': os.path.join(pose_path, '{}_lig0.mae'.format(target))})
         if len(docking_config) == max_num_concurrent_jobs:
             break
-
     print(len(docking_config))
 
     run_config = {'run_folder': run_path,
                   'group_size': n,
-                  'partition': 'owners',
+                  'partition': 'rondror',
                   'dry_run': False}
 
     dock_set = Docking_Set()
     dock_set.run_docking_rmsd_delete(docking_config, run_config)
 
-def check(docked_prot_file, raw_root):
+def check(docked_prot_file, raw_root, decoy_type):
     """
     check if scores and rmsds were calculated
     :param docked_prot_file: (string) file listing proteins to process
@@ -86,7 +90,7 @@ def check(docked_prot_file, raw_root):
     :return:
     """
     counter = 0
-    unfinished = []
+    missing = []
     incomplete = []
     with open(docked_prot_file) as fp:
         for line in tqdm(fp, desc='protein, target, start groups'):
@@ -97,29 +101,35 @@ def check(docked_prot_file, raw_root):
             docking_config = []
             protein_path = os.path.join(raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
-            pose_path = os.path.join(pair_path, 'ligand_poses')
+            pose_path = os.path.join(pair_path, decoy_type)
             docking_config.append({'folder': pair_path,
-                                   'name': pair,
+                                   'name': '{}_{}'.format(pair, decoy_type),
                                    'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
-                                   'prepped_ligand_file': os.path.join(pair_path, '{}_merge_pv.mae.gz'.format(pair)),
+                                   'prepped_ligand_file': os.path.join(pair_path, '{}_{}_merge_pv.mae'.format(pair,
+                                                                                                              decoy_type)),
                                    'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
                                    'ligand_file': os.path.join(pose_path, '{}_lig0.mae'.format(target))})
 
             dock_set = Docking_Set()
-            if not os.path.exists(os.path.join(pair_path, '{}.scor'.format(pair))):
-                unfinished.append((protein, target, start))
+            if not os.path.exists(os.path.join(pair_path, '{}_{}.scor'.format(pair, decoy_type))):
+                print(os.path.join(pair_path, '{}_{}.scor'.format(pair, decoy_type)))
+                missing.append((protein, target, start))
+                continue
             else:
-                if not os.path.exists(os.path.join(pair_path, '{}_rmsd.csv'.format(pair))):
-                    print(os.path.join(pair_path, '{}_rmsd.csv'.format(pair)))
-                    unfinished.append((protein, target, start))
-                results = dock_set.get_docking_gscores(docking_config, mode='multi')
-                results_by_ligand = results[pair]
-                if len(results_by_ligand.keys()) != len(os.listdir(pose_path)):
-                    print(len(results_by_ligand.keys()), len(os.listdir(pose_path)))
+                if not os.path.exists(os.path.join(pair_path, '{}_{}_rmsd.csv'.format(pair, decoy_type))):
+                    print(os.path.join(pair_path, '{}_{}_rmsd.csv'.format(pair, decoy_type)))
                     incomplete.append((protein, target, start))
+                    continue
+                results = dock_set.get_docking_gscores(docking_config, mode='multi')
+                results_by_ligand = results['{}_{}'.format(pair, decoy_type)]
+                if len(results_by_ligand.keys()) != 100:
+                    # print(results_by_ligand.keys())
+                    print(len(results_by_ligand.keys()), 100)
+                    incomplete.append((protein, target, start))
+                    continue
 
-        print('Missing', len(unfinished), '/', counter)
-        print('Incomplete', len(incomplete), '/', counter - len(unfinished))
+        print('Missing', len(missing), '/', counter)
+        print('Incomplete', len(incomplete), '/', counter - len(missing))
         print(incomplete)
 
 def main():
@@ -133,38 +143,60 @@ def main():
                                                          'group task')
     parser.add_argument('--max_num_concurrent_jobs', type=int, default=200, help='maximum number of concurrent jobs '
                                                                                  'that can be run on slurm at one time')
+    parser.add_argument('--decoy_type', type=str, default='ligand_poses', help='either cartesian_poses, ligand_poses, '
+                                                                               'or conformer_poses')
     args = parser.parse_args()
 
     if not os.path.exists(args.run_path):
         os.mkdir(args.run_path)
 
     if args.task == 'run':
-        process = []
-        with open(args.docked_prot_file) as fp:
-            for line in tqdm(fp, desc='protein, target, start groups'):
-                if line[0] == '#': continue
-                protein, target, start = line.strip().split()
-                pair = '{}-to-{}'.format(target, start)
-                protein_path = os.path.join(args.raw_root, protein)
-                pair_path = os.path.join(protein_path, pair)
-
-                if not os.path.exists(os.path.join(pair_path, '{}.scor'.format(pair))):
-                    process.append((protein, target, start))
-        run(process, args.run_path, args.raw_root, args.n)
+        process = get_prots(args.docked_prot_file)
+        run(process, args.run_path, args.raw_root, args.decoy_type, args.n, args.max_num_concurrent_jobs)
 
     if args.task == 'check':
-        check(args.docked_prot_file, args.raw_root)
+        check(args.docked_prot_file, args.raw_root, args.decoy_type)
 
-    if args.task == 'delete_json':
+    if args.task == 'delete':
         with open(args.docked_prot_file) as fp:
             for line in tqdm(fp, desc='protein, target, start groups'):
                 if line[0] == '#': continue
                 protein, target, start = line.strip().split()
                 pair = '{}-to-{}'.format(target, start)
+                target_pair = '{}-to-{}'.format(target, target)
                 protein_path = os.path.join(args.raw_root, protein)
                 pair_path = os.path.join(protein_path, pair)
-                if os.path.exists(os.path.join(pair_path, '{}_state.json'.format(pair))):
-                    os.remove(os.path.join(pair_path, '{}_state.json'.format(pair)))
+                # if os.path.exists(os.path.join(pair_path, '{}_conformer_poses.in'.format(pair))):
+                #     os.remove(os.path.join(pair_path, '{}_conformer_poses.in'.format(pair)))
+                # if os.path.exists(os.path.join(pair_path, '{}_conformer_poses.log'.format(pair))):
+                #     os.remove(os.path.join(pair_path, '{}_conformer_poses.log'.format(pair)))
+                # if os.path.exists(os.path.join(pair_path, '{}_conformer_poses_rmsd.csv'.format(pair))):
+                #     os.remove(os.path.join(pair_path, '{}_conformer_poses_rmsd.csv'.format(pair)))
+                # if os.path.exists(os.path.join(pair_path, '{}_conformer_poses.scor'.format(pair))):
+                #     os.remove(os.path.join(pair_path, '{}_conformer_poses.scor'.format(pair)))
+
+                if os.path.exists(os.path.join(pair_path, '{}_conformer_poses.in'.format(target_pair))):
+                    os.remove(os.path.join(pair_path, '{}_conformer_poses.in'.format(target_pair)))
+                if os.path.exists(os.path.join(pair_path, '{}_conformer_poses.log'.format(target_pair))):
+                    os.remove(os.path.join(pair_path, '{}_conformer_poses.log'.format(target_pair)))
+                if os.path.exists(os.path.join(pair_path, '{}_conformer_poses_rmsd.csv'.format(target_pair))):
+                    os.remove(os.path.join(pair_path, '{}_conformer_poses_rmsd.csv'.format(target_pair)))
+                if os.path.exists(os.path.join(pair_path, '{}_conformer_poses.scor'.format(target_pair))):
+                    os.remove(os.path.join(pair_path, '{}_conformer_poses.scor'.format(target_pair)))
+                if os.path.exists(os.path.join(pair_path, '{}_conformer_poses_merge_pv.mae'.format(target_pair))):
+                    os.remove(os.path.join(pair_path, '{}_conformer_poses_merge_pv.mae'.format(target_pair)))
+                # if os.path.exists(os.path.join(pair_path, '{}_conformer_poses_merge_pv.mae.gz'.format(pair))):
+                #     os.remove(os.path.join(pair_path, '{}_conformer_poses_merge_pv.mae.gz'.format(pair)))
+                # if os.path.exists(os.path.join(pair_path, '{}_conformer_poses_pv.maegz'.format(pair))):
+                #     os.remove(os.path.join(pair_path, '{}_conformer_poses_pv.maegz'.format(pair)))
+                # if os.path.exists(os.path.join(pair_path, '{}_conformer_poses_pv.maegz'.format(target_pair))):
+                #     os.remove(os.path.join(pair_path, '{}_conformer_poses_pv.maegz'.format(target_pair)))
+                # if os.path.exists(os.path.join(pair_path, 'aligned_conformers.mae')):
+                #     os.remove(os.path.join(pair_path, 'aligned_conformers.mae'))
+                # if os.path.exists(os.path.join(pair_path, '{}_lig.log'.format(start))):
+                #     os.remove(os.path.join(pair_path, '{}_lig.log'.format(start)))
+                # if os.path.exists(os.path.join(pair_path, '{}_lig-out.maegz'.format(start))):
+                #     os.remove(os.path.join(pair_path, '{}_lig-out.maegz'.format(start)))
 
 if __name__=="__main__":
     main()

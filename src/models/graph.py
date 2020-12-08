@@ -3,9 +3,12 @@ The purpose of this code is to create the pytorch-geometric graphs, create the D
 train/val/test data
 
 It can be run on sherlock using
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python graph.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --score_feature
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python graph.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --index 0 --score_feature
-$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python graph.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --score_feature
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python graph.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --no_protein
+
+/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python graph.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/combined_index_balance_clash_large.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined_conformer_poses.csv --decoy_type conformer_poses --score_feature --index 0
+
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python graph.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --index 0 --no_protein
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python graph.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --no_protein
 $ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python graph.py update /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv --new_prot_file /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random2.txt
 $ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python graph.py remove /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/models/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/combined.csv
 """
@@ -83,7 +86,7 @@ def get_score_no_vdw(pdb, label_df):
     :param label_df: (df) combined rmsd df
     :return: (float) rmsd value
     """
-    return label_df[label_df['target'] == pdb]['score_no_vdw'].iloc[0]
+    return label_df[label_df['target'] == pdb]['target_start_score_no_vdw'].iloc[0]
 
 def get_pocket_res(protein, ligand, dist):
     """
@@ -137,7 +140,8 @@ def get_ligand(ligfile):
     lig = Chem.RemoveHs(lig)
     return lig
 
-def create_graphs(target, start, pair_path, dist, label_file, include_score, lower_score_bound, upper_score_bound):
+def create_graphs(target, start, pair_path, decoy_type, dist, label_file, include_score, lower_score_bound, upper_score_bound,
+                  include_protein):
     """
     Creates pytorch-geometric graph objects for target, start pair
     :param target: (string) name of target ligand
@@ -148,7 +152,7 @@ def create_graphs(target, start, pair_path, dist, label_file, include_score, low
     data = {}
     error_count = 0
     io = Bio.PDB.MMCIFIO()
-    pose_path = os.path.join(pair_path, 'ligand_poses')
+    pose_path = os.path.join(pair_path, decoy_type)
     receptor_file = os.path.join(pair_path, '{}_prot.pdb'.format(start))
 
     label_df = pd.read_csv(label_file)
@@ -163,64 +167,80 @@ def create_graphs(target, start, pair_path, dist, label_file, include_score, low
             pocket = get_pocket_res(protein, ligand, dist)
 
             if len(pocket) != 0:
-                io.save(os.path.join(pair_path, f"{target}_pocket{index}.mmcif"), PocketSelect(pocket))
-                score = get_score_no_vdw(pdb_code, label_df)
-                if score < lower_score_bound:
-                    score = lower_score_bound
-                if score > upper_score_bound:
-                    score = upper_score_bound
-                prot_graph = graph.prot_df_to_graph(dt.bp_to_df(dt.read_any(
-                    os.path.join(pair_path, f"{target}_pocket{index}.mmcif"), name=pdb_code)),
-                    get_mcss(pdb_code, label_df), score, include_score=include_score)
-                mol_graph = graph.mol_to_graph(dt.read_sdf_to_mol(os.path.join(pose_path, file))[0])
-                node_feats, edge_index, edge_feats, pos = graph.combine_graphs(prot_graph, mol_graph, edges_between=True)
-                data[pdb_code] = (node_feats, edge_index, edge_feats, pos)
-                os.remove(os.path.join(pair_path, f"{target}_pocket{index}.mmcif"))
+                if include_protein:
+                    io.save(os.path.join(pair_path, f"{target}_pocket{index}.mmcif"), PocketSelect(pocket))
+                    score = get_score_no_vdw(pdb_code, label_df)
+                    if score < lower_score_bound:
+                        score = lower_score_bound
+                    if score > upper_score_bound:
+                        score = upper_score_bound
+                    prot_graph = graph.prot_df_to_graph(dt.bp_to_df(dt.read_any(
+                        os.path.join(pair_path, f"{target}_pocket{index}.mmcif"), name=pdb_code)),
+                        get_mcss(pdb_code, label_df), score, include_score=include_score)
+                    mol_graph = graph.mol_to_graph(dt.read_sdf_to_mol(os.path.join(pose_path, file))[0])
+                    node_feats, edge_index, edge_feats, pos = graph.combine_graphs(prot_graph, mol_graph, edges_between=True)
+                    data[pdb_code] = (node_feats, edge_index, edge_feats, pos)
+                    os.remove(os.path.join(pair_path, f"{target}_pocket{index}.mmcif"))
+                else:
+                    mol_graph = graph.mol_to_graph(dt.read_sdf_to_mol(os.path.join(pose_path, file))[0])
+                    node_feats, edge_index, edge_feats, pos = mol_graph
+                    data[pdb_code] = (node_feats, edge_index, edge_feats, pos)
+
             else:
                 error_count += 1
 
     print(len(data))
     print(error_count)
-    if not include_score:
-        outfile = open(os.path.join(pair_path, '{}-to-{}_graph.pkl'.format(target, start)), 'wb')
+    if include_score:
+        outfile = open(os.path.join(pair_path, '{}-to-{}_{}_graph_with_score.pkl'.format(target, start, decoy_type)), 'wb')
+    elif not include_protein:
+        outfile = open(os.path.join(pair_path, '{}-to-{}_{}_graph_without_protein.pkl'.format(target, start, decoy_type)), 'wb')
     else:
-        outfile = open(os.path.join(pair_path, '{}-to-{}_graph_with_score.pkl'.format(target, start)), 'wb')
+        outfile = open(os.path.join(pair_path, '{}-to-{}_{}_graph.pkl'.format(target, start, decoy_type)), 'wb')
+
     pickle.dump(data, outfile)
 
-def run_all(docked_prot_file, run_path, root, label_file, grouped_files, n, include_score):
+def run_all(docked_prot_file, run_path, root, label_file, decoy_type, grouped_files, n, include_score, include_protein):
     for i, group in enumerate(grouped_files):
+        cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="' \
+              '/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python graph.py group ' \
+              '{} {} {} {} --n {} --index {} --decoy_type {}'
         if include_score:
-            cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="' \
-                  '/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python graph.py group ' \
-                  '{} {} {} {} --score_feature --n {} --index {}"'
-            os.system(cmd.format(os.path.join(run_path, 'graph{}.out'.format(i)), docked_prot_file, run_path, root,
-                                 label_file, n, i))
-        else:
-            cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="' \
-                  '/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python graph.py group ' \
-                  '{} {} {} {} --n {} --index {}"'
-            os.system(cmd.format(os.path.join(run_path, 'graph{}.out'.format(i)), docked_prot_file, run_path, root,
-                                 label_file, n, i))
+            cmd += ' --score_feature'
+        if not include_protein:
+            cmd += ' --no_protein'
 
-def run_group(grouped_files, raw_root, label_file, index, dist, include_score, lower_score_bound, upper_score_bound):
+        cmd += '"'
+        os.system(cmd.format(os.path.join(run_path, 'graph{}.out'.format(i)), docked_prot_file, run_path, root,
+                                 label_file, n, i, decoy_type))
+
+def run_group(grouped_files, raw_root, label_file, decoy_type, index, dist, include_score, lower_score_bound, upper_score_bound,
+              include_protein):
     for protein, target, start in grouped_files[index]:
         protein_path = os.path.join(raw_root, protein)
         pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-        create_graphs(target, start, pair_path, dist, label_file, include_score, lower_score_bound, upper_score_bound)
+        print(pair_path)
+        create_graphs(target, start, pair_path, decoy_type, dist, label_file, include_score, lower_score_bound,
+                      upper_score_bound, include_protein)
 
-def run_check(raw_root, docked_prot_file, include_score):
+def run_check(raw_root, docked_prot_file, decoy_type, include_score, include_protein):
     process = []
     num_pairs = 0
     with open(docked_prot_file) as fp:
         for line in tqdm(fp, desc='going through protein, target, start groups'):
             if line[0] == '#': continue
             protein, target, start = line.strip().split()
+            pair = '{}-to-{}'.format(target, start)
             num_pairs += 1
             protein_path = os.path.join(raw_root, protein)
             pair_path = os.path.join(protein_path, '{}-to-{}'.format(target, start))
-            if not include_score and not os.path.exists(os.path.join(pair_path, '{}-to-{}_graph.pkl'.format(target, start))):
+            if include_score and not os.path.exists(
+                    os.path.join(pair_path, '{}_{}_graph_with_score.pkl'.format(pair, decoy_type))):
                 process.append((protein, target, start))
-            if include_score and not os.path.exists(os.path.join(pair_path, '{}-to-{}_graph_with_score.pkl'.format(target, start))):
+            elif not include_protein and not os.path.exists(
+                    os.path.join(pair_path, '{}_{}_graph_without_protein.pkl'.format(pair, decoy_type))):
+                process.append((protein, target, start))
+            elif not os.path.exists(os.path.join(pair_path, '{}_{}_graph.pkl'.format(pair, decoy_type))):
                 process.append((protein, target, start))
 
     print('Missing', len(process), '/', num_pairs)
@@ -259,6 +279,8 @@ def main():
     parser.add_argument('--index_file', type=str, default=os.path.join(os.getcwd(), 'index_groups.pkl'),
                         help='for combine task, file with protein, target, start, and starting index information for '
                              'each group')
+    parser.add_argument('--decoy_type', type=str, default='ligand_poses', help='either cartesian_poses, ligand_poses, '
+                                                                               'or conformer_poses')
     parser.add_argument('--dist', type=float, default=6.0, help='distance cutoff for defining pocket')
     parser.add_argument('--cutoff', type=float, default=0.1, help='proportion of pdbbind data used')
     parser.add_argument('--lower_score_bound', type=float, default=-20, help='any physics score below this value, will '
@@ -272,6 +294,9 @@ def main():
     parser.add_argument('--score_feature', dest='include_score', action='store_true')
     parser.add_argument('--no_score_feature', dest='include_score', action='store_false')
     parser.set_defaults(include_score=False)
+    parser.add_argument('--protein', dest='include_protein', action='store_true')
+    parser.add_argument('--no_protein', dest='include_protein', action='store_false')
+    parser.set_defaults(include_protein=True)
     args = parser.parse_args()
 
     raw_root = os.path.join(args.root, 'raw')
@@ -292,21 +317,19 @@ def main():
         os.mkdir(args.run_path)
 
     if args.task == 'all':
-        # process = get_prots(args.docked_prot_file)
-        process = [('P00797', '3own', '3d91'), ('P00798', '1bxo', '2web'), ('P00798', '1ppl', '2web'), ('P00798', '2wec', '1ppl'), ('P00800', '1qf0', '2tmn'), ('P03369', '1aid', '1z1h'), ('P03369', '1b6l', '1aid'), ('P03369', '1kzk', '3aid'), ('P03369', '3aid', '1aid'), ('P03951', '4crc', '4ty6'), ('P03951', '4ty7', '4cra'), ('P03956', '1cgl', '966c'), ('P04035', '3ccz', '3cd7'), ('P04035', '3cd7', '3cd0'), ('P04035', '3cdb', '3cda'), ('P04058', '1e66', '1h23'), ('P04058', '1h22', '1gpk'), ('P04058', '5bwc', '5nap'), ('P06202', '1b1h', '1b3h'), ('P06202', '1b2h', '1b3g'), ('P06202', '1b3g', '1b3l'), ('P06202', '1b40', '1b2h'), ('P09958', '4omc', '4ryd'), ('P09958', '6eqw', '6eqv'), ('Q8WQX9', '5l8c', '5g57'), ('Q8WSF8', '2xys', '2x00'), ('Q8WXF7', '4ido', '4idn'), ('Q90EB9', '1izh', '1izi'), ('Q9UM73', '4clj', '4cmo'), ('Q9WYE2', '2zx8', '2zx6')]
+        process = get_prots(args.docked_prot_file)
         grouped_files = group_files(args.n, process)
-        run_all(args.docked_prot_file, args.run_path, args.root, args.label_file, grouped_files, args.n,
-                args.include_score)
+        run_all(args.docked_prot_file, args.run_path, args.root, args.label_file, args.decoy_type, grouped_files,
+                args.n, args.include_score, args.include_protein)
 
     if args.task == 'group':
-        # process = get_prots(args.docked_prot_file)
-        process = [('P00797', '3own', '3d91'), ('P00798', '1bxo', '2web'), ('P00798', '1ppl', '2web'), ('P00798', '2wec', '1ppl'), ('P00800', '1qf0', '2tmn'), ('P03369', '1aid', '1z1h'), ('P03369', '1b6l', '1aid'), ('P03369', '1kzk', '3aid'), ('P03369', '3aid', '1aid'), ('P03951', '4crc', '4ty6'), ('P03951', '4ty7', '4cra'), ('P03956', '1cgl', '966c'), ('P04035', '3ccz', '3cd7'), ('P04035', '3cd7', '3cd0'), ('P04035', '3cdb', '3cda'), ('P04058', '1e66', '1h23'), ('P04058', '1h22', '1gpk'), ('P04058', '5bwc', '5nap'), ('P06202', '1b1h', '1b3h'), ('P06202', '1b2h', '1b3g'), ('P06202', '1b3g', '1b3l'), ('P06202', '1b40', '1b2h'), ('P09958', '4omc', '4ryd'), ('P09958', '6eqw', '6eqv'), ('Q8WQX9', '5l8c', '5g57'), ('Q8WSF8', '2xys', '2x00'), ('Q8WXF7', '4ido', '4idn'), ('Q90EB9', '1izh', '1izi'), ('Q9UM73', '4clj', '4cmo'), ('Q9WYE2', '2zx8', '2zx6')]
+        process = get_prots(args.docked_prot_file)
         grouped_files = group_files(args.n, process)
-        run_group(grouped_files, raw_root, args.label_file, args.index, args.dist, args.include_score,
-                  args.lower_score_bound, args.upper_score_bound)
+        run_group(grouped_files, raw_root, args.label_file, args.decoy_type, args.index, args.dist, args.include_score,
+                  args.lower_score_bound, args.upper_score_bound, args.include_protein)
 
     if args.task == 'check':
-        run_check(raw_root, args.docked_prot_file, args.include_score)
+        run_check(raw_root, args.docked_prot_file, args.decoy_type, args.include_score, args.include_protein)
 
     if args.task == 'update':
         update(args.docked_prot_file, raw_root, args.new_prot_file)

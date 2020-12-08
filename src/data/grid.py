@@ -6,6 +6,9 @@ $ ml load chemistry
 $ ml load schrodinger
 $ $SCHRODINGER/run python3 grid.py run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 $ $SCHRODINGER/run python3 grid.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+
+$ $SCHRODINGER/run python3 grid.py run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/combined_index_large.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+
 $ $SCHRODINGER/run python3 grid.py update /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --new_prot_file /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random2.txt
 
 """
@@ -46,7 +49,7 @@ def group_files(n, process):
 
     return grouped_files
 
-def run(grouped_files, run_path, raw_root):
+def run(grouped_files, run_path, raw_root, decoy_type):
     """
     creates grid for each protein, target, start
     :param grouped_files: (list) list of protein, target, start groups
@@ -56,34 +59,58 @@ def run(grouped_files, run_path, raw_root):
     """
     for i, group in enumerate(grouped_files):
         with open(os.path.join(run_path, 'grid{}_in.sh'.format(i)), 'w') as f:
+            print(os.path.join(run_path, 'grid{}_in.sh'.format(i)))
             for protein, target, start in group:
                 pair = '{}-to-{}'.format(target, start)
+                target_pair = '{}-to-{}'.format(target, target)
                 protein_path = os.path.join(raw_root, protein)
                 pair_path = os.path.join(protein_path, pair)
-                pose_path = os.path.join(pair_path, 'ligand_poses')
+                pose_path = os.path.join(pair_path, decoy_type)
+                print(pair_path)
 
                 # create in file for grid
-                with open(os.path.join(pair_path, '{}.in'.format(pair)), 'w') as f_in:
-                    c = get_centroid(list(structure.StructureReader(os.path.join(pose_path,
-                                                                                 '{}_lig0.mae'.format(target))))[0])
-                    x, y, z = c[:3]
+                if not os.path.exists(os.path.join(pair_path, '{}.zip'.format(pair))):
+                    with open(os.path.join(pair_path, '{}.in'.format(pair)), 'w') as f_in:
+                        c = get_centroid(list(structure.StructureReader(os.path.join(pose_path,
+                                                                                     '{}_lig0.mae'.format(target))))[0])
+                        x, y, z = c[:3]
 
-                    f_in.write('GRID_CENTER {},{},{}\n'.format(x, y, z))
-                    f_in.write('GRIDFILE {}-to-{}.zip\n'.format(target, start))
-                    f_in.write('INNERBOX 15,15,15\n')
-                    f_in.write('OUTERBOX 30,30,30\n')
-                    f_in.write('RECEP_FILE {}\n'.format(os.path.join(pair_path, '{}_prot.mae'.format(start))))
+                        f_in.write('GRID_CENTER {},{},{}\n'.format(x, y, z))
+                        f_in.write('GRIDFILE {}.zip\n'.format(pair))
+                        f_in.write('INNERBOX 15,15,15\n')
+                        f_in.write('OUTERBOX 30,30,30\n')
+                        f_in.write('RECEP_FILE {}\n'.format(os.path.join(pair_path, '{}_prot.mae'.format(start))))
+                        # create grid commands
+                        f.write('#!/bin/bash\n')
+                        f.write('cd {}\n'.format(pair_path))
+                        f.write('$SCHRODINGER/glide -WAIT {}.in\n'.format(pair))
+                        f.write('rm {}/{}.in\n'.format(pair_path, pair))
+                        f.write('rm {}/{}.log\n'.format(pair_path, pair))
 
-                # create grid commands
-                f.write('#!/bin/bash\n')
-                f.write('cd {}\n'.format(pair_path))
-                f.write('$SCHRODINGER/glide -WAIT {}.in\n'.format(pair))
-                f.write('rm {}/{}.in\n'.format(pair_path, pair))
-                f.write('rm {}/{}.log\n'.format(pair_path, pair))
+                if not os.path.exists(os.path.join(pair_path, '{}.zip'.format(target_pair))):
+                    print('hi')
+                    with open(os.path.join(pair_path, '{}.in'.format(target_pair)), 'w') as f_in:
+                        c = get_centroid(list(structure.StructureReader(os.path.join(pose_path,
+                                                                                     '{}_lig0.mae'.format(target))))[0])
+                        x, y, z = c[:3]
+
+                        f_in.write('GRID_CENTER {},{},{}\n'.format(x, y, z))
+                        f_in.write('GRIDFILE {}.zip\n'.format(target_pair))
+                        f_in.write('INNERBOX 15,15,15\n')
+                        f_in.write('OUTERBOX 30,30,30\n')
+                        f_in.write('RECEP_FILE {}\n'.format(os.path.join(pair_path, '{}_prot.mae'.format(target))))
+                        # create grid commands
+                        f.write('#!/bin/bash\n')
+                        f.write('cd {}\n'.format(pair_path))
+                        f.write('$SCHRODINGER/glide -WAIT {}.in\n'.format(target_pair))
+                        f.write('rm {}/{}.in\n'.format(pair_path, target_pair))
+                        f.write('rm {}/{}.log\n'.format(pair_path, target_pair))
+                break
 
         os.chdir(run_path)
-        os.system('sbatch -p owners -t 02:00:00 -o grid{}.out grid{}_in.sh'.format(i, i))
+        os.system('sbatch -p rondror -t 02:00:00 -o grid{}.out grid{}_in.sh'.format(i, i))
         # print('sbatch -p owners -t 02:00:00 -o grid{}.out grid{}_in.sh'.format(i, i))
+        break
 
 def check(docked_prot_file, raw_root):
     """
@@ -141,6 +168,8 @@ def main():
                         help='for update task, name of new prot file')
     parser.add_argument('--n', type=int, default=3, help='number of protein, target, start groups processed in '
                                                          'group task')
+    parser.add_argument('--decoy_type', type=str, default='ligand_poses', help='either cartesian_poses, ligand_poses, '
+                                                                               'or conformer_poses')
     args = parser.parse_args()
 
     if not os.path.exists(args.run_path):
@@ -149,7 +178,7 @@ def main():
     if args.task == 'run':
         process = get_prots(args.docked_prot_file)
         grouped_files = group_files(args.n, process)
-        run(grouped_files, args.run_path, args.raw_root)
+        run(grouped_files, args.run_path, args.raw_root, args.decoy_type)
 
     if args.task == 'check':
         check(args.docked_prot_file, args.raw_root)
