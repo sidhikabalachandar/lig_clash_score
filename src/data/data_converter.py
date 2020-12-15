@@ -6,7 +6,7 @@ ml load chemistry
 ml load schrodinger
 $ $SCHRODINGER/run python3 data_converter.py run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 
-$ $SCHRODINGER/run python3 data_converter.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/combined_index_balance_clash_large.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --decoy_type conformer_poses
+$ $SCHRODINGER/run python3 data_converter.py run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/combined_index_balance_clash_large.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --decoy_type conformer_poses
 
 $ $SCHRODINGER/run python3 data_converter.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 '''
@@ -14,7 +14,6 @@ $ $SCHRODINGER/run python3 data_converter.py check /oak/stanford/groups/rondror/
 import os
 from tqdm import tqdm
 import argparse
-import schrodinger.structure as structure
 from rdkit import Chem
 
 def get_ligand(ligfile):
@@ -42,6 +41,7 @@ def find_files(docked_prot_file, raw_root, decoy_type):
     :return: process (list) list of all files to convert
     '''
     process = []
+    num = 0
     with open(docked_prot_file) as fp:
         for line in tqdm(fp, desc='going through protein, target, start groups'):
             if line[0] == '#': continue
@@ -57,6 +57,10 @@ def find_files(docked_prot_file, raw_root, decoy_type):
             for file in os.listdir(pose_path):
                 if file[-3:] == 'mae':
                     process.append(os.path.join(pose_path, file)[:-4])
+
+            num += 1
+            if num == 12:
+                break
 
     return process
 

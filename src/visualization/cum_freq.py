@@ -131,7 +131,7 @@ def get_graph_data(gnn_data, glide_data, score_no_vdw_data, max_poses):
         sorted_score_no_vdw = sorted(rev_score_no_vdw_data, key=lambda x: x[1])
         sorted_gnn_without_correct = sorted(rev_gnn_data_without_correct, key=lambda x: x[1])
         sorted_glide_without_correct = sorted(rev_glide_data_without_correct, key=lambda x: x[1])
-        score_no_vdw_without_correct = sorted(rev_score_no_vdw_data_without_correct, key=lambda x: x[1])
+        sorted_score_no_vdw_without_correct = sorted(rev_score_no_vdw_data_without_correct, key=lambda x: x[1])
         num_glide = find_num_glide(max_poses, sorted_gnn, target)
         num_poses = min(num_glide, max_poses)
         ls[0].append(min(sorted_gnn[:num_poses], key=lambda x: x[2])[2])
@@ -139,7 +139,7 @@ def get_graph_data(gnn_data, glide_data, score_no_vdw_data, max_poses):
         ls[2].append(min(sorted_glide[:num_poses], key=lambda x: x[2])[2])
         ls[3].append(min(sorted_glide_without_correct[:num_poses], key=lambda x: x[2])[2])
         ls[4].append(min(sorted_score_no_vdw[:num_poses], key=lambda x: x[2])[2])
-        ls[5].append(min(score_no_vdw_without_correct[:num_poses], key=lambda x: x[2])[2])
+        ls[5].append(min(sorted_score_no_vdw_without_correct[:num_poses], key=lambda x: x[2])[2])
 
     return ls
 
@@ -165,8 +165,8 @@ def get_random_data(gnn_data, score_list, max_poses):
 
         # take average for each val of max_pose
         for i in range(len(ls_with_correct)):
-            score_list[i][6].append(statistics.mean(ls_with_correct[i]))
-            score_list[i][7].append(statistics.mean(ls_without_correct[i]))
+            score_list[i][6].extend(ls_with_correct[i])
+            score_list[i][7].extend(ls_without_correct[i])
 
 def graph(title, ls, out_dir, name):
     n_bins = 1000
@@ -358,6 +358,22 @@ def main():
         ax.set_xlabel('GNN Score')
         ax.set_ylabel('RMSD')
         plt.savefig(os.path.join(args.out_dir, 'score_vs_rmsd_{}.png'.format(name)))
+
+
+    elif args.task == 'score_no_vdw_vs_rmsd':
+        fig, ax = plt.subplots()
+        score_no_vdw_data = get_data(score_no_vdw_dir)
+        for target in score_no_vdw_data:
+            sorted_gnn = sorted(score_no_vdw_data[target], key=lambda x: (x[1], x[0]))
+            scores = [x[1] for x in sorted_gnn]
+            rmsd = [x[2] for x in sorted_gnn]
+            plt.scatter(scores, rmsd, c='blue', s=0.5)
+            break
+
+        plt.xlim((-20, 20))
+        ax.set_xlabel('Score no vdw')
+        ax.set_ylabel('RMSD')
+        plt.savefig(os.path.join(args.out_dir, 'score_no_vdw_vs_rmsd_{}.png'.format(name)))
 
     elif args.task == 'epoch_graphs':
         output_file = os.path.join(args.log_dir, 'output.txt')
