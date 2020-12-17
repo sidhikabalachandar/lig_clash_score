@@ -381,10 +381,8 @@ def gen_ligand_conformers(path, output_dir, num_conformers):
     run_cmd(f'rm ./{basename:}')
     os.chdir(current_dir)
 
-def get_aligned_conformers(conformer_file, pair_path, start_file):
-    aligned_file = os.path.join(pair_path, "aligned_conformers.mae")
-    run_cmd(_ALIGN_CMD.format(ref_file=start_file, conf_file=conformer_file, output_file=aligned_file))
-    return list(structure.StructureReader(aligned_file))
+def get_aligned_conformers(conformer_file, ref_file, aligned_file):
+    run_cmd(_ALIGN_CMD.format(ref_file=ref_file, conf_file=conformer_file, output_file=aligned_file))
 
 
 def create_conformer_decoys(conformers, grid_size, start_lig_center, prot, pose_path, target, max_poses, min_angle,
@@ -527,7 +525,7 @@ def run_group(grouped_files, raw_root, data_root, index, max_poses, decoy_type, 
                 if not os.path.exists(os.path.join(pair_path, "{}_lig0-out.maegz".format(target))):
                     gen_ligand_conformers(target_lig_file, pair_path, num_conformers)
                 conformer_file = os.path.join(pair_path, "{}_lig0-out.maegz".format(target))
-                get_aligned_conformers(conformer_file, pair_path, target_lig_file)
+                get_aligned_conformers(conformer_file, target_lig_file, aligned_file)
 
             conformers = list(structure.StructureReader(aligned_file))
             create_conformer_decoys(conformers, grid_size, start_lig_center, prot, pose_path, target, max_poses, min_angle,
