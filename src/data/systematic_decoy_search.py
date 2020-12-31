@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 systematic_decoy_search.py search /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --rotation_search_step_size 5 --time --prot_pocket_only --protein P35968 --target 4agc --start 3vhk
+$ $SCHRODINGER/run python3 systematic_decoy_search.py combine_search_data /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --rotation_search_step_size 5 --protein P35968 --target 4agc --start 3vhk
 """
 
 import argparse
@@ -80,6 +80,40 @@ def get_prots(docked_prot_file):
             process.append((protein, target, start))
 
     return process
+
+
+def get_pocket_res(protein, ligand, dist):
+    """
+    Given a co-crystallized protein and ligand, extract residues within specified distance of ligand.
+
+    Args:
+        protein (Biopython Structure object): receptor protein
+        ligand (RDKit Mol object): co-crystallized ligand
+        dist (float): distance cutoff for defining binding site
+
+    Returns:
+        key_residues (set of Biopython Residue objects): set of key binding site residues
+    """
+    # get protein coordinates
+    prot_coords = []
+    for m in list(protein.molecule):
+        for r in list(m.residue):
+            for a in list(r.atom):
+                prot_coords.append(a.xyz)
+
+    # get ligand coordinates
+    lig_coords = []
+    for m in list(ligand.molecule):
+        for r in list(m.residue):
+            for a in list(r.atom):
+                lig_coords.append(a.xyz)
+
+    kd_tree = scipy.spatial.KDTree(prot_coords)
+    key_pts = kd_tree.query_ball_point(lig_coords, r=dist, p=2.0)
+    key_pts = set([k for l in key_pts for k in l])
+
+    remove = [i for i in protein.getAtomIndices() if i not in key_pts]
+    protein.deleteAtoms(remove)
 
 
 def get_translation_matrix(trans):
@@ -299,28 +333,28 @@ def time_conformer_decoys(pair_path, start_lig_center, target_lig, prot, rotatio
         conformer_center = list(get_centroid(conformer))
 
         # keep track of rotation angles
-        transform.rotate_structure(conformer, math.radians(-30 - rotation_search_step_size), 0, 0, conformer_center)
+        rotate_structure(conformer, math.radians(-30 - rotation_search_step_size), 0, 0, conformer_center)
         x_so_far = -30 - rotation_search_step_size
         y_so_far = 0
         z_so_far = 0
 
         for _ in range(-30, 30, rotation_search_step_size):
             # x rotation
-            transform.rotate_structure(conformer, rotation_search_step_size_rad,
+            rotate_structure(conformer, rotation_search_step_size_rad,
                                        math.radians(-30 - rotation_search_step_size - y_so_far), 0, conformer_center)
             x_so_far += 1
             y_so_far += -30 - rotation_search_step_size - y_so_far
 
             for _ in range(-30, 30, rotation_search_step_size):
                 # y rotation
-                transform.rotate_structure(conformer, 0, rotation_search_step_size_rad,
+                rotate_structure(conformer, 0, rotation_search_step_size_rad,
                                            math.radians(-30 - rotation_search_step_size - z_so_far), conformer_center)
                 y_so_far += 1
                 z_so_far += -30 - rotation_search_step_size - z_so_far
 
                 for _ in range(-30, 30, rotation_search_step_size):
                     # z rotation
-                    transform.rotate_structure(conformer, 0, 0, rotation_search_step_size_rad, conformer_center)
+                    rotate_structure(conformer, 0, 0, rotation_search_step_size_rad, conformer_center)
                     z_so_far += 1
 
                     # get clash_iterator
@@ -351,7 +385,7 @@ def time_conformer_decoys(pair_path, start_lig_center, target_lig, prot, rotatio
 
 def create_conformer_decoys(conformers, start_lig_center, target_lig, cutoff, rotation_search_step_size, protein,
                             target, start, test, x_rot, y_rot, z_rot):
-    out_file_template = '{}_{}-to-{}_step_size_{}_no_lig_h.out'
+    out_file_template = '{}_{}-to-{}_step_size_{}_no_lig_h_improved.out'
     out_file = os.path.join(os.getcwd(), 'decoy_timing_data', out_file_template.format(protein, target, start,
                                                                                        rotation_search_step_size))
     decoy_start_time = time.time()
@@ -370,28 +404,28 @@ def create_conformer_decoys(conformers, start_lig_center, target_lig, cutoff, ro
         conformer_center = list(get_centroid(conformer))
 
         # keep track of rotation angles
-        transform.rotate_structure(conformer, math.radians(-30 - rotation_search_step_size), 0, 0, conformer_center)
+        rotate_structure(conformer, math.radians(-30 - rotation_search_step_size), 0, 0, conformer_center)
         x_so_far = -30 - rotation_search_step_size
         y_so_far = 0
         z_so_far = 0
 
         for _ in range(-30, 30, rotation_search_step_size):
             # x rotation
-            transform.rotate_structure(conformer, rotation_search_step_size_rad,
+            rotate_structure(conformer, rotation_search_step_size_rad,
                                        math.radians(-30 - rotation_search_step_size - y_so_far), 0, conformer_center)
             x_so_far += 1
             y_so_far += -30 - rotation_search_step_size - y_so_far
 
             for _ in range(-30, 30, rotation_search_step_size):
                 # y rotation
-                transform.rotate_structure(conformer, 0, rotation_search_step_size_rad,
+                rotate_structure(conformer, 0, rotation_search_step_size_rad,
                                            math.radians(-30 - rotation_search_step_size - z_so_far), conformer_center)
                 y_so_far += 1
                 z_so_far += -30 - rotation_search_step_size - z_so_far
 
                 for _ in range(-30, 30, rotation_search_step_size):
                     # z rotation
-                    transform.rotate_structure(conformer, 0, 0, rotation_search_step_size_rad, conformer_center)
+                    rotate_structure(conformer, 0, 0, rotation_search_step_size_rad, conformer_center)
                     z_so_far += 1
                     counter += 1
 
@@ -582,7 +616,7 @@ def run_align_combine(process, raw_root):
         print(len(list(structure.StructureReader(combined_file))))
 
 
-def search_system_caller(process, raw_root, run_path, docked_prot_file, rotation_search_step_size, no_prot_h):
+def search_system_caller(process, raw_root, run_path, docked_prot_file, rotation_search_step_size):
     counter = 0
     for protein, target, start in process:
         if counter == 10:
@@ -597,52 +631,11 @@ def search_system_caller(process, raw_root, run_path, docked_prot_file, rotation
         else:
             counter += 1
         cmd = 'sbatch -p owners -t 10:00:00 -o {} --wrap="$SCHRODINGER/run python3 systematic_decoy_search.py search ' \
-              '{} {} {} --protein {} --target {} --start {} --rotation_search_step_size {}'
-        if no_prot_h:
-            cmd += ' --remove_prot_h"'
-            out_file_name = '{}_{}-to-{}_step_size_{}_no_lig_h_no_prot_h.out'.format(protein, target, start,
-                                                                                     rotation_search_step_size)
-            os.system(cmd.format(os.path.join(run_path, out_file_name), docked_prot_file, run_path, raw_root, protein,
-                                 target, start, rotation_search_step_size))
-        else:
-            cmd += '"'
-            out_file_name = '{}_{}-to-{}_step_size_{}_no_lig_h.out'.format(protein, target, start,
-                                                                           rotation_search_step_size)
-            os.system(cmd.format(os.path.join(run_path, out_file_name), docked_prot_file, run_path, raw_root, protein,
-                                 target, start, rotation_search_step_size))
-
-def get_pocket_res(protein, ligand, dist):
-    """
-    Given a co-crystallized protein and ligand, extract residues within specified distance of ligand.
-
-    Args:
-        protein (Biopython Structure object): receptor protein
-        ligand (RDKit Mol object): co-crystallized ligand
-        dist (float): distance cutoff for defining binding site
-
-    Returns:
-        key_residues (set of Biopython Residue objects): set of key binding site residues
-    """
-    # get protein coordinates
-    prot_coords = []
-    for m in list(protein.molecule):
-        for r in list(m.residue):
-            for a in list(r.atom):
-                prot_coords.append(a.xyz)
-
-    # get ligand coordinates
-    lig_coords = []
-    for m in list(ligand.molecule):
-        for r in list(m.residue):
-            for a in list(r.atom):
-                lig_coords.append(a.xyz)
-
-    kd_tree = scipy.spatial.KDTree(prot_coords)
-    key_pts = kd_tree.query_ball_point(lig_coords, r=dist, p=2.0)
-    key_pts = set([k for l in key_pts for k in l])
-
-    remove = [i for i in protein.getAtomIndices() if i not in key_pts]
-    protein.deleteAtoms(remove)
+              '{} {} {} --protein {} --target {} --start {} --rotation_search_step_size {}"'
+        out_file_name = '{}_{}-to-{}_step_size_{}_no_lig_h_improved.out'.format(protein, target, start,
+                                                                                 rotation_search_step_size)
+        os.system(cmd.format(os.path.join(run_path, out_file_name), docked_prot_file, run_path, raw_root, protein,
+                             target, start, rotation_search_step_size))
 
 
 def run_search(protein, target, start, raw_root, get_time, cutoff, rotation_search_step_size, no_prot_h,
@@ -694,11 +687,11 @@ def run_test_search(protein, target, start, raw_root, cutoff, rotation_search_st
     base_conf = list(structure.StructureReader(conformer_file))[0]
     grid_loc = [0, 0, 0]
     base_conf_center = list(get_centroid(base_conf))
-    transform.translate_structure(base_conf, start_lig_center[0] - base_conf_center[0] + grid_loc[0],
+    translate_structure(base_conf, start_lig_center[0] - base_conf_center[0] + grid_loc[0],
                                   start_lig_center[1] - base_conf_center[1] + grid_loc[1],
                                   start_lig_center[2] - base_conf_center[2] + grid_loc[2])
     base_conf_center = list(get_centroid(base_conf))
-    transform.rotate_structure(base_conf, math.radians(x_rot), math.radians(y_rot), math.radians(z_rot),
+    rotate_structure(base_conf, math.radians(x_rot), math.radians(y_rot), math.radians(z_rot),
                                base_conf_center)
     rmsd_val = rmsd.calculate_in_place_rmsd(conformer, conformer.getAtomIndices(), base_conf,
                                             base_conf.getAtomIndices())
@@ -731,7 +724,7 @@ def run_combine_search_data(process, raw_root, rotation_search_step_size):
         search_dict['start'].append(start)
         search_dict['num_conformers'].append(len(conformers))
 
-        out_file_template = '{}_{}-to-{}_step_size_{}_no_lig_h.out'
+        out_file_template = '{}_{}-to-{}_step_size_{}_no_lig_h_improved.out'
         out_file = os.path.join(os.getcwd(), 'decoy_timing_data', out_file_template.format(protein, target, start,
                                                                                            rotation_search_step_size))
         f = open(out_file, "r")
@@ -744,7 +737,7 @@ def run_combine_search_data(process, raw_root, rotation_search_step_size):
         search_dict['time_elapsed_per_conformer'].append(data[2] / len(conformers))
 
     df = pd.DataFrame.from_dict(search_dict)
-    df.to_csv(os.path.join(os.getcwd(), 'decoy_timing_data', 'step_size_{}_no_lig_h.csv'.format(
+    df.to_csv(os.path.join(os.getcwd(), 'decoy_timing_data', 'step_size_{}_no_lig_h_improved.csv'.format(
         rotation_search_step_size)))
 
 
@@ -824,7 +817,7 @@ def main():
         process = get_prots(args.docked_prot_file)
         random.shuffle(process)
         search_system_caller(process, args.raw_root, args.run_path, args.docked_prot_file,
-                             args.rotation_search_step_size, args.no_prot_h)
+                             args.rotation_search_step_size)
 
     elif args.task == 'search':
         run_search(args.protein, args.target, args.start, args.raw_root, args.get_time, args.rmsd_cutoff,
