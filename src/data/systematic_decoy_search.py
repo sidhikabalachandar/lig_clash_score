@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 systematic_decoy_search.py get_rmsd /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P22894 --target 3tt4 --start 1zvx --rotation_search_step_size 5 --index 0
+$ $SCHRODINGER/run python3 systematic_decoy_search.py combine_search_data /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --rotation_search_step_size 5 --grid_size 0 --protein P22894 --target 3tt4 --start 1zvx
 """
 
 import argparse
@@ -30,6 +30,7 @@ from tqdm import tqdm
 import pandas as pd
 import scipy.spatial
 import numpy as np
+import copy
 
 _CONFGEN_CMD = ("$SCHRODINGER/confgenx -WAIT -optimize -drop_problematic -num_conformers {num_conformers} "
                 "-max_num_conformers {num_conformers} {input_file}")
@@ -68,9 +69,9 @@ def get_conformer_groups(n, target, start, protein, raw_root):
 
 def get_grid_groups(grid_size, n):
     grid = []
-    for dx in range(-grid_size, grid_size):
-        for dy in range(-grid_size, grid_size):
-            for dz in range(-grid_size, grid_size):
+    for dx in range(-grid_size, grid_size + 1):
+        for dy in range(-grid_size, grid_size + 1):
+            for dz in range(-grid_size, grid_size + 1):
                 grid.append([dx, dy, dz])
 
     grouped_files = []
@@ -146,7 +147,7 @@ def get_translation_matrix(trans):
     trans_matrix[2][3] = float(trans[2])
     return trans_matrix
 
-def transform_structure(st, matrix):
+def transform_structure(coords, matrix):
     """
     Transforms atom coordinates of the structure using a 4x4
     transformation matrix.
@@ -159,7 +160,7 @@ def transform_structure(st, matrix):
     """
 
     # Modifying this array will directly alter the actual coordinates:
-    atom_xyz_array = np.array(st.getXYZ(copy=False))
+    atom_xyz_array = np.array(coords)
     num_atoms = len(atom_xyz_array)
     ones = np.ones((num_atoms, 1))
     atom_xyz_array = np.concatenate((atom_xyz_array, ones), axis=1)
@@ -167,12 +168,13 @@ def transform_structure(st, matrix):
     atom_xyz_array = np.matmul(matrix, atom_xyz_array)
     atom_xyz_array = np.resize(atom_xyz_array, (num_atoms, 4))
     atom_xyz_array = atom_xyz_array[:, 0:3]
-    st.setXYZ(atom_xyz_array[:, 0:3])
+    return atom_xyz_array
 
 
 def translate_structure(st, x, y, z):
     trans_matrix = get_translation_matrix([x, y, z])
-    transform_structure(st, trans_matrix)
+    atom_xyz_array = transform_structure(st.getXYZ(copy=True), trans_matrix)
+    st.setXYZ(atom_xyz_array)
 
 
 def get_coords_array_from_list(coords_list):
@@ -238,7 +240,7 @@ def get_rotation_matrix(axis, angle):
     return rot_matrix
 
 
-def rotate_structure(st, x_angle, y_angle, z_angle, rot_center):
+def rotate_structure(coords, x_angle, y_angle, z_angle, rot_center):
     """
     Rotates the structure about x axis, then y axis, then z axis.
 
@@ -274,7 +276,7 @@ def rotate_structure(st, x_angle, y_angle, z_angle, rot_center):
 
     combined_rot_matrix = np.matmul(np.matmul(np.matmul(np.matmul(from_origin_matrix, rot_matrix_z), rot_matrix_y),
                                               rot_matrix_x), to_origin_matrix)
-    transform_structure(st, combined_rot_matrix)
+    return transform_structure(coords, combined_rot_matrix)
 
 
 def time_conformer_decoys(pair_path, start_lig_center, target_lig, prot, rotation_search_step_size):
@@ -398,8 +400,8 @@ def time_conformer_decoys(pair_path, start_lig_center, target_lig, prot, rotatio
                         return
 
 
-def create_conformer_decoys(grid, start_lig_center, target_lig, cutoff, rotation_search_step_size, protein,
-                            target, start, index, pair_path, test, x_rot, y_rot, z_rot):
+def create_conformer_decoys(grid, target_lig, cutoff, rotation_search_step_size, protein, target, start, index,
+                            pair_path, test, x_rot, y_rot, z_rot):
     counter = 0
     data_dict = {'protein': [], 'target': [], 'start': [], 'num_conformers': [], 'num_poses_searched': [],
                  'num_correct_poses_found': [], 'time_elapsed': [], 'time_elapsed_per_conformer': [], 'grid_loc_x': [],
@@ -410,164 +412,26 @@ def create_conformer_decoys(grid, start_lig_center, target_lig, cutoff, rotation
         conformer_file = os.path.join(pair_path, "aligned_to_start_without_hydrogen_conformers.mae")
         conformers = list(structure.StructureReader(conformer_file))
         decoy_start_time = time.time()
-        conformer = conformers[248]
-        rmsd_val = rmsd.calculate_in_place_rmsd(conformer, conformer.getAtomIndices(),
-                                                target_lig, target_lig.getAtomIndices())
-        print("aligned conformer rmsd:", rmsd_val)
-        # for conformer in conformers:
-        conformer_center = list(get_centroid(conformer))
 
-        # translation
-        translate_structure(conformer, grid_loc[0], grid_loc[1], grid_loc[2])
-        rmsd_val = rmsd.calculate_in_place_rmsd(conformer, conformer.getAtomIndices(),
-                                                target_lig, target_lig.getAtomIndices())
-        print("translated conformer rmsd:", rmsd_val)
-        conformer_center = list(get_centroid(conformer))
+        for conformer in conformers:
+            transform.translate_structure(conformer, grid_loc[0], grid_loc[1], grid_loc[2])
+            conformer_center = list(get_centroid(conformer))
+            coords = conformer.getXYZ(copy=True)
 
-        print("Before:", 0, 0, 0)
-        print("x + ", -rotation_search_step_size)
-        # keep track of rotation angles
-        rotate_structure(conformer, math.radians(-rotation_search_step_size), 0, 0, conformer_center)
-        x_so_far = -rotation_search_step_size
-        y_so_far = 0
-        z_so_far = 0
-        print("After:", x_so_far, y_so_far, z_so_far)
+            for x in range(-30, 30 + rotation_search_step_size, rotation_search_step_size):
+                for y in range(-30, 30 + rotation_search_step_size, rotation_search_step_size):
+                    for z in range(-30, 30 + rotation_search_step_size, rotation_search_step_size):
+                        new_coords = rotate_structure(coords, math.radians(x), math.radians(y),
+                                                      math.radians(z), conformer_center)
+                        conformer.setXYZ(new_coords)
 
-        for _ in range(0, 30, rotation_search_step_size):
-            print("Before:", x_so_far, y_so_far, z_so_far)
-            print("x + ", rotation_search_step_size, "y + ", -rotation_search_step_size - y_so_far)
-            # x rotation
-            rotate_structure(conformer, math.radians(rotation_search_step_size),
-                                       math.radians(-rotation_search_step_size - y_so_far), 0, conformer_center)
-            x_so_far += rotation_search_step_size
-            y_so_far += -rotation_search_step_size - y_so_far
-            print("After:", x_so_far, y_so_far, z_so_far)
+                        if test and x_rot == x and y_rot == y and z_rot == z:
+                            return conformer
 
-            for _ in range(0, 30, rotation_search_step_size):
-                print("Before:", x_so_far, y_so_far, z_so_far)
-                print("y + ", rotation_search_step_size, "z + ", -rotation_search_step_size - z_so_far)
-                # y rotation
-                rotate_structure(conformer, 0, math.radians(rotation_search_step_size),
-                                           math.radians(-rotation_search_step_size - z_so_far), conformer_center)
-                y_so_far += rotation_search_step_size
-                z_so_far += -rotation_search_step_size - z_so_far
-                print("After:", x_so_far, y_so_far, z_so_far)
-
-                for _ in range(0, 30, rotation_search_step_size):
-                    print("Before:", x_so_far, y_so_far, z_so_far)
-                    print("z + ", rotation_search_step_size)
-                    # z rotation
-                    rotate_structure(conformer, 0, 0, math.radians(rotation_search_step_size), conformer_center)
-                    z_so_far += rotation_search_step_size
-                    counter += 1
-                    print("After:", x_so_far, y_so_far, z_so_far)
-                    print("CALCULATE RMSD")
-
-                    if test and x_rot == x_so_far and y_rot == y_so_far and z_rot == z_so_far:
-                        return conformer
-
-                    rmsd_val = rmsd.calculate_in_place_rmsd(conformer, conformer.getAtomIndices(),
-                                                            target_lig, target_lig.getAtomIndices())
-                    if x_so_far == 0 and y_so_far == 0 and z_so_far == 0:
-                        print("No rotation pose rmsd:", rmsd_val)
-                    if rmsd_val < cutoff:
-                        num_correct_found += 1
-
-        # keep track of rotation angles
-        x_so_far = 0
-        y_so_far = 0
-        z_so_far = 0
-
-        for _ in range(-rotation_search_step_size, -30, -rotation_search_step_size):
-            print("Before:", x_so_far, y_so_far, z_so_far)
-            print("x + ", -rotation_search_step_size, "y + ", -y_so_far)
-            # x rotation
-            rotate_structure(conformer, math.radians(-rotation_search_step_size),
-                             math.radians(-y_so_far), 0, conformer_center)
-            x_so_far += -rotation_search_step_size
-            y_so_far += -y_so_far
-            print("After:", x_so_far, y_so_far, z_so_far)
-
-            for _ in range(-rotation_search_step_size, -30, -rotation_search_step_size):
-                print("Before:", x_so_far, y_so_far, z_so_far)
-                print("y + ", -rotation_search_step_size, "z + ", -z_so_far)
-                # y rotation
-                rotate_structure(conformer, 0, math.radians(-rotation_search_step_size),
-                                 math.radians(-z_so_far), conformer_center)
-                y_so_far += -rotation_search_step_size
-                z_so_far += -z_so_far
-                print("After:", x_so_far, y_so_far, z_so_far)
-
-                for _ in range(-rotation_search_step_size, -30, -rotation_search_step_size):
-                    print("Before:", x_so_far, y_so_far, z_so_far)
-                    print("z + ", -rotation_search_step_size)
-                    # z rotation
-                    rotate_structure(conformer, 0, 0, math.radians(-rotation_search_step_size), conformer_center)
-                    z_so_far += -rotation_search_step_size
-                    counter += 1
-                    print("After:", x_so_far, y_so_far, z_so_far)
-                    print("CALCULATE RMSD")
-
-                    if test and x_rot == x_so_far and y_rot == y_so_far and z_rot == z_so_far:
-                        return conformer
-
-                    rmsd_val = rmsd.calculate_in_place_rmsd(conformer, conformer.getAtomIndices(),
-                                                            target_lig, target_lig.getAtomIndices())
-                    if x_so_far == 0 and y_so_far == 0 and z_so_far == 0:
-                        print("No rotation pose rmsd:", rmsd_val)
-                        return
-                    if rmsd_val < cutoff:
-                        num_correct_found += 1
-
-        # print("Before:", 0, 0, 0)
-        # print("x + ", - 30 - rotation_search_step_size)
-        # # keep track of rotation angles
-        # rotate_structure(conformer, math.radians(-30 - rotation_search_step_size), 0, 0, conformer_center)
-        # x_so_far = -30 - rotation_search_step_size
-        # y_so_far = 0
-        # z_so_far = 0
-        # print("After:", x_so_far, y_so_far, z_so_far)
-        #
-        # for _ in range(-30, 30, rotation_search_step_size):
-        #     print("Before:", x_so_far, y_so_far, z_so_far)
-        #     print("x + ", rotation_search_step_size, "y + ", -30 - rotation_search_step_size - y_so_far)
-        #     # x rotation
-        #     rotate_structure(conformer, math.radians(rotation_search_step_size),
-        #                                math.radians(-30 - rotation_search_step_size - y_so_far), 0, conformer_center)
-        #     x_so_far += rotation_search_step_size
-        #     y_so_far += -30 - rotation_search_step_size - y_so_far
-        #     print("After:", x_so_far, y_so_far, z_so_far)
-        #
-        #     for _ in range(-30, 30, rotation_search_step_size):
-        #         print("Before:", x_so_far, y_so_far, z_so_far)
-        #         print("y + ", rotation_search_step_size, "z + ", -30 - rotation_search_step_size - z_so_far)
-        #         # y rotation
-        #         rotate_structure(conformer, 0, math.radians(rotation_search_step_size),
-        #                                    math.radians(-30 - rotation_search_step_size - z_so_far), conformer_center)
-        #         y_so_far += rotation_search_step_size
-        #         z_so_far += -30 - rotation_search_step_size - z_so_far
-        #         print("After:", x_so_far, y_so_far, z_so_far)
-        #
-        #         for _ in range(-30, 30, rotation_search_step_size):
-        #             print("Before:", x_so_far, y_so_far, z_so_far)
-        #             print("z + ", rotation_search_step_size)
-        #             # z rotation
-        #             rotate_structure(conformer, 0, 0, math.radians(rotation_search_step_size), conformer_center)
-        #             z_so_far += rotation_search_step_size
-        #             counter += 1
-        #             print("After:", x_so_far, y_so_far, z_so_far)
-        #             print("CALCULATE RMSD")
-        #
-        #             if test and x_rot == x_so_far and y_rot == y_so_far and z_rot == z_so_far:
-        #                 return conformer
-        #
-        #             rmsd_val = rmsd.calculate_in_place_rmsd(conformer, conformer.getAtomIndices(),
-        #                                                     target_lig, target_lig.getAtomIndices())
-        #             if x_so_far == 0 and y_so_far == 0 and z_so_far == 0:
-        #                 print("No rotation pose rmsd:", rmsd_val)
-        #                 return
-        #             if rmsd_val < cutoff:
-        #                 num_correct_found += 1
+                        rmsd_val = rmsd.calculate_in_place_rmsd(conformer, conformer.getAtomIndices(), target_lig,
+                                                                target_lig.getAtomIndices())
+                        if rmsd_val < cutoff:
+                            num_correct_found += 1
 
         decoy_end_time = time.time()
 
@@ -583,12 +447,15 @@ def create_conformer_decoys(grid, start_lig_center, target_lig, cutoff, rotation
         data_dict['grid_loc_y'].append(grid_loc[1])
         data_dict['grid_loc_z'].append(grid_loc[2])
 
-    # df = pd.DataFrame.from_dict(data_dict)
-    # save_folder = os.path.join(os.getcwd(), 'decoy_timing_data', '{}_{}-to-{}'.format(protein, target, start))
-    # if not os.path.exists(save_folder):
-    #     os.mkdir(save_folder)
-    # df.to_csv(os.path.join(save_folder, '{}.csv'.format(index)))
-    # return None
+    df = pd.DataFrame.from_dict(data_dict)
+    data_folder = os.path.join(os.getcwd(), 'decoy_timing_data')
+    if not os.path.exists(data_folder):
+        os.mkdir(data_folder)
+    save_folder = os.path.join(data_folder, '{}_{}-to-{}'.format(protein, target, start))
+    if not os.path.exists(save_folder):
+        os.mkdir(save_folder)
+    df.to_csv(os.path.join(save_folder, '{}.csv'.format(index)))
+    return None
 
 
 def run_conformer_all(process, raw_root, run_path, docked_prot_file):
@@ -757,7 +624,8 @@ def run_align_combine(process, raw_root):
         print(len(list(structure.StructureReader(combined_file))))
 
 
-def search_system_caller(process, raw_root, run_path, docked_prot_file, rotation_search_step_size, grouped_files):
+def search_system_caller(process, raw_root, run_path, docked_prot_file, rotation_search_step_size, grid_size,
+                         grouped_files):
     counter = 0
     for protein, target, start in process:
         if counter == 10:
@@ -773,10 +641,11 @@ def search_system_caller(process, raw_root, run_path, docked_prot_file, rotation
             counter += 1
         for i in range(len(grouped_files)):
             cmd = 'sbatch -p owners -t 3:00:00 -o {} --wrap="$SCHRODINGER/run python3 systematic_decoy_search.py ' \
-                  'search {} {} {} --protein {} --target {} --start {} --rotation_search_step_size {} --index {}"'
+                  'search {} {} {} --protein {} --target {} --start {} --rotation_search_step_size {} --grid_size {} ' \
+                  '--index {}"'
             out_file_name = '{}_{}-to-{}_{}.out'.format(protein, target, start, i)
             os.system(cmd.format(os.path.join(run_path, out_file_name), docked_prot_file, run_path, raw_root, protein,
-                                 target, start, rotation_search_step_size, i))
+                                 target, start, rotation_search_step_size, grid_size, i))
 
 
 def run_search(protein, target, start, index, raw_root, get_time, cutoff, rotation_search_step_size, grid, no_prot_h,
@@ -803,45 +672,42 @@ def run_search(protein, target, start, index, raw_root, get_time, cutoff, rotati
     if get_time:
         time_conformer_decoys(pair_path, start_lig_center, target_lig, prot, rotation_search_step_size)
     else:
-        conformer = create_conformer_decoys(grid, start_lig_center, target_lig, cutoff, rotation_search_step_size,
-                                            protein, target, start, index, pair_path, test, x_rot, y_rot, z_rot)
+        conformer = create_conformer_decoys(grid, target_lig, cutoff, rotation_search_step_size, protein, target, start,
+                                            index, pair_path, test, x_rot, y_rot, z_rot)
         return conformer
 
 
 def run_test_search(protein, target, start, raw_root, cutoff, rotation_search_step_size, pair_path, no_prot_h,
                     pocket_only, get_time):
-    angles = [i for i in range(-30, 30, rotation_search_step_size)]
+    angles = [i for i in range(-30, 30 + rotation_search_step_size, rotation_search_step_size)]
     angles = angles[:5]
     x_rot = random.choice(angles)
     y_rot = random.choice(angles)
     z_rot = random.choice(angles)
+    grid_points = [i for i in range(-6, 7)]
+    grid = [[random.choice(grid_points), random.choice(grid_points), random.choice(grid_points)]]
 
-    conformer = run_search(protein, target, start, raw_root, get_time, cutoff, rotation_search_step_size, no_prot_h,
-                           pocket_only, True, x_rot, y_rot, z_rot)
-    start_lig_file = os.path.join(pair_path, '{}_lig.mae'.format(start))
-    start_lig = list(structure.StructureReader(start_lig_file))[0]
-    start_lig_center = list(get_centroid(start_lig))
+    conformer = run_search(protein, target, start, 0, raw_root, get_time, cutoff, rotation_search_step_size, grid,
+                           no_prot_h, pocket_only, True, x_rot, y_rot, z_rot)
 
-    conformer_file = os.path.join(pair_path, "aligned_to_start_conformers.mae")
+    conformer_file = os.path.join(pair_path, "aligned_to_start_without_hydrogen_conformers.mae")
     base_conf = list(structure.StructureReader(conformer_file))[0]
-    grid_loc = [0, 0, 0]
+    translate_structure(base_conf, grid[0][0], grid[0][1], grid[0][2])
     base_conf_center = list(get_centroid(base_conf))
-    translate_structure(base_conf, start_lig_center[0] - base_conf_center[0] + grid_loc[0],
-                                  start_lig_center[1] - base_conf_center[1] + grid_loc[1],
-                                  start_lig_center[2] - base_conf_center[2] + grid_loc[2])
-    base_conf_center = list(get_centroid(base_conf))
-    rotate_structure(base_conf, math.radians(x_rot), math.radians(y_rot), math.radians(z_rot),
-                               base_conf_center)
+    coords = base_conf.getXYZ(copy=False)
+    new_coords = rotate_structure(coords, math.radians(x_rot), math.radians(y_rot), math.radians(z_rot),
+                                  base_conf_center)
+    base_conf.setXYZ(new_coords)
+
     rmsd_val = rmsd.calculate_in_place_rmsd(conformer, conformer.getAtomIndices(), base_conf,
                                             base_conf.getAtomIndices())
-    if abs(rmsd_val) < 0.2:
+    if abs(rmsd_val) == 0:
         print("Search works properly", rmsd_val)
     else:
         print("x_rot =", x_rot, "y_rot =", y_rot, "z_rot =", z_rot)
         print("RMSD =", rmsd_val, "but RMSD should equal 0")
 
-
-def run_combine_search_data(process, grouped_files, raw_root, grid_size):
+def get_data(process, grouped_files, raw_root, grid_size, save_combine=False):
     counter = 0
     dfs = []
     protein_pairs = []
@@ -863,19 +729,22 @@ def run_combine_search_data(process, grouped_files, raw_root, grid_size):
             dfs.append(pd.read_csv(os.path.join(save_folder, '{}.csv'.format(i))))
 
     data_df = pd.concat(dfs)
-    pair_dict = {}
+    if save_combine:
+        data_df.to_csv(os.path.join(os.getcwd(), 'decoy_timing_data', 'combined.csv'))
+    else:
+        pair_dict = {}
 
-    for protein, target, start in protein_pairs:
-        pair = '{}_{}-to-{}'.format(protein, target, start)
-        pair_df = data_df[(data_df['protein'] == protein) & (data_df['target'] == target) & (data_df['start'] == start)]
-        pair_dict[pair] = []
-        for i in range(grid_size + 1):
-            grid_df = pair_df[(pair_df['grid_loc_x'] <= i) & (pair_df['grid_loc_x'] >= -i) &
-                              (pair_df['grid_loc_y'] <= i) & (pair_df['grid_loc_y'] >= -i) &
-                              (pair_df['grid_loc_z'] <= i) & (pair_df['grid_loc_z'] >= -i)]
-            pair_dict[pair].append(grid_df.sum(axis=0)['num_correct_poses_found'])
+        for protein, target, start in protein_pairs:
+            pair = '{}_{}-to-{}'.format(protein, target, start)
+            pair_df = data_df[(data_df['protein'] == protein) & (data_df['target'] == target) & (data_df['start'] == start)]
+            pair_dict[pair] = []
+            for i in range(grid_size + 1):
+                grid_df = pair_df[(pair_df['grid_loc_x'] <= i) & (pair_df['grid_loc_x'] >= -i) &
+                                  (pair_df['grid_loc_y'] <= i) & (pair_df['grid_loc_y'] >= -i) &
+                                  (pair_df['grid_loc_z'] <= i) & (pair_df['grid_loc_z'] >= -i)]
+                pair_dict[pair].append(grid_df.sum(axis=0)['num_correct_poses_found'])
 
-    print(pair_dict)
+        print(pair_dict)
 
 
 
@@ -959,14 +828,12 @@ def main():
         random.shuffle(process)
         grouped_files = get_grid_groups(args.grid_size, args.grid_n)
         search_system_caller(process, args.raw_root, args.run_path, args.docked_prot_file,
-                             args.rotation_search_step_size, grouped_files)
+                             args.rotation_search_step_size, args.grid_size, grouped_files)
 
     elif args.task == 'search':
-        # grouped_files = get_grid_groups(args.grid_size, args.grid_n)
-        # run_search(args.protein, args.target, args.start, args.index, args.raw_root, args.get_time, args.rmsd_cutoff,
-        #            args.rotation_search_step_size, grouped_files[args.index], args.no_prot_h, args.pocket_only)
+        grouped_files = get_grid_groups(args.grid_size, args.grid_n)
         run_search(args.protein, args.target, args.start, args.index, args.raw_root, args.get_time, args.rmsd_cutoff,
-                   args.rotation_search_step_size, [[0, 0, 0]], args.no_prot_h, args.pocket_only)
+                   args.rotation_search_step_size, grouped_files[args.index], args.no_prot_h, args.pocket_only)
 
     elif args.task == 'check_search':
         process = get_prots(args.docked_prot_file)
@@ -997,11 +864,17 @@ def main():
         run_test_search(args.protein, args.target, args.start, args.raw_root, args.rmsd_cutoff,
                         args.rotation_search_step_size, pair_path, args.no_prot_h, args.pocket_only, args.get_time)
 
+    elif args.task == 'get_grid_data':
+        process = get_prots(args.docked_prot_file)
+        random.shuffle(process)
+        grouped_files = get_grid_groups(args.grid_size, args.grid_n)
+        get_data(process, grouped_files, args.raw_root, args.grid_size)
+
     elif args.task == 'combine_search_data':
         process = get_prots(args.docked_prot_file)
         random.shuffle(process)
         grouped_files = get_grid_groups(args.grid_size, args.grid_n)
-        run_combine_search_data(process, grouped_files, args.raw_root, args.grid_size)
+        get_data(process, grouped_files, args.raw_root, args.grid_size, True)
 
     elif args.task == 'get_dist':
         process = get_prots(args.docked_prot_file)
@@ -1054,7 +927,9 @@ def main():
         rotation_center = [rotation_center[0], rotation_center[1], rotation_center[2]]
         transform.rotate_structure(schrodinger_prot, rotation_vector[0], rotation_vector[1], rotation_vector[2],
                                    rotation_center)
-        rotate_structure(custom_prot, rotation_vector[0], rotation_vector[1], rotation_vector[2], rotation_center)
+        coords = rotate_structure(custom_prot.getXYZ(copy=False), rotation_vector[0], rotation_vector[1],
+                                  rotation_vector[2], rotation_center)
+        custom_prot.setXYZ(coords)
         schrodinger_atoms = np.array(schrodinger_prot.getXYZ(copy=False))
         custom_atoms = np.array(custom_prot.getXYZ(copy=False))
         if np.amax(np.absolute(schrodinger_atoms - custom_atoms)) < 10 ** -7:
@@ -1092,6 +967,30 @@ def main():
         file = os.path.join(pair_path, 'translated_conformer_248.mae')
         with structure.StructureWriter(file) as best_match:
             best_match.append(rmsds[248][0])
+
+    elif args.task == 'check_rotation':
+        target_lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(args.target))
+        target_lig = list(structure.StructureReader(target_lig_file))[0]
+        remove = [i for i in target_lig.getAtomIndices() if i != 1]
+        target_lig.deleteAtoms(remove)
+        center = list(get_centroid(target_lig))
+        print("ROTATE 5,5,5")
+        rotate_structure(target_lig, math.radians(5), math.radians(5), math.radians(5), center)
+
+        target_lig_2 = list(structure.StructureReader(target_lig_file))[0]
+        target_lig_2.deleteAtoms(remove)
+        center = list(get_centroid(target_lig_2))
+        print("ROTATE 5,0,0")
+        rotate_structure(target_lig_2, math.radians(5), 0, 0, center)
+        print("ROTATE 0,5,0")
+        rotate_structure(target_lig_2, 0, math.radians(5), 0, center)
+        print("ROTATE 0,0,5")
+        rotate_structure(target_lig_2, 0, 0, math.radians(5), center)
+
+        print(rmsd.calculate_in_place_rmsd(target_lig, target_lig.getAtomIndices(), target_lig_2,
+                                           target_lig_2.getAtomIndices()))
+        print(target_lig.getXYZ(copy=False))
+        print(target_lig_2.getXYZ(copy=False))
 
 if __name__=="__main__":
     main()
