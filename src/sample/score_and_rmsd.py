@@ -2,7 +2,7 @@
 The purpose of this code is to get the physics scores and the rmsds
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 score_and_rmsd.py stats /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --max_num_concurrent_jobs 1
+$ $SCHRODINGER/run python3 score_and_rmsd.py add_glide /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein O38732 --target 2i0a --start 2q5k  --max_num_concurrent_jobs 50
 """
 
 import argparse
@@ -44,7 +44,8 @@ def group_files(n, process):
 
     return grouped_files
 
-def run(process, run_path, raw_root, decoy_type, max_num_concurrent_jobs):
+
+def run(protein, target, start, run_path, raw_root, decoy_type, max_num_concurrent_jobs):
     """
     get scores and rmsds
     :param process: (list) list of all protein, target, start
@@ -54,26 +55,26 @@ def run(process, run_path, raw_root, decoy_type, max_num_concurrent_jobs):
     :return:
     """
     docking_config = []
-    for protein, target, start in process:
-        pair = '{}-to-{}'.format(target, start)
-        protein_path = os.path.join(raw_root, protein)
-        pair_path = os.path.join(protein_path, pair)
-        pose_path = os.path.join(pair_path, decoy_type)
-        grouped_pose_path = os.path.join(pose_path, 'grouped_poses')
-        dock_output_path = os.path.join(pose_path, 'dock_output')
-        ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
-        if not os.path.exists(dock_output_path):
-            os.mkdir(dock_output_path)
-        for file in os.listdir(grouped_pose_path):
-            name = file[:-6]
+    pair = '{}-to-{}'.format(target, start)
+    protein_path = os.path.join(raw_root, protein)
+    pair_path = os.path.join(protein_path, pair)
+    pose_path = os.path.join(pair_path, decoy_type)
+    grouped_pose_path = os.path.join(pose_path, 'grouped_poses')
+    dock_output_path = os.path.join(pose_path, 'dock_output')
+    ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
+    if not os.path.exists(dock_output_path):
+        os.mkdir(dock_output_path)
+    for file in os.listdir(grouped_pose_path):
+        name = file[:-6]
+        if not os.path.exists(os.path.join(dock_output_path, '{}.scor'.format(name))):
             docking_config.append({'folder': dock_output_path,
                                    'name': name,
                                    'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
                                    'prepped_ligand_file': os.path.join(grouped_pose_path, file),
                                    'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
                                    'ligand_file': ground_truth_file})
-            if len(docking_config) == max_num_concurrent_jobs:
-                break
+        if len(docking_config) == max_num_concurrent_jobs:
+            break
     print(len(docking_config))
 
     run_config = {'run_folder': run_path,
@@ -84,17 +85,14 @@ def run(process, run_path, raw_root, decoy_type, max_num_concurrent_jobs):
     dock_set = Docking_Set()
     dock_set.run_docking_rmsd_delete(docking_config, run_config)
 
-def check(raw_root, decoy_type):
+
+def check(raw_root, decoy_type, protein, target, start):
     """
     check if scores and rmsds were calculated
     :param docked_prot_file: (string) file listing proteins to process
     :param raw_root: (string) directory where raw data will be placed
     :return:
     """
-    protein = 'P18031'
-    target = '1g7g'
-    start = '1c83'
-
     pair = '{}-to-{}'.format(target, start)
     protein_path = os.path.join(raw_root, protein)
     pair_path = os.path.join(protein_path, pair)
@@ -102,20 +100,25 @@ def check(raw_root, decoy_type):
     grouped_pose_path = os.path.join(pose_path, 'grouped_poses')
     dock_output_path = os.path.join(pose_path, 'dock_output')
     ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
-    docking_config = []
     missing = []
     incomplete = []
 
     for file in os.listdir(grouped_pose_path):
         name = file[:-6]
-        docking_config.append({'folder': dock_output_path,
-                               'name': name,
-                               'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
-                               'prepped_ligand_file': os.path.join(grouped_pose_path, file),
-                               'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
-                               'ligand_file': ground_truth_file})
+        docking_config = [{'folder': dock_output_path,
+                           'name': name,
+                           'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
+                           'prepped_ligand_file': os.path.join(grouped_pose_path, file),
+                           'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
+                           'ligand_file': ground_truth_file}]
         dock_set = Docking_Set()
         if not os.path.exists(os.path.join(dock_output_path, '{}.scor'.format(name))):
+            if os.path.exists(os.path.join(dock_output_path, '{}.in'.format(name))):
+                os.remove(os.path.join(dock_output_path, '{}.in'.format(name)))
+            if os.path.exists(os.path.join(dock_output_path, '{}.log'.format(name))):
+                os.remove(os.path.join(dock_output_path, '{}.log'.format(name)))
+            if os.path.exists(os.path.join(dock_output_path, '{}_state.json'.format(name))):
+                os.remove(os.path.join(dock_output_path, '{}_state.json'.format(name)))
             missing.append(name)
             continue
         else:
@@ -141,6 +144,9 @@ def main():
     parser.add_argument('task', type=str, help='either run, check, or delete_json')
     parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
+    parser.add_argument('--protein', type=str, default='', help='protein name')
+    parser.add_argument('--target', type=str, default='', help='target ligand name')
+    parser.add_argument('--start', type=str, default='', help='start ligand name')
     parser.add_argument('--index', type=int, default=-1, help='for group task, group number')
     parser.add_argument('--n', type=int, default=3, help='number of protein, target, start groups processed in '
                                                          'group task')
@@ -154,24 +160,20 @@ def main():
         os.mkdir(args.run_path)
 
     if args.task == 'run':
-        process = [('P18031', '1g7g', '1c83')]
-        run(process, args.run_path, args.raw_root, args.decoy_type, args.max_num_concurrent_jobs)
+        run(args.protein, args.target, args.start, args.run_path, args.raw_root, args.decoy_type,
+            args.max_num_concurrent_jobs)
 
     elif args.task == 'check':
-        check(args.raw_root, args.decoy_type)
+        check(args.raw_root, args.decoy_type, args.protein, args.target, args.start)
 
     elif args.task == 'combine':
-        protein = 'P18031'
-        target = '1g7g'
-        start = '1c83'
-
-        pair = '{}-to-{}'.format(target, start)
-        protein_path = os.path.join(args.raw_root, protein)
+        pair = '{}-to-{}'.format(args.target, args.start)
+        protein_path = os.path.join(args.raw_root, args.protein)
         pair_path = os.path.join(protein_path, pair)
         pose_path = os.path.join(pair_path, args.decoy_type)
         dfs = []
         for file in os.listdir(pose_path):
-            if file[-3:] == 'csv':
+            if file[-9:] == 'poses.csv':
                 df = pd.read_csv(os.path.join(pose_path, file))
                 dfs.append(df)
 
@@ -179,109 +181,60 @@ def main():
         combined_df.to_csv(os.path.join(pose_path, 'combined.csv'))
 
     elif args.task == 'add_data':
-        protein = 'P18031'
-        target = '1g7g'
-        start = '1c83'
-
-        pair = '{}-to-{}'.format(target, start)
-        protein_path = os.path.join(args.raw_root, protein)
+        pair = '{}-to-{}'.format(args.target, args.start)
+        protein_path = os.path.join(args.raw_root, args.protein)
         pair_path = os.path.join(protein_path, pair)
         pose_path = os.path.join(pair_path, args.decoy_type)
         grouped_pose_path = os.path.join(pose_path, 'grouped_poses')
         dock_output_path = os.path.join(pose_path, 'dock_output')
-        ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
+        ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(args.target))
 
         df = pd.read_csv(os.path.join(pose_path, 'combined.csv'))
-        all_names_unrenamed = df['name'].tolist()
-        all_names = []
-        for name in all_names_unrenamed:
-            conf, gridloc, rot = name.split('_')
-            conf = int(conf[4:])
-            gridloc_x, gridloc_y, gridloc_z = gridloc[7:].split(',')
-            gridloc_x = int(gridloc_x)
-            gridloc_y = int(gridloc_y)
-            gridloc_z = int(gridloc_z)
-            rot_x, rot_y, rot_z = rot[3:].split(',')
-            rot_x = int(rot_x)
-            rot_y = int(rot_y)
-            rot_z = int(rot_z)
-            all_names.append('{}_{},{},{}_{},{},{}'.format(conf, gridloc_x, gridloc_y, gridloc_z, rot_x, rot_y, rot_z))
-        rmsd_dict = {}
-        glide_dict = {}
+        in_place_data = {'name': [], 'glide_score': [], 'score_no_vdw': [], 'modified_score_no_vdw': [],
+                         'start_clash': [], 'target_clash': [], 'rmsd': []}
 
-        for file in os.listdir(grouped_pose_path):
-            name = file[:-6]
+        for file in os.listdir(dock_output_path):
+            if file[-4:] == 'scor':
+                name = file[:-5]
+                docking_config = [{'folder': dock_output_path,
+                                   'name': name,
+                                   'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
+                                   'prepped_ligand_file': os.path.join(grouped_pose_path, '{}.maegz'.format(name)),
+                                   'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
+                                   'ligand_file': ground_truth_file}]
+                dock_set = Docking_Set()
+                results = dock_set.get_docking_gscores(docking_config, mode='multi')
+                results_by_ligand = results[name]
+                for n in results_by_ligand:
+                    in_place_data['name'].append(n)
+                    in_place_data['glide_score'].append(results_by_ligand[n][0]['Score'])
+                    score = score_no_vdW(results_by_ligand[n][0])
+                    in_place_data['score_no_vdw'].append(score)
+                    if score > 20:
+                        in_place_data['modified_score_no_vdw'].append(20)
+                    elif score < -20:
+                        in_place_data['modified_score_no_vdw'].append(-20)
+                    else:
+                        in_place_data['modified_score_no_vdw'].append(score)
+                    in_place_data['start_clash'].append(df[df['name'] == n]['start_clash'].iloc[0])
+                    in_place_data['target_clash'].append(df[df['name'] == n]['target_clash'].iloc[0])
+                    in_place_data['rmsd'].append(df[df['name'] == n]['rmsd'].iloc[0])
 
-            rmsd_df = pd.read_csv(os.path.join(dock_output_path, '{}_rmsd.csv'.format(name)))
-            names = rmsd_df['Title'].tolist()
-            for n in names:
-                rmsd_dict[n] = rmsd_df[rmsd_df['Title'] == n]['RMSD'].iloc[0]
-
-            docking_config = [{'folder': dock_output_path,
-                               'name': name,
-                               'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
-                               'prepped_ligand_file': os.path.join(grouped_pose_path, file),
-                               'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
-                               'ligand_file': ground_truth_file}]
-            dock_set = Docking_Set()
-            results = dock_set.get_docking_gscores(docking_config, mode='multi')
-            results_by_ligand = results[name]
-            for n in results_by_ligand:
-                glide_dict[n] = (results_by_ligand[n][0]['Score'], score_no_vdW(results_by_ligand[n][0]))
-
-        rmsds = [rmsd_dict[name] for name in all_names]
-        df['rmsd'] = rmsds
-
-        glide_scores = [glide_dict[name][0] for name in all_names]
-        score_no_vdws = [glide_dict[name][1] for name in all_names]
-        modified_score_no_vdws = []
-        for score in score_no_vdws:
-            if score > 20:
-                modified_score_no_vdws.append(20)
-            elif score < -20:
-                modified_score_no_vdws.append(-20)
-            else:
-                modified_score_no_vdws.append(score)
-        df['glide_score'] = glide_scores
-        df['score_no_vdw'] = score_no_vdws
-        df['modified_score_no_vdws'] = modified_score_no_vdws
-        df.to_csv(os.path.join(pose_path, 'combined_data.csv'))
-
-    elif args.task == 'stats':
-        protein = 'P18031'
-        target = '1g7g'
-        start = '1c83'
-
-        pair = '{}-to-{}'.format(target, start)
-        protein_path = os.path.join(args.raw_root, protein)
-        pair_path = os.path.join(protein_path, pair)
-        # pose_path = os.path.join(pair_path, args.decoy_type)
-        #
-        # df = pd.read_csv(os.path.join(pose_path, 'combined_data.csv'))
-        # print(len(df))
-        # print(len(df[df['rmsd'] < 3]) / len(df))
-        # print(min(df[df['rmsd'] < 3]))
-
-        prot = os.path.join(pair_path, '{}_prot.mae'.format(target))
-        lig = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
-        print()
+        in_place_df = pd.DataFrame.from_dict(in_place_data)
+        in_place_df.to_csv(os.path.join(pose_path, 'in_place_combined.csv'))
 
     elif args.task == 'add_glide':
-        protein = 'C8B467'
-        target = '5jfu'
-        start = '5jfp'
-
-        pair = '{}-to-{}'.format(target, start)
-        protein_path = os.path.join(args.raw_root, protein)
+        pair = '{}-to-{}'.format(args.target, args.start)
+        protein_path = os.path.join(args.raw_root, args.protein)
         pair_path = os.path.join(protein_path, pair)
         pose_path = os.path.join(pair_path, args.decoy_type)
 
-        grid_df = pd.read_csv(os.path.join(pose_path, 'combined.csv'))
+        grid_df = pd.read_csv(os.path.join(pose_path, 'in_place_combined.csv'))
         glide_df = pd.read_csv(os.path.join(pair_path, '{}.csv'.format(pair)))
-        glide_data = {'name': [], 'rmsd': [], 'glide_score': [], 'score_no_vdw': [], 'modified_score_no_vdws': []}
+        glide_data = {'name': [], 'rmsd': [], 'glide_score': [], 'score_no_vdw': [], 'modified_score_no_vdw': []}
 
         for i in range(1, 100):
-            pose_df = glide_df[glide_df['target'] == '{}_lig{}'.format(target, i)]
+            pose_df = glide_df[glide_df['target'] == '{}_lig{}'.format(args.target, i)]
             if len(pose_df) > 0:
                 glide_data['name'].append(pose_df['target'].iloc[0])
                 glide_data['rmsd'].append(pose_df['rmsd'].iloc[0])
@@ -289,15 +242,26 @@ def main():
                 score = pose_df['score_no_vdw'].iloc[0]
                 glide_data['score_no_vdw'].append(score)
                 if score > 20:
-                    glide_data['modified_score_no_vdws'].append(20)
+                    glide_data['modified_score_no_vdw'].append(20)
                 elif score < -20:
-                    glide_data['modified_score_no_vdws'].append(-20)
+                    glide_data['modified_score_no_vdw'].append(-20)
                 else:
-                    glide_data['modified_score_no_vdws'].append(score)
+                    glide_data['modified_score_no_vdw'].append(score)
 
         df_to_add = pd.DataFrame.from_dict(glide_data)
         df = pd.concat([grid_df, df_to_add])
         df.to_csv(os.path.join(pose_path, 'combined_glide.csv'))
+
+    elif args.task == 'stats':
+        pair = '{}-to-{}'.format(args.target, args.start)
+        protein_path = os.path.join(args.raw_root, args.protein)
+        pair_path = os.path.join(protein_path, pair)
+        pose_path = os.path.join(pair_path, args.decoy_type)
+
+        df = pd.read_csv(os.path.join(pose_path, 'in_place_combined.csv'))
+        print(len(df[df['rmsd'] < 2]))
+        print(len(df))
+        print(len(df[df['rmsd'] < 2]) / len(df))
 
 if __name__=="__main__":
     main()

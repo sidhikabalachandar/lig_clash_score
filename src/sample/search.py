@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 search.py all_search /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/src/data/decoy_timing_data_with_clash --grid_size 1 --n 1
+$ $SCHRODINGER/run python3 search.py all_search /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --grid_size 1 --n 1 --group_name grid_no_target_clash_cutoff --no_target_clash_cutoff
 """
 
 import argparse
@@ -14,7 +14,6 @@ import schrodinger.structutils.transform as transform
 import schrodinger.structutils.interactions.steric_clash as steric_clash
 import schrodinger.structutils.rmsd as rmsd
 import random
-from tqdm import tqdm
 import pickle
 import scipy.spatial
 import time
@@ -294,31 +293,32 @@ def rotate_structure(coords, x_angle, y_angle, z_angle, rot_center):
 # MAIN TASK FUNCTIONS
 
 
-def all_search(pairs, raw_root, run_path, docked_prot_file, save_folder, rotation_search_step_size, grid_size, n,
-               target_clash_cutoff, include_clash_filter, pocket_only, no_prot_h, save_poses, grouped_files):
+def all_search(pairs, raw_root, run_path, docked_prot_file, rotation_search_step_size, grid_size, n,
+               target_clash_cutoff, group_name, include_clash_filter, pocket_only, no_prot_h, inc_target_clash_cutoff,
+               grouped_files):
     for protein, target, start in pairs:
         for i in range(len(grouped_files)):
-            cmd = 'sbatch -p rondror -t 6:00:00 -o {} --wrap="$SCHRODINGER/run python3 search.py search {} {} {} {} ' \
+            cmd = 'sbatch -p rondror -t 6:00:00 -o {} --wrap="$SCHRODINGER/run python3 search.py search {} {} {} ' \
                   '--protein {} --target {} --start {} --rotation_search_step_size {} --grid_size {} --n {} ' \
-                  '--target_clash_cutoff {} --index {}'
+                  '--target_clash_cutoff {} --index {} --group_name {}'
             if not include_clash_filter:
                 cmd += ' --no_clash_filter'
             if not pocket_only:
                 cmd += ' --all_prot'
             if not no_prot_h:
                 cmd += ' --keep_prot_h'
-            if save_poses:
-                cmd += ' --save'
+            if not inc_target_clash_cutoff:
+                cmd += ' --no_target_clash_cutoff'
             cmd += '"'
             out_file_name = '{}_{}-to-{}_{}.out'.format(protein, target, start, i)
-            os.system(cmd.format(os.path.join(run_path, out_file_name), docked_prot_file, run_path, raw_root,
-                                 save_folder, protein, target, start, rotation_search_step_size, grid_size, n,
-                                 target_clash_cutoff, i))
+            os.system(cmd.format(os.path.join(run_path, out_file_name), docked_prot_file, run_path, raw_root, protein,
+                                 target, start, rotation_search_step_size, grid_size, n, target_clash_cutoff, i,
+                                 group_name))
 
 
-def search(protein, target, start, index, raw_root, save_folder, get_time, rmsd_cutoff, start_clash_cutoff,
-           target_clash_cutoff, rotation_search_step_size, grid, no_prot_h, pocket_only, include_clash_filter,
-           save_poses, test=False, x_rot=0, y_rot=0, z_rot=0):
+def search(protein, target, start, index, raw_root, get_time, rmsd_cutoff, start_clash_cutoff, target_clash_cutoff,
+           rotation_search_step_size, grid, no_prot_h, pocket_only, group_name, inc_target_clash_cutoff, test=False,
+           x_rot=0, y_rot=0, z_rot=0):
     pair = '{}-to-{}'.format(target, start)
     protein_path = os.path.join(raw_root, protein)
     pair_path = os.path.join(protein_path, pair)
@@ -341,7 +341,7 @@ def search(protein, target, start, index, raw_root, save_folder, get_time, rmsd_
     else:
         conformer = create_poses(grid, target_lig, start_prot, target_prot, rmsd_cutoff, start_clash_cutoff,
                                  target_clash_cutoff, rotation_search_step_size, protein, target, start, index,
-                                 pair_path, save_folder, include_clash_filter, save_poses, test, x_rot, y_rot, z_rot)
+                                 pair_path, group_name, test, x_rot, y_rot, z_rot, inc_target_clash_cutoff)
 
         return conformer
 
@@ -415,121 +415,108 @@ def get_times(pair_path, target_lig, prot):
 
 
 def create_poses(grid, target_lig, start_prot, target_prot, rmsd_cutoff, start_clash_cutoff, target_clash_cutoff,
-                 rotation_search_step_size, protein, target, start, index, pair_path, save_folder, include_clash_filter,
-                 save_poses, test, x_rot, y_rot, z_rot):
+                 rotation_search_step_size, protein, target, start, index, pair_path, group_name, test, x_rot, y_rot,
+                 z_rot, inc_target_clash_cutoff):
     data_dict = {'protein': [], 'target': [], 'start': [], 'num_conformers': [], 'num_poses_searched': [],
-                 'num_correct_poses_found': [], 'time_elapsed': [], 'time_elapsed_per_conformer': [], 'grid_loc_x': [],
-                 'grid_loc_y': [], 'grid_loc_z': []}
-    clash_data = []
-    pose_path = os.path.join(pair_path, 'grid_search_poses')
+                 'num_correct_poses_found': [], 'num_correct_after_simple_filter': [],
+                 'num_correct_after_advanced_filter':[], 'time_elapsed': [], 'time_elapsed_per_conformer': [],
+                 'grid_loc_x': [], 'grid_loc_y': [], 'grid_loc_z': []}
+    pose_path = os.path.join(pair_path, group_name)
     if not os.path.exists(pose_path):
         os.mkdir(pose_path)
 
-    saved_dict = {'name': [], 'start_clash': [], 'target_clash': []}
+    saved_dict = {'name': [], 'conformer_index': [], 'grid_loc_x': [], 'grid_loc_y': [], 'grid_loc_z': [], 'rot_x': [],
+                  'rot_y': [], 'rot_z': [], 'start_clash': [], 'target_clash': [], 'rmsd': []}
 
     for grid_loc in grid:
         counter = 0
         num_correct_found = 0
+        num_correct_after_simple_filter = 0
+        num_correct_after_advanced_filter = 0
         conformer_file_without_hydrogen = os.path.join(pair_path, "aligned_to_start_without_hydrogen_conformers.mae")
-        conformer_file_with_hydrogen = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
         conformers_without_hydrogen = list(structure.StructureReader(conformer_file_without_hydrogen))
-        conformers_with_hydrogen = list(structure.StructureReader(conformer_file_with_hydrogen))
-        pose_file = os.path.join(pose_path, '{}_{}_{}.maegz'.format(grid_loc[0], grid_loc[1], grid_loc[2]))
 
-        with structure.StructureWriter(pose_file) as pose:
-            decoy_start_time = time.time()
-            for i, conformer_without_hydrogen in enumerate(conformers_without_hydrogen):
-                translate_structure(conformer_without_hydrogen, grid_loc[0], grid_loc[1], grid_loc[2])
-                conformer_center_without_hydrogen = list(get_centroid(conformer_without_hydrogen))
-                coords_without_hydrogen = conformer_without_hydrogen.getXYZ(copy=True)
+        decoy_start_time = time.time()
+        for i, conformer_without_hydrogen in enumerate(conformers_without_hydrogen):
+            translate_structure(conformer_without_hydrogen, grid_loc[0], grid_loc[1], grid_loc[2])
+            conformer_center_without_hydrogen = list(get_centroid(conformer_without_hydrogen))
+            coords_without_hydrogen = conformer_without_hydrogen.getXYZ(copy=True)
 
-                conformer_with_hydrogen = conformers_with_hydrogen[i]
-                translate_structure(conformer_with_hydrogen, grid_loc[0], grid_loc[1], grid_loc[2])
-                conformer_center_with_hydrogen = list(get_centroid(conformer_with_hydrogen))
-                coords_with_hydrogen = conformer_with_hydrogen.getXYZ(copy=True)
+            for x in range(-30, 30 + rotation_search_step_size, rotation_search_step_size):
+                for y in range(-30, 30 + rotation_search_step_size, rotation_search_step_size):
+                    for z in range(-30, 30 + rotation_search_step_size, rotation_search_step_size):
+                        counter += 1
+                        new_coords = rotate_structure(coords_without_hydrogen, math.radians(x), math.radians(y),
+                                                      math.radians(z), conformer_center_without_hydrogen)
+                        conformer_without_hydrogen.setXYZ(new_coords)
 
-                for x in range(-30, 30 + rotation_search_step_size, rotation_search_step_size):
-                    for y in range(-30, 30 + rotation_search_step_size, rotation_search_step_size):
-                        for z in range(-30, 30 + rotation_search_step_size, rotation_search_step_size):
-                            counter += 1
-                            new_coords = rotate_structure(coords_without_hydrogen, math.radians(x), math.radians(y),
-                                                          math.radians(z), conformer_center_without_hydrogen)
-                            conformer_without_hydrogen.setXYZ(new_coords)
+                        if test and x_rot == x and y_rot == y and z_rot == z:
+                            return conformer_without_hydrogen
 
-                            if test and x_rot == x and y_rot == y and z_rot == z:
-                                return conformer_without_hydrogen
+                        rmsd_val = rmsd.calculate_in_place_rmsd(conformer_without_hydrogen,
+                                                                conformer_without_hydrogen.getAtomIndices(),
+                                                                target_lig, target_lig.getAtomIndices())
+                        if rmsd_val < rmsd_cutoff:
+                            num_correct_found += 1
 
-                            if save_poses:
-                                start_clash = steric_clash.clash_volume(start_prot, struc2=conformer_without_hydrogen)
-                                if start_clash < start_clash_cutoff:
-                                    target_clash = steric_clash.clash_volume(target_prot,
-                                                                             struc2=conformer_without_hydrogen)
-                                    if target_clash < target_clash_cutoff:
-                                        name = '{}_{},{},{}_{},{},{}'.format(i, grid_loc[0], grid_loc[1],
-                                                                                           grid_loc[2], x, y, z)
-                                        new_coords = rotate_structure(coords_with_hydrogen, math.radians(x),
-                                                                      math.radians(y), math.radians(z),
-                                                                      conformer_center_with_hydrogen)
-                                        conformer_with_hydrogen.setXYZ(new_coords)
-
-                                        conformer_with_hydrogen.title = name
-                                        pose.append(conformer_with_hydrogen)
-                                        saved_dict['name'].append(name)
-                                        saved_dict['start_clash'].append(start_clash)
-                                        saved_dict['target_clash'].append(target_clash)
-
-                            else:
-                                rmsd_val = rmsd.calculate_in_place_rmsd(conformer_without_hydrogen,
-                                                                        conformer_without_hydrogen.getAtomIndices(),
-                                                                        target_lig, target_lig.getAtomIndices())
-                                if include_clash_filter:
-                                    clash = steric_clash.clash_volume(start_prot, struc2=conformer_without_hydrogen)
-                                    clash_data.append((clash, rmsd_val))
-
+                        start_clash = steric_clash.clash_volume(start_prot, struc2=conformer_without_hydrogen)
+                        if start_clash < start_clash_cutoff:
+                            if rmsd_val < rmsd_cutoff:
+                                num_correct_after_simple_filter += 1
+                            target_clash = steric_clash.clash_volume(target_prot,
+                                                                     struc2=conformer_without_hydrogen)
+                            if target_clash < target_clash_cutoff or not inc_target_clash_cutoff:
                                 if rmsd_val < rmsd_cutoff:
-                                    num_correct_found += 1
+                                    num_correct_after_advanced_filter += 1
+                                name = '{}_{},{},{}_{},{},{}'.format(i, grid_loc[0], grid_loc[1], grid_loc[2], x, y,
+                                                                     z)
+                                saved_dict['name'].append(name)
+                                saved_dict['conformer_index'].append(i)
+                                saved_dict['grid_loc_x'].append(grid_loc[0])
+                                saved_dict['grid_loc_y'].append(grid_loc[1])
+                                saved_dict['grid_loc_z'].append(grid_loc[2])
+                                saved_dict['rot_x'].append(x)
+                                saved_dict['rot_y'].append(y)
+                                saved_dict['rot_z'].append(z)
+                                saved_dict['start_clash'].append(start_clash)
+                                saved_dict['target_clash'].append(target_clash)
+                                saved_dict['rmsd'].append(rmsd_val)
 
-            decoy_end_time = time.time()
+        decoy_end_time = time.time()
 
-        if save_poses:
-            df = pd.DataFrame.from_dict(saved_dict)
-            df.to_csv(os.path.join(pose_path, '{}_{}_{}.csv'.format(grid_loc[0], grid_loc[1], grid_loc[2])))
-        else:
-            data_dict['protein'].append(protein)
-            data_dict['target'].append(target)
-            data_dict['start'].append(start)
-            data_dict['num_conformers'].append(len(conformers_without_hydrogen))
-            data_dict['num_poses_searched'].append(counter)
-            data_dict['num_correct_poses_found'].append(num_correct_found)
-            data_dict['time_elapsed'].append(decoy_end_time - decoy_start_time)
-            data_dict['time_elapsed_per_conformer'].append((decoy_end_time - decoy_start_time) /
-                                                           len(conformers_without_hydrogen))
-            data_dict['grid_loc_x'].append(grid_loc[0])
-            data_dict['grid_loc_y'].append(grid_loc[1])
-            data_dict['grid_loc_z'].append(grid_loc[2])
+        df = pd.DataFrame.from_dict(saved_dict)
+        df.to_csv(os.path.join(pose_path, 'gridloc_{}_{}_{}_poses.csv'.format(grid_loc[0], grid_loc[1], grid_loc[2])))
 
-    if not save_poses:
-        df = pd.DataFrame.from_dict(data_dict)
-        pair_folder = os.path.join(save_folder, '{}_{}-to-{}'.format(protein, target, start))
-        if not os.path.exists(pair_folder):
-            os.mkdir(pair_folder)
-        df.to_csv(os.path.join(pair_folder, '{}.csv'.format(index)))
-        if include_clash_filter:
-            outfile = open(os.path.join(pair_folder, 'clash_data_{}.pkl'.format(index)), 'wb')
-            pickle.dump(clash_data, outfile)
+        data_dict['protein'].append(protein)
+        data_dict['target'].append(target)
+        data_dict['start'].append(start)
+        data_dict['num_conformers'].append(len(conformers_without_hydrogen))
+        data_dict['num_poses_searched'].append(counter)
+        data_dict['num_correct_poses_found'].append(num_correct_found)
+        data_dict['num_correct_after_simple_filter'].append(num_correct_after_simple_filter)
+        data_dict['num_correct_after_advanced_filter'].append(num_correct_after_advanced_filter)
+        data_dict['time_elapsed'].append(decoy_end_time - decoy_start_time)
+        data_dict['time_elapsed_per_conformer'].append((decoy_end_time - decoy_start_time) /
+                                                       len(conformers_without_hydrogen))
+        data_dict['grid_loc_x'].append(grid_loc[0])
+        data_dict['grid_loc_y'].append(grid_loc[1])
+        data_dict['grid_loc_z'].append(grid_loc[2])
+
+    df = pd.DataFrame.from_dict(data_dict)
+    df.to_csv(os.path.join(pose_path, '{}_info.csv'.format(index)))
 
 
-def check_search(pairs, raw_root):
+def check_search(pairs, raw_root, group_name):
     for protein, target, start in pairs:
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
-        pose_path = os.path.join(pair_path, 'grid_search_poses')
+        pose_path = os.path.join(pair_path, group_name)
         csv_counter = 0
         pose_counter = 0
 
         for file in os.listdir(pose_path):
-            if file[-3:] == 'csv':
+            if file[-9:] == 'poses.csv':
                 df = pd.read_csv(os.path.join(pose_path, file))
                 csv_counter += len(df)
             elif file[-5:] == 'maegz':
@@ -614,7 +601,7 @@ def test_rotate_translate(protein, target, start, raw_root):
 
 
 def test_search(protein, target, start, raw_root, save_folder, cutoff, rotation_search_step_size, no_prot_h,
-                pocket_only, get_time, include_clash_filter):
+                pocket_only, get_time, include_clash_filter, group_name, inc_target_clash_cutoff):
     angles = [i for i in range(-30, 30 + rotation_search_step_size, rotation_search_step_size)]
     angles = angles[:5]
     x_rot = random.choice(angles)
@@ -624,7 +611,8 @@ def test_search(protein, target, start, raw_root, save_folder, cutoff, rotation_
     grid = [[random.choice(grid_points), random.choice(grid_points), random.choice(grid_points)]]
 
     conformer = search(protein, target, start, 0, raw_root, save_folder, get_time, cutoff, rotation_search_step_size,
-                       grid, no_prot_h, pocket_only, include_clash_filter, True, x_rot, y_rot, z_rot)
+                       grid, no_prot_h, pocket_only, include_clash_filter, group_name, inc_target_clash_cutoff, True,
+                       x_rot, y_rot, z_rot)
 
     pair = '{}-to-{}'.format(target, start)
     protein_path = os.path.join(raw_root, protein)
@@ -653,7 +641,6 @@ def main():
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
-    parser.add_argument('save_folder', type=str, help='directory where data will be saved')
     parser.add_argument('--protein', type=str, default='', help='protein name')
     parser.add_argument('--target', type=str, default='', help='target ligand name')
     parser.add_argument('--start', type=str, default='', help='start ligand name')
@@ -672,6 +659,7 @@ def main():
                                                                             'ligand pose')
     parser.add_argument('--target_clash_cutoff', type=int, default=15, help='clash cutoff between target protein and '
                                                                             'ligand pose')
+    parser.add_argument('--group_name', type=str, default='grid_search_poses', help='name of pose group subdir')
     parser.add_argument('--clash_filter', dest='include_clash_filter', action='store_true')
     parser.add_argument('--no_clash_filter', dest='include_clash_filter', action='store_false')
     parser.set_defaults(include_clash_filter=True)
@@ -684,9 +672,9 @@ def main():
     parser.add_argument('--time', dest='get_time', action='store_true')
     parser.add_argument('--no_time', dest='get_time', action='store_false')
     parser.set_defaults(get_time=False)
-    parser.add_argument('--save', dest='save_poses', action='store_true')
-    parser.add_argument('--no_save', dest='save_poses', action='store_false')
-    parser.set_defaults(save_poses=False)
+    parser.add_argument('--include_target_clash_cutoff', dest='inc_target_clash_cutoff', action='store_true')
+    parser.add_argument('--no_target_clash_cutoff', dest='inc_target_clash_cutoff', action='store_false')
+    parser.set_defaults(inc_target_clash_cutoff=True)
     args = parser.parse_args()
 
     random.seed(0)
@@ -694,28 +682,25 @@ def main():
     if not os.path.exists(args.run_path):
         os.mkdir(args.run_path)
 
-    if not os.path.exists(args.save_folder):
-        os.mkdir(args.save_folder)
-
     if args.task == 'all_search':
         grouped_files = group_grid(args.n, args.grid_size)
-        pairs = [('A5HZZ9', '3c8a', '3qw5'), ('O38732', '2i0a', '2q5k'), ('P07900', '2qg2', '1yet'),
-                 ('P51449', '5vb6', '5ufr')]
+        pairs = [('O38732', '2i0a', '2q5k')]
         # if args.include_clash_filter:
         #     pairs = get_grid_prots(args.grid_file, args.grid_size)
         # else:
         #     process = get_prots(args.docked_prot_file)
         #     random.shuffle(process)
         #     pairs = get_conformer_prots(process, args.raw_root, args.num_pairs)
-        all_search(pairs, args.raw_root, args.run_path, args.docked_prot_file, args.save_folder,
-                   args.rotation_search_step_size, args.grid_size, args.n, args.target_clash_cutoff,
-                   args.include_clash_filter, args.pocket_only, args.no_prot_h, args.save_poses, grouped_files)
+        all_search(pairs, args.raw_root, args.run_path, args.docked_prot_file, args.rotation_search_step_size,
+                   args.grid_size, args.n, args.target_clash_cutoff, args.group_name, args.include_clash_filter,
+                   args.pocket_only, args.no_prot_h, args.inc_target_clash_cutoff, grouped_files)
 
     elif args.task == 'search':
         grouped_files = group_grid(args.n, args.grid_size)
-        search(args.protein, args.target, args.start, args.index, args.raw_root, args.save_folder, args.get_time,
-               args.rmsd_cutoff, args.start_clash_cutoff, args.target_clash_cutoff, args.rotation_search_step_size,
-               grouped_files[args.index], args.no_prot_h, args.pocket_only, args.include_clash_filter, args.save_poses)
+        search(args.protein, args.target, args.start, args.index, args.raw_root, args.get_time, args.rmsd_cutoff,
+               args.start_clash_cutoff, args.target_clash_cutoff, args.rotation_search_step_size,
+               grouped_files[args.index], args.no_prot_h, args.pocket_only, args.group_name,
+               args.inc_target_clash_cutoff)
 
     elif args.task == 'check_search':
         # if args.include_clash_filter:
@@ -724,8 +709,27 @@ def main():
         #     process = get_prots(args.docked_prot_file)
         #     random.shuffle(process)
         #     pairs = get_conformer_prots(process, args.raw_root, args.num_pairs)
-        pairs = [('P18031', '1g7g', '1c83')]
-        check_search(pairs, args.raw_root)
+        pairs = [('A5HZZ9', '3c8a', '3qw5'), ('O38732', '2i0a', '2q5k'), ('P07900', '2qg2', '1yet'),
+                 ('P51449', '5vb6', '5ufr')]
+        check_search(pairs, args.raw_root, args.group_name)
+
+    elif args.task == 'combine_info':
+        pairs = [('A5HZZ9', '3c8a', '3qw5'), ('O38732', '2i0a', '2q5k'), ('P07900', '2qg2', '1yet'),
+                 ('P51449', '5vb6', '5ufr')]
+        dfs = []
+        for protein, target, start in pairs:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+            pose_path = os.path.join(pair_path, args.group_name)
+
+            for file in os.listdir(pose_path):
+                if file[-8:] == 'info.csv':
+                    df = pd.read_csv(os.path.join(pose_path, file))
+                    dfs.append(df)
+
+        all_df = pd.concat(dfs)
+        all_df.to_csv('combined_decoy_info.csv')
 
     elif args.task == 'combine':
         grouped_files = group_grid(args.n, args.grid_size)
@@ -750,28 +754,24 @@ def main():
     elif args.task == 'test_search':
         test_search(args.protein, args.target, args.start, args.raw_root, args.save_folder, args.cutoff,
                     args.rotation_search_step_size, args.no_prot_h, args.pocket_only, args.get_time,
-                    args.include_clash_filter)
+                    args.include_clash_filter, args.group_name, args.inc_target_clash_cutoff)
 
     elif args.task == 'stats':
-        protein = 'P18031'
-        target = '1g7g'
-        start = '1c83'
+        pairs = [('A5HZZ9', '3c8a', '3qw5'), ('O38732', '2i0a', '2q5k'), ('P07900', '2qg2', '1yet'),
+                 ('P51449', '5vb6', '5ufr')]
 
-        pair = '{}-to-{}'.format(target, start)
-        protein_path = os.path.join(args.raw_root, protein)
-        pair_path = os.path.join(protein_path, pair)
-        # pose_path = os.path.join(pair_path, args.decoy_type)
-        #
-        # df = pd.read_csv(os.path.join(pose_path, 'combined_data.csv'))
-        # print(len(df))
-        # print(len(df[df['rmsd'] < 3]) / len(df))
-        # print(min(df[df['rmsd'] < 3]))
+        for protein, target, start in pairs:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
 
-        prot_file = os.path.join(pair_path, '{}_prot.mae'.format(target))
-        prot = list(structure.StructureReader(prot_file))[0]
-        lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
-        lig = list(structure.StructureReader(lig_file))[0]
-        print(steric_clash.clash_volume(prot, struc2=lig))
+            target_lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
+            target_lig = list(structure.StructureReader(target_lig_file))[0]
+            target_centroid = get_centroid(target_lig)
+            starting_lig_file = os.path.join(pair_path, '{}_lig.mae'.format(start))
+            starting_lig = list(structure.StructureReader(starting_lig_file))[0]
+            starting_centroid = get_centroid(starting_lig)
+            print(protein, target, start, np.linalg.norm(target_centroid - starting_centroid))
 
 
 if __name__ == "__main__":

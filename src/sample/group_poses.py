@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 group_poses.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P18031 --target 1g7g --start 1c83
+$ $SCHRODINGER/run python3 group_poses.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein O38732 --target 2i0a --start 2q5k
 """
 
 import argparse
@@ -17,7 +17,7 @@ def main():
     parser.add_argument('--protein', type=str, default='', help='protein name')
     parser.add_argument('--target', type=str, default='', help='target ligand name')
     parser.add_argument('--start', type=str, default='', help='start ligand name')
-    parser.add_argument('--num_poses_per_file', type=int, default=300, help='number of poses in each file')
+    parser.add_argument('--num_poses_per_file', type=int, default=15, help='number of poses in each file')
     args = parser.parse_args()
 
     if args.task == 'run':
@@ -45,19 +45,6 @@ def main():
                                 break
                             else:
                                 pose = grid_pt_poses[num]
-                                conf, gridloc, rot = pose.title.split('_')
-                                conf = int(conf[4:])
-                                gridloc_x, gridloc_y, gridloc_z = gridloc[7:].split(',')
-                                gridloc_x = int(gridloc_x)
-                                gridloc_y = int(gridloc_y)
-                                gridloc_z = int(gridloc_z)
-                                rot_x, rot_y, rot_z = rot[3:].split(',')
-                                rot_x = int(rot_x)
-                                rot_y = int(rot_y)
-                                rot_z = int(rot_z)
-                                pose.title = '{}_{},{},{}_{},{},{}'.format(conf, gridloc_x, gridloc_y, gridloc_z, rot_x,
-                                                                           rot_y,
-                                                                           rot_z)
                                 group_poses.append(pose)
 
     elif args.task == 'check':

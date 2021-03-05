@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python cum_freq.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures
+/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python cum_freq.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures --protein O38732 --target 2i0a --start 2q5k
 """
 
 import argparse
@@ -11,7 +11,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-def bar_graph(glide_ls, score_no_vdw_ls, pose_ls, out_dir):
+def bar_graph(glide_ls, score_no_vdw_ls, pose_ls, out_dir, protein, target, start):
     fig, ax = plt.subplots()
     plt.plot(pose_ls, glide_ls, label='Glide')
     plt.plot(pose_ls, score_no_vdw_ls, label='Score no vdw')
@@ -19,30 +19,29 @@ def bar_graph(glide_ls, score_no_vdw_ls, pose_ls, out_dir):
     ax.legend()
     ax.set_xlabel('Pose Cutoff')
     ax.set_ylabel('Min RMSD')
-    plt.savefig(os.path.join(out_dir, 'glide_vs_score_no_vdw_500.png'))
+    plt.savefig(os.path.join(out_dir, '{}_{}_{}.png'.format(protein, target, start)))
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
     parser.add_argument('out_dir', type=str, help='directory where all graphs will be saved')
+    parser.add_argument('--protein', type=str, default='', help='protein name')
+    parser.add_argument('--target', type=str, default='', help='target ligand name')
+    parser.add_argument('--start', type=str, default='', help='start ligand name')
     parser.add_argument('--decoy_type', type=str, default='grid_search_poses', help='either cartesian_poses, '
                                                                                     'ligand_poses, or conformer_poses')
     parser.add_argument('--max_poses', type=int, default=100, help='maximum number of glide poses considered')
     args = parser.parse_args()
 
-    protein = 'C8B467'
-    target = '5jfu'
-    start = '5jfp'
-
-    pair = '{}-to-{}'.format(target, start)
-    protein_path = os.path.join(args.raw_root, protein)
+    pair = '{}-to-{}'.format(args.target, args.start)
+    protein_path = os.path.join(args.raw_root, args.protein)
     pair_path = os.path.join(protein_path, pair)
     pose_path = os.path.join(pair_path, args.decoy_type)
 
-    df = pd.read_csv(os.path.join(pose_path, 'combined.csv'))
+    df = pd.read_csv(os.path.join(pose_path, 'combined_glide.csv'))
 
     glide_scores = df['glide_score'].tolist()
-    score_no_vdws = df['modified_score_no_vdws'].tolist()
+    score_no_vdws = df['modified_score_no_vdw'].tolist()
     rmsds = df['rmsd'].tolist()
     names = df['name']
     glide_data = [(glide_scores[i], rmsds[i], names[i]) for i in range(len(rmsds))]
@@ -62,7 +61,8 @@ def main():
     for i in range(1, 500):
         glide_ls.append(min(sorted_glide[:i], key=lambda x: x[1])[1])
         score_no_vdw_ls.append(min(sorted_score_no_vdw[:i], key=lambda x: x[1])[1])
-    bar_graph(glide_ls, score_no_vdw_ls, pose_ls, args.out_dir)
+    bar_graph(glide_ls, score_no_vdw_ls, pose_ls, args.out_dir, args.protein, args.target, args.start)
+
 
 if __name__=="__main__":
     main()
