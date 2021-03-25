@@ -16,7 +16,6 @@ $ $SCHRODINGER/run python3 clash_volume_analysis.py group /home/users/sidhikab/l
 import argparse
 import os
 import pickle
-from tqdm import tqdm
 import matplotlib.pyplot as plt
 import seaborn as sns
 import random
@@ -262,10 +261,14 @@ def main():
                     residues.append(r)
                     clash_vol = steric_clash.clash_volume(prot, atoms1=r.getAtomIndices(), struc2=c)
                     if clash_vol > 100:
-                        print(r, clash_vol)
+                        prot_copy = prot.copy()
+                        print(r, clash_vol, steric_clash.clash_volume(prot, atoms1=r.getAtomIndices(), struc2=prot_copy,
+                                                                      atoms2=r.getAtomIndices()))
                         print(df[df['name'] == name])
                         with structure.StructureWriter('clash_pose.mae') as clash:
                             clash.append(c)
+                        with structure.StructureWriter('clash_res.mae') as res:
+                            res.append(r)
                         return
                     if rmsd_val < args.rmsd_cutoff:
                         good_clash_ls.append(clash_vol)
