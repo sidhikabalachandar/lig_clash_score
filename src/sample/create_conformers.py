@@ -2,12 +2,11 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 create_conformers.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P18031 --target 1g7g --start 1c83
+$ $SCHRODINGER/run python3 create_conformers.py check test /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --num_conformers 2 --index 0
 """
 
 import argparse
 import os
-import schrodinger.structure as structure
 import subprocess
 import random
 from tqdm import tqdm
@@ -26,13 +25,28 @@ def get_prots(docked_prot_file):
     """
     process = []
     with open(docked_prot_file) as fp:
-        for line in tqdm(fp, desc='index file'):
+        for line in fp:
             if line[0] == '#':
                 continue
             protein, target, start = line.strip().split()
             process.append((protein, target, start))
 
     return process
+
+
+def group_files(n, process):
+    """
+    groups pairs into sublists of size n
+    :param n: (int) sublist size
+    :param process: (list) list of pairs to process
+    :return: grouped_files (list) list of sublists of pairs
+    """
+    grouped_files = []
+
+    for i in range(0, len(process), n):
+        grouped_files += [process[i: i + n]]
+
+    return grouped_files
 
 
 def run_cmd(cmd, error_msg=None, raise_except=False):
@@ -50,25 +64,12 @@ def run_cmd(cmd, error_msg=None, raise_except=False):
 # MAIN TASK FUNCTIONS
 
 
-def run_all(process, raw_root, run_path, docked_prot_file, num_pairs):
-    counter = 0
-    for protein, target, start in process:
-        if counter == num_pairs:
-            break
-        pair = '{}-to-{}'.format(target, start)
-        protein_path = os.path.join(raw_root, protein)
-        pair_path = os.path.join(protein_path, pair)
-        conformer_file = os.path.join(pair_path, "{}_lig0-out.maegz".format(target))
-        if not os.path.exists(conformer_file):
-            cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 create_conformers.py group {} ' \
-                  '{} {} --protein {} --target {} --start {}"'
-            os.system(cmd.format(os.path.join(run_path, 'conformer_{}_{}-to-{}.out'.format(protein, target, start)),
-                                 docked_prot_file, run_path, raw_root, protein, target, start))
-            counter += 1
-        else:
-            conformers = list(structure.StructureReader(conformer_file))
-            if len(conformers) > 1:
-                counter += 1
+def run_all(grouped_files, raw_root, run_path, docked_prot_file):
+    for i in range(len(grouped_files)):
+        cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 create_conformers.py group {} {} {} ' \
+              '--index {}"'
+        os.system(cmd.format(os.path.join(run_path, 'conformer_{}.out'.format(i)), docked_prot_file, run_path, raw_root,
+                             i))
 
 
 def run_group(protein, target, start, raw_root, num_conformers):
@@ -98,40 +99,33 @@ def run_group(protein, target, start, raw_root, num_conformers):
         os.remove(os.path.join(pair_path, '{}_lig0.log'.format(target)))
 
 
-def run_check(process, raw_root, num_pairs):
+def run_check(process, raw_root):
     unfinished = []
-    counter = 0
     for protein, target, start in process:
-        print(protein, target, start)
-        if counter == num_pairs:
-            break
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
         if not os.path.exists(os.path.join(pair_path, '{}_lig0-out.maegz'.format(target))):
             unfinished.append((protein, target, start))
-        else:
-            conformer_file = os.path.join(pair_path, "{}_lig0-out.maegz".format(target))
-            conformers = list(structure.StructureReader(conformer_file))
-            print(protein, target, start, len(conformers), counter)
-            if len(conformers) > 1:
-                counter += 1
 
-    print("Missing:", len(unfinished), "/", num_pairs)
+    print("Missing:", len(unfinished), "/", len(process))
     print(unfinished)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('task', type=str, help='either align or search')
+    parser.add_argument('mode', type=str, help='either train or test')
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
-    parser.add_argument('--protein', type=str, default='', help='protein name')
-    parser.add_argument('--target', type=str, default='', help='target ligand name')
-    parser.add_argument('--start', type=str, default='', help='start ligand name')
+    parser.add_argument('--index', type=int, default=-1, help='protein-ligand pair group index')
     parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
-    parser.add_argument('--num_pairs', type=int, default=10, help='number of protein-ligand pairs considered')
+    parser.add_argument('--n', type=int, default=3, help='number of protein, target, start groups processed in '
+                                                         'group task')
+    parser.add_argument('--protein', type=str, default='', help='name of protein')
+    parser.add_argument('--target', type=str, default='', help='name of target ligand')
+    parser.add_argument('--start', type=str, default='', help='name of start ligand')
     args = parser.parse_args()
 
     random.seed(0)
@@ -140,22 +134,43 @@ def main():
         os.mkdir(args.run_path)
 
     if args.task == 'all':
-        # process = get_prots(args.docked_prot_file)
-        # random.shuffle(process)
-        process = [('A5HZZ9', '3c8a', '3qw5'), ('O38732', '2i0a', '2q5k'), ('P07900', '2qg2', '1yet'),
-                   ('P51449', '5vb6', '5ufr')]
-        run_all(process, args.raw_root, args.run_path, args.docked_prot_file, args.num_pairs)
+        if args.mode == 'train':
+            process = get_prots(args.docked_prot_file)
+            grouped_files = group_files(args.n, process)
+            run_all(grouped_files, args.raw_root, args.run_path, args.docked_prot_file)
+        elif args.mode == 'test':
+            process = get_prots(args.docked_prot_file)
+            random.shuffle(process)
+            for protein, target, start in process[:5]:
+                print(protein, target, start)
+                cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 create_conformers.py group ' \
+                      'test {} {} {} --protein {} --target {} --start {}"'
+                os.system(cmd.format(os.path.join(args.run_path, '{}_{}_{}.out'.format(protein, target, start)),
+                                     args.docked_prot_file, args.run_path, args.raw_root, protein, target, start))
 
     elif args.task == 'group':
-        run_group(args.protein, args.target, args.start, args.raw_root, args.num_conformers)
+        if args.mode == 'train':
+            # process = get_prots(args.docked_prot_file)
+            process = [('P01901', '1fzk', '1fzo')]
+            # grouped_files = group_files(args.n, process)
+            for protein, target, start in process:
+                pair = '{}-to-{}'.format(target, start)
+                protein_path = os.path.join(args.raw_root, protein)
+                pair_path = os.path.join(protein_path, pair)
+                conformer_file = os.path.join(pair_path, "{}_lig0-out.maegz".format(target))
+                if not os.path.exists(conformer_file):
+                    run_group(protein, target, start, args.raw_root, args.num_conformers)
+        elif args.mode == 'test':
+            run_group(args.protein, args.target, args.start, args.raw_root, args.num_conformers)
 
     if args.task == 'check':
-        # process = get_prots(args.docked_prot_file)
-        # random.shuffle(process)
-        process = [('A5HZZ9', '3c8a', '3qw5'), ('O38732', '2i0a', '2q5k'), ('P07900', '2qg2', '1yet'),
-                   ('P51449', '5vb6', '5ufr')]
-        run_check(process, args.raw_root, args.num_pairs)
-
+        if args.mode == 'train':
+            process = get_prots(args.docked_prot_file)
+            run_check(process, args.raw_root)
+        elif args.mode == 'test':
+            process = get_prots(args.docked_prot_file)
+            random.shuffle(process)
+            run_check(process[:5], args.raw_root)
 
 if __name__ == "__main__":
     main()

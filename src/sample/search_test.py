@@ -268,7 +268,7 @@ def get_rotation_matrix(axis, angle):
     return rot_matrix
 
 
-def rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x, rot_matrix_y, rot_matrix_z):
+def rotate_structure(coords, x_angle, y_angle, z_angle, rot_center):
     """
     Rotates the structure about x axis, then y axis, then z axis.
 
@@ -288,6 +288,20 @@ def rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
         By default, rotation happens about the origin (0, 0, 0)
 
     """
+
+    # This action is achieved in four steps
+    # 1)  Find the vector that moves the rot_center to the origin
+    # 2)  Move the structure along that vector
+    # 3)  Apply rotations
+    # 4)  Move the structure back
+
+    displacement_vector = get_coords_array_from_list(rot_center)
+    to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
+    rot_matrix_x = get_rotation_matrix(X_AXIS, x_angle)
+    rot_matrix_y = get_rotation_matrix(Y_AXIS, y_angle)
+    rot_matrix_z = get_rotation_matrix(Z_AXIS, z_angle)
+    from_origin_matrix = get_translation_matrix(displacement_vector)
+
     combined_rot_matrix = np.matmul(np.matmul(np.matmul(np.matmul(from_origin_matrix, rot_matrix_z), rot_matrix_y),
                                               rot_matrix_x), to_origin_matrix)
     return transform_structure(coords, combined_rot_matrix)
@@ -346,33 +360,161 @@ def all_search(grouped_files, mode, raw_root, run_path, docked_prot_file, rotati
                              start))
 
 
-def search(protein, target, start, raw_root, rmsd_cutoff, start_clash_cutoff, rotation_search_step_size, num_conformers,
-           grid, grid_index, group_name, min_angle, max_angle, conformer_n, conformer_index):
-    # important dirs
+def search(protein, target, start, raw_root, get_time, rmsd_cutoff, start_clash_cutoff, rotation_search_step_size,
+           no_prot_h, pocket_only, num_conformers, grid, grid_index, group_name, min_angle, max_angle, conformer_n,
+           conformer_index, test=False,  x_rot=0, y_rot=0, z_rot=0):
     pair = '{}-to-{}'.format(target, start)
     protein_path = os.path.join(raw_root, protein)
     pair_path = os.path.join(protein_path, pair)
-
-    # delete hydrogens from target lig for efficiency
     target_lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
     target_lig = list(structure.StructureReader(target_lig_file))[0]
-
-    # get proteins use only pocket and delete hydrogens for efficiency
+    build.delete_hydrogens(target_lig)
     start_prot_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
     start_prot = list(structure.StructureReader(start_prot_file))[0]
     target_prot_file = os.path.join(pair_path, '{}_prot.mae'.format(target))
     target_prot = list(structure.StructureReader(target_prot_file))[0]
-
-    # get conformers
     conformer_file = os.path.join(pair_path, "aligned_to_start_without_hydrogen_conformers.mae")
     conformers = list(structure.StructureReader(conformer_file))[:num_conformers]
     grouped_conformers = group_files(conformer_n, conformers)
     conformer_group = grouped_conformers[conformer_index]
 
-    # clash preprocessing
-    start_prot_grid, start_origin = get_grid(start_prot)
-    target_prot_grid, target_origin = get_grid(target_prot)
+    if pocket_only:
+        get_pocket_res(start_prot, target_lig, 6)
+        get_pocket_res(target_prot, target_lig, 6)
+    if no_prot_h:
+        build.delete_hydrogens(start_prot)
+        build.delete_hydrogens(target_prot)
 
+    if get_time:
+        get_times(pair_path, target_lig, start_prot)
+    else:
+        conformer = create_poses(grid, target_lig, start_prot, target_prot, rmsd_cutoff, start_clash_cutoff,
+                                 rotation_search_step_size, protein, target, start, pair_path, test, x_rot, y_rot,
+                                 z_rot, conformer_group, grid_index, conformer_index, group_name, min_angle, max_angle)
+
+        return conformer
+
+
+def get_times(pair_path, target_lig, prot):
+    schrodinger_translate_times = []
+    schrodinger_rotate_times = []
+    custom_translate_times = []
+    custom_rotate_times = []
+    clash_iterator_times = []
+    clash_volume_times = []
+    rmsd_times = []
+    conformer_file = os.path.join(pair_path, "aligned_to_start_without_hydrogen_conformers.mae")
+    conformers = list(structure.StructureReader(conformer_file))
+
+    for conformer in conformers:
+        # schrdoinger translation
+        grid_loc = [0, 0, 0]
+        start = time.time()
+        transform.translate_structure(conformer, grid_loc[0], grid_loc[1], grid_loc[2])
+        end = time.time()
+        schrodinger_translate_times.append(end - start)
+
+        # schrdoinger rotation
+        conformer_center = list(get_centroid(conformer))
+        start = time.time()
+        transform.rotate_structure(conformer, math.radians(-30), math.radians(-30), math.radians(-30), conformer_center)
+        end = time.time()
+        schrodinger_rotate_times.append(end - start)
+
+        # custom translation
+        grid_loc = [0, 0, 0]
+        start = time.time()
+        translate_structure(conformer, grid_loc[0], grid_loc[1], grid_loc[2])
+        end = time.time()
+        custom_translate_times.append(end - start)
+
+        # custom rotation
+        conformer_center = list(get_centroid(conformer))
+        start = time.time()
+        rotate_structure(conformer, math.radians(-30), math.radians(-30), math.radians(-30), conformer_center)
+        end = time.time()
+        custom_rotate_times.append(end - start)
+
+        # get clash_iterator
+        start = time.time()
+        max([x[2] for x in list(steric_clash.clash_iterator(prot, struc2=conformer))])
+        end = time.time()
+        clash_iterator_times.append(end - start)
+
+        # get clash_volume
+        start = time.time()
+        steric_clash.clash_volume(prot, struc2=conformer)
+        end = time.time()
+        clash_volume_times.append(end - start)
+
+        # get rmsd
+        start = time.time()
+        rmsd.calculate_in_place_rmsd(conformer, conformer.getAtomIndices(), target_lig,
+                                     target_lig.getAtomIndices())
+        end = time.time()
+        rmsd_times.append(end - start)
+
+    print("Average schrodinger translate time =", statistics.mean(schrodinger_translate_times))
+    print("Average schrodinger rotate time =", statistics.mean(schrodinger_rotate_times))
+    print("Average custom translate time =", statistics.mean(custom_translate_times))
+    print("Average custom rotate time =", statistics.mean(custom_rotate_times))
+    print("Average clash iterator time =", statistics.mean(clash_iterator_times))
+    print("Average clash volume time =", statistics.mean(clash_volume_times))
+    print("Average rmsd time =", statistics.mean(rmsd_times))
+
+def check_clash_vol(other_c, other_prot):
+    protein = 'O38732'
+    target = '2i0a'
+    start = '2q5k'
+    raw_root = '/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw'
+    group_name = 'exhaustive_grid_1_rotation_5'
+    n = 2000
+    file_index = 0
+    name_index = 0
+    pair = '{}-to-{}'.format(target, start)
+    protein_path = os.path.join(raw_root, protein)
+    pair_path = os.path.join(protein_path, pair)
+    pose_path = os.path.join(pair_path, group_name)
+    clash_path = os.path.join(pose_path, 'ideal_clash_data')
+    if not os.path.exists(clash_path):
+        os.mkdir(clash_path)
+    file = os.path.join(pose_path, 'exhaustive_search_poses_{}.csv'.format(file_index))
+    df = pd.read_csv(file)
+    grouped_files = group_files(n, df['name'].to_list())
+    names = grouped_files[name_index]
+    prot_target = list(structure.StructureReader(os.path.join(pair_path, '{}_prot.mae'.format(target))))[0]
+    conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
+    conformers = list(structure.StructureReader(conformer_file))
+
+    for name in names:
+        conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
+        c = conformers[conformer_index]
+        old_coords = c.getXYZ(copy=True)
+        grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
+        grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
+        grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
+        translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
+        conformer_center = list(get_centroid(c))
+        coords = c.getXYZ(copy=True)
+        rot_x = df[df['name'] == name]['rot_x'].iloc[0]
+        rot_y = df[df['name'] == name]['rot_y'].iloc[0]
+        rot_z = df[df['name'] == name]['rot_z'].iloc[0]
+        new_coords = rotate_structure(coords, math.radians(rot_x), math.radians(rot_y), math.radians(rot_z),
+                                      conformer_center)
+        c.setXYZ(new_coords)
+        if name == '0_-1,-1,-1_-20,-20,10':
+            print('target clash volume in function 2:', steric_clash.clash_volume(prot_target, struc2=c))
+            rmsd_val = rmsd.calculate_in_place_rmsd(c, c.getAtomIndices(), other_c, other_c.getAtomIndices())
+            print('c rmsd:', rmsd_val)
+            rmsd_val = rmsd.calculate_in_place_rmsd(prot_target, prot_target.getAtomIndices(), other_prot,
+                                                    other_prot.getAtomIndices())
+            print('prot rmsd:', rmsd_val)
+            return
+        c.setXYZ(old_coords)
+
+def create_poses(grid, target_lig, start_prot, target_prot, rmsd_cutoff, start_clash_cutoff, rotation_search_step_size,
+                 protein, target, start, pair_path, test, x_rot, y_rot, z_rot, conformers, grid_index, conformer_index,
+                 group_name, min_angle, max_angle):
     data_dict = {'protein': [], 'target': [], 'start': [], 'num_conformers': [], 'num_poses_searched': [],
                  'num_correct_poses_found': [], 'num_correct_after_simple_filter': [], 'time_elapsed': [],
                  'time_elapsed_per_conformer': [], 'grid_loc_x': [], 'grid_loc_y': [], 'grid_loc_z': []}
@@ -380,54 +522,37 @@ def search(protein, target, start, raw_root, rmsd_cutoff, start_clash_cutoff, ro
                   'rot_y': [], 'rot_z': [], 'start_clash': [], 'target_clash': [], 'rmsd': []}
 
     for grid_loc in grid:
-        num_poses_searched = 0
-        num_after_simple_filter = 0
+        counter = 0
+        num_correct_found = 0
         num_correct_after_simple_filter = 0
         decoy_start_time = time.time()
-        for i, c in enumerate(conformer_group):
-            # apply grid_loc translation
+        for i, c in enumerate(conformers):
             translate_structure(c, grid_loc[0], grid_loc[1], grid_loc[2])
             conformer_center = list(get_centroid(c))
             coords = c.getXYZ(copy=True)
 
-            # rotation preprocessing
-            displacement_vector = get_coords_array_from_list(conformer_center)
-            to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
-            from_origin_matrix = get_translation_matrix(displacement_vector)
-
             for x in range(min_angle, max_angle + rotation_search_step_size, rotation_search_step_size):
-                # rotation preprocessing
-                rot_matrix_x = get_rotation_matrix(X_AXIS, x)
-
                 for y in range(min_angle, max_angle + rotation_search_step_size, rotation_search_step_size):
-                    # rotation preprocessing
-                    rot_matrix_y = get_rotation_matrix(Y_AXIS, y)
-
                     for z in range(min_angle, max_angle + rotation_search_step_size, rotation_search_step_size):
-                        # rotation preprocessing
-                        rot_matrix_z = get_rotation_matrix(Z_AXIS, z)
-
-                        # apply x,y,z rotation
-                        new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
-                                                      rot_matrix_y, rot_matrix_z)
+                        counter += 1
+                        new_coords = rotate_structure(coords, math.radians(x), math.radians(y), math.radians(z),
+                                                      conformer_center)
                         c.setXYZ(new_coords)
 
-                        # look at potential pose
-                        num_poses_searched += 1
+                        if test and x_rot == x and y_rot == y and z_rot == z:
+                            return c
 
-                        # check simple filter
-                        start_clash = get_clash(c, start_prot_grid, start_origin)
+                        rmsd_val = rmsd.calculate_in_place_rmsd(c, c.getAtomIndices(), target_lig,
+                                                                target_lig.getAtomIndices())
+                        if rmsd_val < rmsd_cutoff:
+                            num_correct_found += 1
+
+                        start_clash = steric_clash.clash_volume(start_prot, struc2=c)
+
                         if start_clash < start_clash_cutoff:
-                            num_after_simple_filter += 1
-
-                            # check if pose correct
-                            rmsd_val = rmsd.calculate_in_place_rmsd(c, c.getAtomIndices(), target_lig,
-                                                                    target_lig.getAtomIndices())
                             if rmsd_val < rmsd_cutoff:
                                 num_correct_after_simple_filter += 1
-
-                            # save info for pose
-                            target_clash = get_clash(c, target_prot_grid, target_origin)
+                            target_clash = steric_clash.clash_volume(target_prot, struc2=c)
                             name = '{}_{},{},{}_{},{},{}'.format(i, grid_loc[0], grid_loc[1], grid_loc[2], x, y,
                                                                  z)
                             saved_dict['name'].append(name)
@@ -442,14 +567,13 @@ def search(protein, target, start, raw_root, rmsd_cutoff, start_clash_cutoff, ro
                             saved_dict['target_clash'].append(target_clash)
                             saved_dict['rmsd'].append(rmsd_val)
 
-        # save info for grid_loc
         decoy_end_time = time.time()
         data_dict['protein'].append(protein)
         data_dict['target'].append(target)
         data_dict['start'].append(start)
         data_dict['num_conformers'].append(len(conformers))
-        data_dict['num_poses_searched'].append(num_poses_searched)
-        data_dict['num_after_simple_filter'].append(num_after_simple_filter)
+        data_dict['num_poses_searched'].append(counter)
+        data_dict['num_correct_poses_found'].append(num_correct_found)
         data_dict['num_correct_after_simple_filter'].append(num_correct_after_simple_filter)
         data_dict['time_elapsed'].append(decoy_end_time - decoy_start_time)
         data_dict['time_elapsed_per_conformer'].append((decoy_end_time - decoy_start_time) / len(conformers))
@@ -485,6 +609,123 @@ def check_search(pairs, raw_root):
 
     print("Missing:", len(unfinished), "/", len(pairs))
     print(unfinished)
+
+
+def test_rotate_translate(protein, target, start, raw_root):
+    pair = '{}-to-{}'.format(target, start)
+    protein_path = os.path.join(raw_root, protein)
+    pair_path = os.path.join(protein_path, pair)
+    prot_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
+    schrodinger_prot = list(structure.StructureReader(prot_file))[0]
+    custom_prot = list(structure.StructureReader(prot_file))[0]
+    translation_vector = np.random.uniform(low=-100, high=100, size=(3))
+    transform.translate_structure(schrodinger_prot, translation_vector[0], translation_vector[1],
+                                  translation_vector[2])
+    translate_structure(custom_prot, translation_vector[0], translation_vector[1],
+                        translation_vector[2])
+    schrodinger_atoms = np.array(schrodinger_prot.getXYZ(copy=False))
+    custom_atoms = np.array(custom_prot.getXYZ(copy=False))
+    if np.array_equal(schrodinger_atoms, custom_atoms):
+        print("Translate function works properly")
+    else:
+        print("Error in translate function")
+
+    schrodinger_prot = list(structure.StructureReader(prot_file))[0]
+    custom_prot = list(structure.StructureReader(prot_file))[0]
+    rotation_vector = np.random.uniform(low=-2 * np.pi, high=2 * np.pi, size=(3))
+    rotation_center = np.random.uniform(low=-100, high=100, size=(3))
+    rotation_center = [rotation_center[0], rotation_center[1], rotation_center[2]]
+    transform.rotate_structure(schrodinger_prot, rotation_vector[0], rotation_vector[1], rotation_vector[2],
+                               rotation_center)
+    coords = rotate_structure(custom_prot.getXYZ(copy=False), rotation_vector[0], rotation_vector[1],
+                              rotation_vector[2], rotation_center)
+    custom_prot.setXYZ(coords)
+    schrodinger_atoms = np.array(schrodinger_prot.getXYZ(copy=False))
+    custom_atoms = np.array(custom_prot.getXYZ(copy=False))
+    if np.amax(np.absolute(schrodinger_atoms - custom_atoms)) < 10 ** -7:
+        print("Rotate function works properly")
+    else:
+        print("Error in rotate function")
+
+
+def test_search(protein, target, start, raw_root, save_folder, cutoff, rotation_search_step_size, no_prot_h,
+                pocket_only, get_time, include_clash_filter, inc_target_clash_cutoff):
+    angles = [i for i in range(-30, 30 + rotation_search_step_size, rotation_search_step_size)]
+    angles = angles[:5]
+    x_rot = random.choice(angles)
+    y_rot = random.choice(angles)
+    z_rot = random.choice(angles)
+    grid_points = [i for i in range(-6, 7)]
+    grid = [[random.choice(grid_points), random.choice(grid_points), random.choice(grid_points)]]
+
+    conformer = search(protein, target, start, 0, raw_root, save_folder, get_time, cutoff, rotation_search_step_size,
+                       grid, no_prot_h, pocket_only, include_clash_filter, inc_target_clash_cutoff, True, x_rot, y_rot,
+                       z_rot)
+
+    pair = '{}-to-{}'.format(target, start)
+    protein_path = os.path.join(raw_root, protein)
+    pair_path = os.path.join(protein_path, pair)
+    conformer_file = os.path.join(pair_path, "aligned_to_start_without_hydrogen_conformers.mae")
+    base_conf = list(structure.StructureReader(conformer_file))[0]
+    translate_structure(base_conf, grid[0][0], grid[0][1], grid[0][2])
+    base_conf_center = list(get_centroid(base_conf))
+    coords = base_conf.getXYZ(copy=False)
+    new_coords = rotate_structure(coords, math.radians(x_rot), math.radians(y_rot), math.radians(z_rot),
+                                  base_conf_center)
+    base_conf.setXYZ(new_coords)
+
+    rmsd_val = rmsd.calculate_in_place_rmsd(conformer, conformer.getAtomIndices(), base_conf,
+                                            base_conf.getAtomIndices())
+    if abs(rmsd_val) == 0:
+        print("Search works properly", rmsd_val)
+    else:
+        print("x_rot =", x_rot, "y_rot =", y_rot, "z_rot =", z_rot)
+        print("RMSD =", rmsd_val, "but RMSD should equal 0")
+
+
+
+def get_grid(df, center, config, rot_mat=np.eye(3, 3)):
+    """
+    Generate the 3d grid from coordinate format.
+    Args:
+        df (pd.DataFrame):
+            region to generate grid for.
+        center (3x3 np.array):
+            center of the grid.
+        rot_mat (3x3 np.array):
+            rotation matrix to apply to region before putting in grid.
+    Returns:
+        4-d numpy array representing an occupancy grid where last dimension
+        is atom channel.  First 3 dimension are of size radius_ang * 2 + 1.
+    """
+    size = grid_size(config)
+    true_radius = size * config.resolution / 2.0
+
+    # Select valid atoms.
+    at = df[['x', 'y', 'z']].values.astype(np.float32)
+    elements = df['element'].values
+
+    # Center atoms.
+    at = at - center
+
+    # Apply rotation matrix.
+    at = np.dot(at, rot_mat)
+    at = (np.around((at + true_radius) / config.resolution - 0.5)).astype(np.int16)
+
+    # Prune out atoms outside of grid as well as non-existent atoms.
+    sel = np.all(at >= 0, axis=1) & np.all(at < size, axis=1) & (elements != '')
+    at = at[sel]
+
+    # Form final grid.
+    labels = elements[sel]
+    lsel = np.nonzero([_recognized(x, config.element_mapping) for x in labels])
+    labels = labels[lsel]
+    labels = np.array([config.element_mapping[x] for x in labels], dtype=np.int8)
+
+    grid = np.zeros(grid_shape(config), dtype=np.float32)
+    grid[at[lsel, 0], at[lsel, 1], at[lsel, 2], labels] = 1
+
+    return grid
 
 
 def main():
@@ -524,6 +765,9 @@ def main():
     parser.add_argument('--remove_prot_h', dest='no_prot_h', action='store_true')
     parser.add_argument('--keep_prot_h', dest='no_prot_h', action='store_false')
     parser.set_defaults(no_prot_h=True)
+    parser.add_argument('--time', dest='get_time', action='store_true')
+    parser.add_argument('--no_time', dest='get_time', action='store_false')
+    parser.set_defaults(get_time=False)
     args = parser.parse_args()
 
     random.seed(0)
@@ -592,15 +836,16 @@ def main():
                     for dz in range(-args.grid_size, args.grid_size + 1):
                         grid.append([dx, dy, dz])
             for protein, target, start in grouped_files[args.grid_index]:
-                search(protein, target, start, args.raw_root, args.rmsd_cutoff, args.start_clash_cutoff,
-                       args.rotation_search_step_size, args.num_conformers, grid, -1, args.group_name, args.min_angle,
-                       args.max_angle, args.conformer_n, args.conformer_index)
+                search(protein, target, start, args.raw_root, args.get_time, args.rmsd_cutoff, args.start_clash_cutoff,
+                       args.rotation_search_step_size, args.no_prot_h, args.pocket_only, args.num_conformers, grid, -1,
+                       args.group_name, args.min_angle, args.max_angle, args.conformer_n, args.conformer_index)
         else:
             grouped_files = group_grid(args.grid_n, args.grid_size)
             grid = grouped_files[args.grid_index]
-            search(args.protein, args.target, args.start, args.raw_root, args.rmsd_cutoff, args.start_clash_cutoff,
-                   args.rotation_search_step_size, args.num_conformers, grid, args.grid_index, args.group_name,
-                   args.min_angle, args.max_angle, args.conformer_n, args.conformer_index)
+            search(args.protein, args.target, args.start, args.raw_root, args.get_time, args.rmsd_cutoff,
+                   args.start_clash_cutoff, args.rotation_search_step_size, args.no_prot_h, args.pocket_only,
+                   args.num_conformers, grid, args.grid_index, args.group_name, args.min_angle, args.max_angle,
+                   args.conformer_n, args.conformer_index)
 
     elif args.task == 'check':
         if args.mode == 'train':
@@ -623,6 +868,15 @@ def main():
 
             print('Missing {} / 5'.format(len(unfinished)))
             print(unfinished)
+
+
+    elif args.task == 'test_rotate_translate':
+        test_rotate_translate(args.protein, args.target, args.start, args.raw_root)
+
+    elif args.task == 'test_search':
+        test_search(args.protein, args.target, args.start, args.raw_root, args.save_folder, args.cutoff,
+                    args.rotation_search_step_size, args.no_prot_h, args.pocket_only, args.get_time,
+                    args.include_clash_filter, args.inc_target_clash_cutoff)
 
 
 if __name__ == "__main__":

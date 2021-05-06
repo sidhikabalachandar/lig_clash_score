@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 data.py combine /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --index 0
+$ $SCHRODINGER/run python3 ideal.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein O38732 --target 2i0a --start 2q5k --group_name exhaustive_grid_1_rotation_5 --save_path /home/users/sidhikab/lig_clash_score/reports/figures/pred_analysis.png --file_index 0 --name_index 0
 """
 
 import argparse
@@ -20,12 +20,14 @@ import pandas as pd
 import numpy as np
 import math
 from Bio import pairwise2
-from tqdm import tqdm
 import statistics
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+import seaborn as sns
 import schrodinger.structure as structure
 from schrodinger.structutils.transform import get_centroid
 import schrodinger.structutils.interactions.steric_clash as steric_clash
-import schrodinger.structutils.rmsd as rmsd
+import schrodinger.structutils.build as build
 
 X_AXIS = [1.0, 0.0, 0.0]  # x-axis unit vector
 Y_AXIS = [0.0, 1.0, 0.0]  # y-axis unit vector
@@ -337,8 +339,16 @@ def main():
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('root', type=str, help='directory where raw data will be placed')
-    parser.add_argument('--index', type=int, default=-1, help='grid point group index')
-    parser.add_argument('--n', type=int, default=3, help='number of grid_points processed in each job')
+    parser.add_argument('--file_index', type=int, default=-1, help='index of pose file')
+    parser.add_argument('--name_index', type=int, default=-1, help='index of name group in pose file')
+    parser.add_argument('--protein', type=str, default='', help='name of protein')
+    parser.add_argument('--target', type=str, default='', help='name of target ligand')
+    parser.add_argument('--start', type=str, default='', help='name of start ligand')
+    parser.add_argument('--group_name', type=str, default='', help='name of pose group subdir')
+    parser.add_argument('--n', type=int, default=2000, help='number of grid_points processed in each job')
+    parser.add_argument('--save_path', type=str, help='directory where raw data will be placed')
+    parser.add_argument('--target_clash_cutoff', type=int, default=20, help='clash cutoff between target protein and '
+                                                                            'ligand pose')
     args = parser.parse_args()
     random.seed(0)
 
@@ -348,131 +358,161 @@ def main():
         os.mkdir(args.run_path)
 
     if args.task == 'all':
-        pairs = get_prots(args.docked_prot_file)
-        grouped_files = group_files(args.n, pairs)
-        for i in range(len(grouped_files)):
-            cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 data.py group {} {} {} ' \
-                  '--index {}"'
-            os.system(cmd.format(os.path.join(args.run_path, 'data_{}.out'.format(i)), args.docked_prot_file,
-                                 args.run_path, args.root, i))
+        pair = '{}-to-{}'.format(args.target, args.start)
+        protein_path = os.path.join(raw_root, args.protein)
+        pair_path = os.path.join(protein_path, pair)
+        pose_path = os.path.join(pair_path, args.group_name)
+        prefix = 'exhaustive_search_poses'
+        files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
+        for i in range(len(files)):
+            file = os.path.join(pose_path, 'exhaustive_search_poses_{}.csv'.format(i))
+            df = pd.read_csv(file)
+            grouped_files = group_files(args.n, df['name'].to_list())
+            for j in range(len(grouped_files)):
+                cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 ideal.py group {} {} {} ' \
+                      '--protein {} --target {} --start {} --group_name {} --file_index {} --name_index {}"'
+                os.system(cmd.format(os.path.join(args.run_path, 'ideal_{}_{}.out'.format(i, j)), args.docked_prot_file,
+                                     args.run_path, args.root, args.protein, args.target, args.start,
+                                     args.group_name, i, j))
+                return
 
     elif args.task == "group":
-        pairs = get_prots(args.docked_prot_file)
-        grouped_files = group_files(args.n, pairs)
+        pair = '{}-to-{}'.format(args.target, args.start)
+        protein_path = os.path.join(raw_root, args.protein)
+        pair_path = os.path.join(protein_path, pair)
+        pose_path = os.path.join(pair_path, args.group_name)
+        clash_path = os.path.join(pose_path, 'ideal_clash_data')
+        if not os.path.exists(clash_path):
+            os.mkdir(clash_path)
+        out_file = os.path.join(clash_path, 'clash_data_{}_{}.csv'.format(args.file_index, args.name_index))
+        file = os.path.join(pose_path, 'exhaustive_search_poses_{}.csv'.format(args.file_index))
+        df = pd.read_csv(file)
+        grouped_files = group_files(args.n, df['name'].to_list())
+        names = grouped_files[args.name_index]
+        prot_target = list(structure.StructureReader(os.path.join(pair_path, '{}_prot.mae'.format(args.target))))[0]
+        conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
+        conformers = list(structure.StructureReader(conformer_file))
 
-        for protein, target, start in grouped_files[args.index]:
-            pair = '{}-to-{}'.format(target, start)
-            protein_path = os.path.join(raw_root, protein)
-            pair_path = os.path.join(protein_path, pair)
-            prot_docking = list(structure.StructureReader(os.path.join(pair_path, '{}_prot.mae'.format(start))))[0]
-            prot_target = list(structure.StructureReader(os.path.join(pair_path, '{}_prot.mae'.format(target))))[0]
-            target_lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
-            target_lig = list(structure.StructureReader(target_lig_file))[0]
-            conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
-            conformers = list(structure.StructureReader(conformer_file))
-            df = pd.read_csv(os.path.join(pair_path, 'exhaustive_search_poses.csv'))
-            correct_df = df[df['rmsd'] <= 2]
-            correct_names = correct_df['name'].to_list()
-            random.shuffle(correct_names)
-            incorrect_df = df[df['rmsd'] > 2]
-            incorrect_names = incorrect_df['name'].to_list()
-            random.shuffle(incorrect_names)
-            num = min(len(correct_names), 100)
-            names = correct_names[:num] + incorrect_names[:200 - num]
+        features = {'name': [], 'conformer_index': [], 'grid_loc_x': [], 'grid_loc_y': [], 'grid_loc_z': [],
+                    'rot_x': [], 'rot_y': [], 'rot_z': [], 'residue': [], 'volume_target': []}
+        for name in tqdm(names, desc='names'):
+            conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
+            c = conformers[conformer_index]
+            old_coords = c.getXYZ(copy=True)
+            grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
+            grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
+            grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
+            translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
+            conformer_center = list(get_centroid(c))
+            coords = c.getXYZ(copy=True)
+            rot_x = df[df['name'] == name]['rot_x'].iloc[0]
+            rot_y = df[df['name'] == name]['rot_y'].iloc[0]
+            rot_z = df[df['name'] == name]['rot_z'].iloc[0]
+            new_coords = rotate_structure(coords, math.radians(rot_x), math.radians(rot_y), math.radians(rot_z),
+                                          conformer_center)
+            c.setXYZ(new_coords)
+            residues = []
+            for clash in steric_clash.clash_iterator(prot_target, struc2=c):
+                r = clash[0].getResidue()
+                if r not in residues:
+                    residues.append(r)
+                    volume_target = steric_clash.clash_volume(prot_target, atoms1=r.getAtomIndices(), struc2=c)
+                    features['name'].append(name)
+                    features['conformer_index'].append(conformer_index)
+                    features['grid_loc_x'].append(grid_loc_x)
+                    features['grid_loc_y'].append(grid_loc_y)
+                    features['grid_loc_z'].append(grid_loc_z)
+                    features['rot_x'].append(rot_x)
+                    features['rot_y'].append(rot_y)
+                    features['rot_z'].append(rot_z)
+                    features['residue'].append(r.getAsl())
+                    features['volume_target'].append(volume_target)
+            c.setXYZ(old_coords)
 
-            seq_docking = get_sequence_from_str(prot_docking)
-            seq_target = get_sequence_from_str(prot_target)
-            alignment_docking, alignment_target = compute_protein_alignments(seq_docking, seq_target)
-            r_list_docking = get_all_res_asl(prot_docking)
-            r_list_target = get_all_res_atoms(prot_target)
-            r_to_i_map_docking = map_residues_to_align_index(alignment_docking, r_list_docking)
-            i_to_r_map_target = map_index_to_residue(alignment_target, r_list_target)
-            mean, stdev = bfactor_stats(prot_docking)
+        out_df = pd.DataFrame.from_dict(features)
+        out_df.to_csv(out_file, index=False)
 
-            with open('{}/{}_mcss.csv'.format(pair_path, pair)) as f:
-                mcss = int(f.readline().strip().split(',')[4])
-
-            features = {'name': [], 'conformer_index': [], 'grid_loc_x': [], 'grid_loc_y': [], 'grid_loc_z': [],
-                        'rot_x': [], 'rot_y': [], 'rot_z': [], 'residue': [], 'bfactor': [], 'mcss': [],
-                        'volume_docking': [], 'volume_target': [], 'rmsd': []}
-            for name in names:
-                conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
-                c = conformers[conformer_index]
-                old_coords = c.getXYZ(copy=True)
-                grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
-                grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
-                grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
-                translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
-                conformer_center = list(get_centroid(c))
-                coords = c.getXYZ(copy=True)
-                rot_x = df[df['name'] == name]['rot_x'].iloc[0]
-                rot_y = df[df['name'] == name]['rot_y'].iloc[0]
-                rot_z = df[df['name'] == name]['rot_z'].iloc[0]
-                new_coords = rotate_structure(coords, math.radians(rot_x), math.radians(rot_y), math.radians(rot_z),
-                                              conformer_center)
-                c.setXYZ(new_coords)
-                rmsd_val = rmsd.calculate_in_place_rmsd(c, c.getAtomIndices(), target_lig, target_lig.getAtomIndices())
-                residues = []
-                for clash in steric_clash.clash_iterator(prot_docking, struc2=c):
-                    r = clash[0].getResidue()
-                    if r not in residues:
-                        residues.append(r)
-                        volume_docking = steric_clash.clash_volume(prot_docking, atoms1=r.getAtomIndices(), struc2=c)
-                        if volume_docking > 5:
-                            id = (r.getCode(), r.getAsl())
-                            i = r_to_i_map_docking[id]
-                            if i in i_to_r_map_target:
-                                atoms = list(i_to_r_map_target[i][1])
-                                volume_target = steric_clash.clash_volume(prot_target, atoms1=atoms, struc2=c)
-                                features['name'].append(name)
-                                features['conformer_index'].append(conformer_index)
-                                features['grid_loc_x'].append(grid_loc_x)
-                                features['grid_loc_y'].append(grid_loc_y)
-                                features['grid_loc_z'].append(grid_loc_z)
-                                features['rot_x'].append(rot_x)
-                                features['rot_y'].append(rot_y)
-                                features['rot_z'].append(rot_z)
-                                features['residue'].append(r.getAsl())
-                                features['bfactor'].append(normalizedBFactor(r, mean, stdev))
-                                features['mcss'].append(mcss)
-                                features['volume_docking'].append(volume_docking)
-                                features['volume_target'].append(volume_target)
-                                features['rmsd'].append(rmsd_val)
-                c.setXYZ(old_coords)
-
-            out_df = pd.DataFrame.from_dict(features)
-            out_df.to_csv(os.path.join(pair_path, 'clash_data.csv'), index=False)
+        group_df = df[df['name'].isin(names)]
+        num_intolerable = []
+        num_clash = []
+        for name in tqdm(group_df['name'].to_list(), desc='names'):
+            name_df = out_df[out_df['name'] == name]
+            num_intolerable.append(len(name_df[name_df['volume_target'] > args.target_clash_cutoff]))
+            num_clash.append(len(name_df))
+        group_df['num_intolerable'] = num_intolerable
+        group_df['num_clash'] = num_clash
+        group_df.to_csv(os.path.join(clash_path, 'pose_data_{}_{}.csv'.format(args.file_index, args.name_index)))
 
     elif args.task == 'check':
-        pairs = get_prots(args.docked_prot_file)
-        unfinished = []
+        pair = '{}-to-{}'.format(args.target, args.start)
+        protein_path = os.path.join(raw_root, args.protein)
+        pair_path = os.path.join(protein_path, pair)
+        pose_path = os.path.join(pair_path, args.group_name)
+        clash_path = os.path.join(pose_path, 'clash_data')
+        prefix = 'exhaustive_search_poses'
+        files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
+        clash_counter = 0
+        pose_counter = 0
+        for i in range(len(files)):
+            file = os.path.join(pose_path, 'exhaustive_search_poses_{}.csv'.format(i))
+            df = pd.read_csv(file)
+            grouped_files = group_files(args.n, df['name'].to_list())
+            for j in range(len(grouped_files)):
+                out_file = os.path.join(clash_path, 'clash_data_{}_{}.csv'.format(i, j))
+                if not os.path.exists(out_file):
+                    clash_counter += 1
 
-        for protein, target, start in pairs:
-            pair = '{}-to-{}'.format(target, start)
-            protein_path = os.path.join(raw_root, protein)
-            pair_path = os.path.join(protein_path, pair)
-            if not os.path.exists(os.path.join(pair_path, 'clash_data.csv')):
-                unfinished.append((protein, target, start))
-
-        print("Missing:", len(unfinished), "/", len(pairs))
-        print(unfinished)
+                out_file = os.path.join(clash_path, 'pose_pred_data_{}_{}.csv'.format(i, j))
+                if not os.path.exists(out_file):
+                    pose_counter += 1
+        print('Missing clash:', clash_counter)
+        print('Missing pose:', pose_counter)
 
     elif args.task == 'combine':
-        dfs = []
-        pairs = get_prots(args.docked_prot_file)
+        clash_dfs = []
+        pose_dfs = []
+        pair = '{}-to-{}'.format(args.target, args.start)
+        protein_path = os.path.join(raw_root, args.protein)
+        pair_path = os.path.join(protein_path, pair)
+        pose_path = os.path.join(pair_path, args.group_name)
+        clash_path = os.path.join(pose_path, 'clash_data')
+        for f in os.listdir(clash_path):
+            file = os.path.join(clash_path, f)
+            df = pd.read_csv(os.path.join(file))
+            if f[:5] == 'clash':
+                clash_dfs.append(df)
+            else:
+                pose_dfs.append(df)
 
-        for protein, target, start in tqdm(pairs, desc='combining protein ligand pairs'):
-            pair = '{}-to-{}'.format(target, start)
-            protein_path = os.path.join(raw_root, protein)
-            pair_path = os.path.join(protein_path, pair)
-            df = pd.read_csv(os.path.join(pair_path, 'clash_data.csv'))
-            df['protein'] = protein
-            df['target'] = target
-            df['start'] = start
-            dfs.append(df)
+        # df = pd.concat(clash_dfs)
+        # df.to_csv(os.path.join(pose_path, 'combined_clash_data.csv'))
 
-        df = pd.concat(dfs)
-        df.to_csv(os.path.join(args.root, 'combined_clash_data.csv'))
+        df = pd.concat(pose_dfs)
+        df.to_csv(os.path.join(pose_path, 'combined_pose_data.csv'))
+
+    elif args.task == 'graph':
+        pair = '{}-to-{}'.format(args.target, args.start)
+        protein_path = os.path.join(raw_root, args.protein)
+        pair_path = os.path.join(protein_path, pair)
+        pose_path = os.path.join(pair_path, args.group_name)
+        df = pd.read_csv(os.path.join(pose_path, 'combined_pose_data.csv'))
+        df = df[df['num_pred_intolerable'] != 0]
+        correct_df = df[df['rmsd'] <= 2]
+        incorrect_df = df[df['rmsd'] > 2]
+        print(len(correct_df), len(incorrect_df))
+        names = incorrect_df['name'].to_list()
+        random.shuffle(names)
+        names = names[:5000]
+        incorrect_df = incorrect_df[incorrect_df['name'].isin(names)]
+
+        fig, ax = plt.subplots()
+        sns.distplot(correct_df['num_pred_intolerable'].to_list(), hist=True, label="correct poses (rmsd <= 2 A)")
+        sns.distplot(incorrect_df['num_pred_intolerable'].to_list(), hist=True, label="incorrect poses (rmsd > 2 A)")
+        plt.title('Num pred intolerable for O38732 2i0a-to-2q5k')
+        plt.xlabel('Num pred intolerable')
+        plt.ylabel('frequency')
+        ax.legend()
+        fig.savefig(args.save_path)
 
 
 if __name__=="__main__":
