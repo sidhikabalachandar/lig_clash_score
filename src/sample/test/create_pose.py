@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 create_pose.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P03368 --target 1gno --start 1zp8
+$ $SCHRODINGER/run python3 create_pose.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P11838 --target 3wz6 --start 1gvx --conformer_index 28 --grid_loc_x 2 --grid_loc_y 4 --grid_loc_z 0 --rot_x 80 --rot_y 40 --rot_z 320
 """
 
 import argparse
@@ -342,8 +342,6 @@ def main():
     parser.add_argument('--rot_z', type=int, default=180, help='rot_z')
     args = parser.parse_args()
 
-    random.seed(0)
-
     # important dirs
     pair = '{}-to-{}'.format(args.target, args.start)
     protein_path = os.path.join(args.raw_root, args.protein)
@@ -351,26 +349,16 @@ def main():
 
     target_lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(args.target))
     target_lig = list(structure.StructureReader(target_lig_file))[0]
-    target_center = get_centroid(target_lig)
-    target_x, target_y, target_z, _ = target_center
     target_lig_indices = [a.index for a in target_lig.atom if a.element != 'H']
-
-    start_prot_file = os.path.join(pair_path, '{}_prot.mae'.format(args.start))
-    start_prot = list(structure.StructureReader(start_prot_file))[0]
 
     # get conformers
     conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
     conformers = list(structure.StructureReader(conformer_file))[:args.num_conformers]
 
-    # clash preprocessing
-    start_prot_grid, start_origin = get_grid(start_prot)
-
     c = conformers[args.conformer_index]
     c_indices = [a.index for a in c.atom if a.element != 'H']
 
-    conformer_x, conformer_y, conformer_z, _ = list(get_centroid(c))
-    translate_structure(c, -conformer_x + target_x + args.grid_loc_x, -conformer_y + target_y + args.grid_loc_y,
-                        -conformer_z + target_z + args.grid_loc_z)
+    translate_structure(c, args.grid_loc_x, args.grid_loc_y, args.grid_loc_z)
     conformer_center = list(get_centroid(c))
     coords = c.getXYZ(copy=True)
 
@@ -379,20 +367,23 @@ def main():
     to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
     from_origin_matrix = get_translation_matrix(displacement_vector)
 
-    rot_matrix_x = get_rotation_matrix(X_AXIS, args.rot_x)
-    rot_matrix_y = get_rotation_matrix(Y_AXIS, args.rot_y)
-    rot_matrix_z = get_rotation_matrix(Z_AXIS, args.rot_z)
+    rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(args.rot_x))
+    rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(args.rot_y))
+    rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(args.rot_z))
 
     # apply x,y,z rotation
     new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
                                   rot_matrix_y, rot_matrix_z)
     c.setXYZ(new_coords)
-    # check simple filter
-    start_clash = get_clash(c, start_prot_grid, start_origin)
 
     # check if pose correct
     rmsd_val = rmsd.calculate_in_place_rmsd(c, c_indices, target_lig, target_lig_indices)
-    print(start_clash, rmsd_val)
+    print(rmsd_val)
+    rmsd_val = rmsd.calculate_in_place_rmsd(c, c.getAtomIndices(), target_lig, target_lig.getAtomIndices())
+    print(rmsd_val)
+
+    with structure.StructureWriter('pose.mae') as pose:
+        pose.append(c)
 
 
 if __name__ == "__main__":

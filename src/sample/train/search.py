@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 search.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/train/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0
+$ $SCHRODINGER/run python3 search.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/sample/train/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --group_name train_grid_6_1_rotation_0_360_20 --index 0 --n 1
 """
 
 import argparse
@@ -293,7 +293,7 @@ def get_grid(s):
     at = (np.around(at - 0.5)).astype(np.int16)
     origin = np.full((3), np.amin(at))
     at = at - origin
-    dim = np.amax(at) + 1
+    dim = np.amax(at) * 2
     grid = np.zeros((dim, dim, dim))
     np.add.at(grid, (at[:, 0], at[:, 1], at[:, 2]), 1)
 
@@ -357,11 +357,11 @@ def rotate_pose(min_angle, max_angle, rotation_search_step_size, coords, from_or
                 target_prot_grid, target_origin, target_prot, saved_dict):
     angles = [x for x in range(min_angle, max_angle + rotation_search_step_size, rotation_search_step_size)]
     x = random.choice(angles)
-    rot_matrix_x = get_rotation_matrix(X_AXIS, x)
+    rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(x))
     y = random.choice(angles)
-    rot_matrix_y = get_rotation_matrix(Y_AXIS, y)
+    rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(y))
     z = random.choice(angles)
-    rot_matrix_z = get_rotation_matrix(Z_AXIS, z)
+    rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(z))
 
 
     # apply x,y,z rotation
@@ -423,7 +423,8 @@ def search(protein, target, start, raw_root, rotation_search_step_size, num_conf
     target_prot_grid, target_origin = get_grid(target_prot)
 
     saved_dict = {'name': [], 'conformer_index': [], 'grid_loc_x': [], 'grid_loc_y': [], 'grid_loc_z': [],
-                  'rot_x': [], 'rot_y': [], 'rot_z': [], 'start_clash': [], 'target_clash': [], 'rmsd': []}
+                  'rot_x': [], 'rot_y': [], 'rot_z': [], 'start_clash': [], 'target_clash': [],
+                  'schrod_start_clash': [], 'schrod_target_clash': [], 'rmsd': []}
 
     for _ in range(100):
 
@@ -451,16 +452,18 @@ def search(protein, target, start, raw_root, rotation_search_step_size, num_conf
 
 
     df = pd.DataFrame.from_dict(saved_dict)
-    df.to_csv(os.path.join(pose_path, 'train_search_poses.csv'))
+    df.to_csv(os.path.join(pose_path, 'poses.csv'))
 
 
-def check_search(pairs, raw_root):
+def check_search(pairs, raw_root, group_name):
     unfinished = []
     for protein, target, start in pairs:
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
-        if not os.path.exists(os.path.join(pair_path, 'exhaustive_search_poses.csv')):
+        pose_path = os.path.join(pair_path, group_name)
+        file = os.path.join(pose_path, 'poses.csv')
+        if not os.path.exists(file):
             unfinished.append((protein, target, start))
 
     print("Missing:", len(unfinished), "/", len(pairs))
@@ -473,14 +476,14 @@ def main():
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
-    parser.add_argument('--num_conformers', type=int, default=, help='maximum number of conformers considered')
+    parser.add_argument('--num_conformers', type=int, default=2, help='maximum number of conformers considered')
     parser.add_argument('--num_pairs', type=int, default=10, help='number of protein-ligand pairs considered')
-    parser.add_argument('--n', type=int, default=3, help='number of grid_points processed in each job')
+    parser.add_argument('--n', type=int, default=10, help='number of grid_points processed in each job')
     parser.add_argument('--grid_size', type=int, default=1, help='grid size in positive and negative x, y, z '
                                                                  'directions')
     parser.add_argument('--grid_file', type=str, default='', help='pickle file with grid data dictionary')
     parser.add_argument('--index', type=int, default=-1, help='grid point group index')
-    parser.add_argument('--grid_search_step_size', type=int, default=2, help='step size between each grid point, in '
+    parser.add_argument('--grid_search_step_size', type=int, default=1, help='step size between each grid point, in '
                                                                              'angstroms')
     parser.add_argument('--rotation_search_step_size', type=int, default=20, help='step size between each angle '
                                                                                  'checked, in degrees')
@@ -488,6 +491,7 @@ def main():
     parser.add_argument('--max_angle', type=int, default=360, help='min angle of rotation in degrees')
     parser.add_argument('--start_clash_cutoff', type=int, default=100, help='clash cutoff between start protein and '
                                                                             'ligand pose')
+    parser.add_argument('--group_name', type=str, default='', help='name of pose group subdir')
     args = parser.parse_args()
 
     random.seed(0)
@@ -519,26 +523,19 @@ def main():
                    args.grid_search_step_size, args.min_angle, args.max_angle)
 
     elif args.task == 'check':
-        if args.mode == 'train':
-            pairs = get_prots(args.docked_prot_file)
-            check_search(pairs, args.raw_root)
-        elif args.mode == 'test' and args.protein == '':
-            pairs = get_prots(args.docked_prot_file)
-            random.shuffle(pairs)
-            grouped_files = group_grid(args.grid_n, args.grid_size)
-            unfinished = []
-            for protein, target, start in pairs[:5]:
-                pair = '{}-to-{}'.format(target, start)
-                protein_path = os.path.join(args.raw_root, protein)
-                pair_path = os.path.join(protein_path, pair)
-                pose_path = os.path.join(pair_path, args.group_name)
-                for i in range(len(grouped_files)):
-                    if not os.path.exists(os.path.join(pose_path, 'exhaustive_search_poses_{}.csv'.format(i))):
-                        unfinished.append((protein, target, start))
-                        break
+        pairs = get_prots(args.docked_prot_file)
+        check_search(pairs, args.raw_root, args.group_name)
 
-            print('Missing {} / 5'.format(len(unfinished)))
-            print(unfinished)
+    elif args.task == 'delete':
+        pairs = get_prots(args.docked_prot_file)
+        for protein, target, start in pairs:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+            # file = os.path.join(pair_path, 'train_grid_6_1_rotation_0_360_20.csv')
+            # os.system('rm {}'.format(file))
+            file = os.path.join(pair_path, 'clash_data_train_grid_6_1_rotation_0_360_20.csv')
+            os.system('rm {}'.format(file))
 
 
 if __name__ == "__main__":

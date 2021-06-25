@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 model.py graph /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --save_path /home/users/sidhikab/lig_clash_score/reports/figures/bfactor_vs_volume.png --docked_prot_file /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+$ $SCHRODINGER/run python3 model.py train /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --save_path /home/users/sidhikab/lig_clash_score/reports/figures/bfactor_vs_volume.png --docked_prot_file /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
 """
 
 import argparse
@@ -36,24 +36,28 @@ def get_prots(docked_prot_file):
             if line[0] == '#':
                 continue
             protein, target, start = line.strip().split()
-            process.append((protein, target, start))
+            if protein not in process:
+                process.append(protein)
 
     return process
 
 
-def train_test_split(df, test_size):
+def train_test_split(df, root):
     proteins = df.protein.unique()
     random.shuffle(proteins)
+    train_prots = get_prots(os.path.join(root, 'splits', 'search_train_index.txt'))
+    test_prots = get_prots(os.path.join(root, 'splits', 'search_test_index.txt'))
+    print(len(train_prots), len(test_prots))
     test_dfs = []
     train_dfs = []
-    cur_test_size = 0
-    for prot in tqdm(proteins, desc='creating data sets'):
+    for prot in proteins:
         prot_df = df[df['protein'] == prot]
-        if cur_test_size / len(df) < test_size or prot == 'O38732':
-            cur_test_size += len(prot_df)
+        if prot in train_prots:
+            train_dfs.append(prot_df)
+        elif prot in test_prots:
             test_dfs.append(prot_df)
         else:
-            train_dfs.append(prot_df)
+            print(prot)
     test = pd.concat(test_dfs)
     train = pd.concat(train_dfs)
 
@@ -76,7 +80,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('task', type=str, help='either align or search')
     parser.add_argument('root', type=str, help='directory where raw data will be placed')
-    parser.add_argument('--test_size', type=float, default=0.33, help='grid point group index')
     parser.add_argument('--save_path', type=str, default="", help='grid point group index')
     parser.add_argument('--docked_prot_file', type=str, help='file listing proteins to process')
     args = parser.parse_args()
@@ -86,7 +89,7 @@ def main():
 
     if args.task == 'train':
         df = pd.read_csv(os.path.join(args.root, 'combined_clash_data.csv'))
-        X_train, X_test, y_train, y_test = train_test_split(df, args.test_size)
+        X_train, X_test, y_train, y_test = train_test_split(df, args.root)
         clf_file = os.path.join(args.root, 'clash_classifier.pkl')
         if os.path.exists(clf_file):
             infile = open(clf_file, 'rb')
