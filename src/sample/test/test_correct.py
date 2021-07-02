@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 test_correct.py combine /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --group_name exhaustive_grid_6_2_rotation_0_360_20_rmsd_2.5 --protein P00797 --target 3own --start 3d91 --index 0
+$ $SCHRODINGER/run python3 test_correct.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein P00797 --target 3own --start 3d91 --index 0
 """
 
 import argparse
@@ -327,6 +327,25 @@ def get_pocket_res(protein, ligand, dist):
     protein.deleteAtoms(remove)
 
 
+def get_grid_size(pair_path, target, start):
+    target_lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
+    target_lig = list(structure.StructureReader(target_lig_file))[0]
+    target_center = get_centroid(target_lig)
+
+    start_lig_file = os.path.join(pair_path, '{}_lig.mae'.format(start))
+    start_lig = list(structure.StructureReader(start_lig_file))[0]
+    start_center = get_centroid(start_lig)
+
+    dist = np.sqrt((target_center[0] - start_center[0]) ** 2 +
+                   (target_center[1] - start_center[1]) ** 2 +
+                   (target_center[2] - start_center[2]) ** 2)
+
+    grid_size = int(dist + 1)
+    if grid_size % 2 == 1:
+        grid_size += 1
+    return grid_size
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('task', type=str, help='either align or search')
@@ -337,8 +356,7 @@ def main():
     parser.add_argument('--protein', type=str, default='', help='name of protein')
     parser.add_argument('--target', type=str, default='', help='name of target ligand')
     parser.add_argument('--start', type=str, default='', help='name of start ligand')
-    parser.add_argument('--group_name', type=str, default='', help='name of pose group subdir')
-    parser.add_argument('--n', type=int, default=1000, help='number of poses to process in each job')
+    parser.add_argument('--n', type=int, default=600, help='number of poses to process in each job')
     parser.add_argument('--save_pred_path', type=str, help='prediction graph file')
     parser.add_argument('--save_true_path', type=str, help='true graph file')
     parser.add_argument('--target_clash_cutoff', type=int, default=0, help='clash cutoff between target protein and '
@@ -363,7 +381,8 @@ def main():
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
-            pose_path = os.path.join(pair_path, args.group_name)
+            grid_size = get_grid_size(pair_path, target, start)
+            pose_path = os.path.join(pair_path, 'exhaustive_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
             correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
             file = os.path.join(correct_path, 'combined.csv')
             df = pd.read_csv(file)
@@ -371,12 +390,11 @@ def main():
             grouped_indices = group_files(args.n, indices)
 
             for i in range(len(grouped_indices)):
-                cmd = 'sbatch -p owners -t 2:00:00 -o {} --wrap="$SCHRODINGER/run python3 test_correct.py group {} {} ' \
-                      '{} --protein {} --target {} --start {} --group_name {} --index {}"'
+                cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 test_correct.py group {} {} ' \
+                      '{} --protein {} --target {} --start {} --index {}"'
                 counter += 1
                 os.system(cmd.format(os.path.join(args.run_path, 'test_{}_{}_{}.out'.format(protein, pair, i)),
-                                     args.docked_prot_file, args.run_path, args.root, protein, target, start,
-                                     args.group_name, i))
+                                     args.docked_prot_file, args.run_path, args.root, protein, target, start, i))
 
         print(counter)
 
@@ -384,7 +402,8 @@ def main():
         pair = '{}-to-{}'.format(args.target, args.start)
         protein_path = os.path.join(raw_root, args.protein)
         pair_path = os.path.join(protein_path, pair)
-        pose_path = os.path.join(pair_path, args.group_name)
+        grid_size = get_grid_size(pair_path, args.target, args.start)
+        pose_path = os.path.join(pair_path, 'exhaustive_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
         correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
         file = os.path.join(correct_path, 'combined.csv')
         df = pd.read_csv(file)
@@ -419,9 +438,7 @@ def main():
         clash_features = {'name': [], 'residue': [], 'bfactor': [], 'mcss': [],
                           'volume_docking': []}
 
-        # first_loop = []
         for i in grouped_indices[args.index]:
-            # start = time.time()
             name = df.loc[[i]]['name'].iloc[0]
             conformer_index = df.loc[[i]]['conformer_index'].iloc[0]
             c = conformers[conformer_index]
@@ -452,7 +469,6 @@ def main():
                     clash_features['volume_docking'].append(volume_docking)
 
             c.setXYZ(old_coords)
-            # first_loop.append(time.time() - start)
 
         out_clash_df = pd.DataFrame.from_dict(clash_features)
         infile = open(os.path.join(args.root, 'clash_classifier.pkl'), 'rb')
@@ -462,6 +478,7 @@ def main():
             pred = clf.predict(out_clash_df[['bfactor', 'mcss', 'volume_docking']])
         else:
             pred = []
+        print(sum(pred))
         out_clash_df['pred'] = pred
         out_clash_df.to_csv(out_clash_file, index=False)
 
@@ -470,24 +487,18 @@ def main():
         df['pred_num_intolerable'] = zeros
         df['num_clash_docking'] = zeros
 
-        # second_loop = []
         for i in grouped_indices[args.index]:
-            # start = time.time()
             name = df.loc[[i]]['name'].iloc[0]
             name_df = out_clash_df[out_clash_df['name'] == name]
             if len(name_df) != 0:
                 pred = name_df['pred'].to_list()
+                print(sum(pred))
                 df.iat[i, df.columns.get_loc('pred_num_intolerable')] = sum(pred)
                 df.iat[i, df.columns.get_loc('num_clash_docking')] = len(pred)
 
             # else
             # default set to 0
-        #     second_loop.append(time.time() - start)
 
-        # t = statistics.mean(first_loop) + statistics.mean(second_loop)
-        # print(t)
-        # print((t * 20000) / 60)
-        # print(len(indices))
         df = df.iloc[grouped_indices[args.index], :]
         df.to_csv(os.path.join(clash_path, 'pose_pred_data_{}.csv'.format(args.index)))
 
@@ -495,46 +506,58 @@ def main():
         pairs = get_prots(args.docked_prot_file)
         random.shuffle(pairs)
         missing = []
+        counter = 0
         for protein, target, start in pairs[:5]:
             if protein == 'Q86WV6':
                 continue
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
-            pose_path = os.path.join(pair_path, args.group_name)
-            subsample_path = os.path.join(pose_path, 'subsample')
-            clash_path = os.path.join(subsample_path, 'clash_data')
-            prefix = 'index_'
-            suffix = '.pkl'
+            grid_size = get_grid_size(pair_path, target, start)
+            pose_path = os.path.join(pair_path, 'exhaustive_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
+            correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
+            clash_path = os.path.join(correct_path, 'clash_data')
+            file = os.path.join(correct_path, 'combined.csv')
+            df = pd.read_csv(file)
+            indices = [i for i in range(len(df))]
+            grouped_indices = group_files(args.n, indices)
 
-            for file in os.listdir(subsample_path):
-                if file[:len(prefix)] == prefix:
-                    name = file[len(prefix):-len(suffix)]
-                    if not os.path.exists(os.path.join(clash_path, 'clash_data_{}.csv'.format(name))) or \
-                            not os.path.exists(os.path.join(clash_path, 'pose_pred_data_{}.csv'.format(name))):
-                        missing.append((protein, target, start, name))
+            for i in range(len(grouped_indices)):
+                out_clash_file = os.path.join(clash_path, 'clash_data_{}.csv'.format(i))
+                pose_file = os.path.join(clash_path, 'pose_pred_data_{}.csv'.format(i))
+                counter += 1
+                if not os.path.exists(out_clash_file):
+                    missing.append((protein, target, start, i))
+                    continue
+                if not os.path.exists(pose_file):
+                    missing.append((protein, target, start, i))
 
-        print(len(missing))
+        print('Missing: {}/{}'.format(len(missing), counter))
         print(missing)
 
     elif args.task == 'combine':
         pairs = get_prots(args.docked_prot_file)
         random.shuffle(pairs)
         for protein, target, start in pairs[:5]:
+            print(protein, target, start)
             if protein == 'Q86WV6':
                 continue
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
-            pose_path = os.path.join(pair_path, args.group_name)
+            grid_size = get_grid_size(pair_path, target, start)
+            pose_path = os.path.join(pair_path, 'exhaustive_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
             correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
             clash_path = os.path.join(correct_path, 'clash_data')
+            file = os.path.join(correct_path, 'combined.csv')
+            df = pd.read_csv(file)
+            indices = [i for i in range(len(df))]
+            grouped_indices = group_files(args.n, indices)
             dfs = []
-            for f in os.listdir(clash_path):
-                file = os.path.join(clash_path, f)
-                prefix = 'pose'
-                if f[:len(prefix)] == prefix:
-                    dfs.append(pd.read_csv(file))
+
+            for i in range(len(grouped_indices)):
+                pose_file = os.path.join(clash_path, 'pose_pred_data_{}.csv'.format(i))
+                dfs.append(pd.read_csv(pose_file))
 
             df = pd.concat(dfs)
             df.to_csv(os.path.join(clash_path, 'combined.csv'), index=False)

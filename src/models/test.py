@@ -2,7 +2,7 @@
 The purpose of this code is to train the gnn model
 
 It can be run on sherlock using
-$ sbatch 1gpu.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python test.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d
+$ sbatch 1gpu.sbatch /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python test_subsample_incorrect.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d
 """
 f = open("/home/users/sidhikab/lig_clash_score/src/models/out/test.out", "w")
 f.write("start import\n")

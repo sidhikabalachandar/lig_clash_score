@@ -382,12 +382,14 @@ def search(protein, target, start, raw_root, rotation_search_step_size, num_conf
     protein_path = os.path.join(raw_root, protein)
     pair_path = os.path.join(protein_path, pair)
 
+    # ground truth lig
     target_lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
     target_lig = list(structure.StructureReader(target_lig_file))[0]
 
     # get non hydrogen atom indices for rmsd
     target_lig_indices = [a.index for a in target_lig.atom if a.element != 'H']
 
+    # prots
     start_prot_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
     start_prot = list(structure.StructureReader(start_prot_file))[0]
 
@@ -411,29 +413,32 @@ def search(protein, target, start, raw_root, rotation_search_step_size, num_conf
             for dz in vals:
                 grid.append((dx, dy, dz))
 
-    # get save location
-    group_name = 'train_grid_{}_{}_rotation_{}_{}_{}'.format(grid_size,
-                 grid_search_step_size, min_angle, max_angle, rotation_search_step_size)
-    pose_path = os.path.join(pair_path, group_name)
-    if not os.path.exists(pose_path):
-        os.mkdir(pose_path)
-
     # clash preprocessing
     start_prot_grid, start_origin = get_grid(start_prot)
     target_prot_grid, target_origin = get_grid(target_prot)
 
+    # get save location
+    group_name = 'train_grid_{}_{}_rotation_{}_{}_{}'.format(grid_size,
+                                                             grid_search_step_size, min_angle, max_angle,
+                                                             rotation_search_step_size)
+    pose_path = os.path.join(pair_path, group_name)
+    if not os.path.exists(pose_path):
+        os.mkdir(pose_path)
     saved_dict = {'name': [], 'conformer_index': [], 'grid_loc_x': [], 'grid_loc_y': [], 'grid_loc_z': [],
                   'rot_x': [], 'rot_y': [], 'rot_z': [], 'start_clash': [], 'target_clash': [],
                   'schrod_start_clash': [], 'schrod_target_clash': [], 'rmsd': []}
 
+    # only save 100 poses
     for _ in range(100):
 
+        # get conformer
         i = random.choice(conformer_indices)
         c = conformers[i]
 
         # get non hydrogen atom indices for rmsd
         c_indices = [a.index for a in c.atom if a.element != 'H']
 
+        # random translation
         grid_loc = random.choice(grid)
         translate_structure(c, grid_loc[0], grid_loc[1], grid_loc[2])
         conformer_center = list(get_centroid(c))

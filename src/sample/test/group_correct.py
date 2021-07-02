@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 group_correct.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P00797 --target 3own --start 3d91 --index 0 --n 1
+$ $SCHRODINGER/run python3 group_correct.py all_combine /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P00797 --target 3own --start 3d91 --index 0 --n 1
 """
 
 import argparse
@@ -146,7 +146,7 @@ def main():
             grouped_files = group_files(args.n, files)
 
             for i in range(len(grouped_files)):
-                cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 group_poses.py group {} {} {} ' \
+                cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 group_correct.py group {} {} {} ' \
                       '--protein {} --target {} --start {} --index {}"'
                 out_file_name = 'subsample_{}_{}_{}_{}.out'.format(protein, target, start, i)
                 os.system(
@@ -177,6 +177,39 @@ def main():
             correct_df = df[df['rmsd'] <= args.rmsd_cutoff]
             correct_df.to_csv(os.path.join(correct_path, 'correct_{}.csv'.format(name)))
 
+    elif args.task == 'all_combine':
+        pairs = get_prots(args.docked_prot_file)
+        random.shuffle(pairs)
+        for protein, target, start in pairs[:5]:
+            if protein == 'Q86WV6':
+                continue
+            cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 group_correct.py group_combine ' \
+                  '{} {} {} --protein {} --target {} --start {}"'
+            out_file_name = 'subsample_combine_{}_{}_{}.out'.format(protein, target, start)
+            os.system(
+                cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.run_path,
+                           args.raw_root, protein, target, start))
+
+    elif args.task == 'group_combine':
+        pair = '{}-to-{}'.format(args.target, args.start)
+        protein_path = os.path.join(args.raw_root, args.protein)
+        pair_path = os.path.join(protein_path, pair)
+        grid_size = get_grid_size(pair_path, args.target, args.start)
+        pose_path = os.path.join(pair_path, 'exhaustive_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
+        correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
+
+        prefix = 'exhaustive_search_poses_'
+        suffix = '.csv'
+        files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
+        dfs = []
+        for file in files:
+            name = file[len(prefix):-len(suffix)]
+            correct_file = os.path.join(correct_path, 'correct_{}.csv'.format(name))
+            df = pd.read_csv(correct_file)
+            dfs.append(df)
+
+        combined_df = pd.concat(dfs)
+        combined_df.to_csv(os.path.join(correct_path, 'combined.csv'))
 
 
 if __name__ == "__main__":

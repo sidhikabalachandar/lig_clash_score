@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 visualize_poses.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --group_name exhaustive_grid_6_2_rotation_0_360_20_rmsd_2.5
+$ $SCHRODINGER/run python3 visualize_correct.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --group_name exhaustive_grid_6_2_rotation_0_360_20_rmsd_2.5
 """
 
 import argparse
@@ -221,7 +221,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
     parser.add_argument('--group_name', type=str, default='', help='name of pose group subdir')
-    parser.add_argument('--residue_cutoff', type=int, default=5, help='name of pose group subdir')
+    parser.add_argument('--residue_cutoff', type=int, default=0, help='name of pose group subdir')
     args = parser.parse_args()
     random.seed(0)
 
@@ -235,7 +235,6 @@ def main():
     correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
     clash_path = os.path.join(correct_path, 'clash_data')
     file = os.path.join(clash_path, 'combined.csv')
-    print(file)
     df = pd.read_csv(file)
     correct_df = df[df['pred_num_intolerable'] <= args.residue_cutoff]
     incorrect_df = df[df['pred_num_intolerable'] > args.residue_cutoff]
