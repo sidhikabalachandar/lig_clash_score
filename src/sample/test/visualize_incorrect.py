@@ -79,7 +79,7 @@ def main():
             i = random.choice(indices)
             intolerable_poses.append((file, i))
 
-    for clash_cutoff in range(1, 5):
+    for clash_cutoff in range(0, 5):
         num_without_clash = 0
 
         with structure.StructureWriter(os.path.join(clash_path,
