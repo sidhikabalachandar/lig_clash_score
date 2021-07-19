@@ -17,7 +17,6 @@ import argparse
 import os
 import random
 import pandas as pd
-import numpy as np
 import math
 import schrodinger.structure as structure
 from schrodinger.structutils.transform import get_centroid
@@ -101,8 +100,15 @@ def main():
                 rot_x = df.loc[[i]]['rot_x'].iloc[0]
                 rot_y = df.loc[[i]]['rot_y'].iloc[0]
                 rot_z = df.loc[[i]]['rot_z'].iloc[0]
-                new_coords = rotate_structure(coords, math.radians(rot_x), math.radians(rot_y), math.radians(rot_z),
-                                              conformer_center)
+
+                displacement_vector = get_coords_array_from_list(conformer_center)
+                to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
+                from_origin_matrix = get_translation_matrix(displacement_vector)
+                rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
+                rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
+                rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
+                new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
+                                              rot_matrix_y, rot_matrix_z)
 
                 # for clash features dictionary
                 c.setXYZ(new_coords)
@@ -134,8 +140,15 @@ def main():
                 rot_x = df.loc[[i]]['rot_x'].iloc[0]
                 rot_y = df.loc[[i]]['rot_y'].iloc[0]
                 rot_z = df.loc[[i]]['rot_z'].iloc[0]
-                new_coords = rotate_structure(coords, math.radians(rot_x), math.radians(rot_y), math.radians(rot_z),
-                                              conformer_center)
+
+                displacement_vector = get_coords_array_from_list(conformer_center)
+                to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
+                from_origin_matrix = get_translation_matrix(displacement_vector)
+                rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
+                rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
+                rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
+                new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
+                                              rot_matrix_y, rot_matrix_z)
 
                 # for clash features dictionary
                 c.setXYZ(new_coords)
