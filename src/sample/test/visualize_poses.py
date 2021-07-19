@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 visualize_incorrect.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --group_name exhaustive_grid_4_2_rotation_0_360_20_rmsd_2.5
+$ $SCHRODINGER/run python3 visualize_poses.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --group_name exhaustive_grid_4_2_rotation_0_360_20_rmsd_2.5
 """
 
 import argparse
@@ -238,6 +238,8 @@ def correct(args):
         correct_intolerable_clash.append(start_clash)
 
         c.setXYZ(old_coords)
+
+        return correct_tolerable_clash, correct_intolerable_clash
 
 
 def main():
