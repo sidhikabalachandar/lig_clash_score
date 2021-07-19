@@ -29,8 +29,6 @@ X_AXIS = [1.0, 0.0, 0.0]  # x-axis unit vector
 Y_AXIS = [0.0, 1.0, 0.0]  # y-axis unit vector
 Z_AXIS = [0.0, 0.0, 1.0]  # z-axis unit vector
 
-# SCHRODINGER REPLACEMENT FUNCTIONS
-
 
 def main():
     parser = argparse.ArgumentParser()

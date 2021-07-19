@@ -55,73 +55,101 @@ def main():
     conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
     conformers = list(structure.StructureReader(conformer_file))
 
-    with structure.StructureWriter(os.path.join(clash_path, 'correct_tolerable_clash.mae')) as correct:
-        indices = [i for i in correct_df.index]
-        random.shuffle(indices)
-        indices = indices[:100]
-        for i in indices:
-            conformer_index = correct_df.loc[[i]]['conformer_index'].iloc[0]
-            c = conformers[conformer_index]
-            old_coords = c.getXYZ(copy=True)
-            grid_loc_x = correct_df.loc[[i]]['grid_loc_x'].iloc[0]
-            grid_loc_y = correct_df.loc[[i]]['grid_loc_y'].iloc[0]
-            grid_loc_z = correct_df.loc[[i]]['grid_loc_z'].iloc[0]
-            translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
-            conformer_center = list(get_centroid(c))
-            coords = c.getXYZ(copy=True)
-            rot_x = correct_df.loc[[i]]['rot_x'].iloc[0]
-            rot_y = correct_df.loc[[i]]['rot_y'].iloc[0]
-            rot_z = correct_df.loc[[i]]['rot_z'].iloc[0]
+    start_prot_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
+    start_prot = list(structure.StructureReader(start_prot_file))[0]
 
-            displacement_vector = get_coords_array_from_list(conformer_center)
-            to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
-            from_origin_matrix = get_translation_matrix(displacement_vector)
-            rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
-            rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
-            rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
-            new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
-                                          rot_matrix_y, rot_matrix_z)
+    start_prot_grid, start_origin = get_grid(start_prot)
 
-            # for clash features dictionary
-            c.setXYZ(new_coords)
+    tolerable_indices = [i for i in correct_df.index]
+    random.shuffle(tolerable_indices)
+    tolerable_poses = tolerable_indices[:100]
 
-            correct.append(c)
+    intolerable_indices = [i for i in incorrect_df.index]
+    random.shuffle(intolerable_indices)
+    intolerable_poses = intolerable_indices[:100]
 
-            c.setXYZ(old_coords)
+    for clash_cutoff in range(1, 5):
+        num_without_clash = 0
 
-    with structure.StructureWriter(os.path.join(clash_path, 'correct_intolerable_clash.mae')) as incorrect:
-        indices = [i for i in incorrect_df.index]
-        random.shuffle(indices)
-        indices = indices[:100]
-        for i in indices:
-            conformer_index = incorrect_df.loc[[i]]['conformer_index'].iloc[0]
-            c = conformers[conformer_index]
-            old_coords = c.getXYZ(copy=True)
-            grid_loc_x = incorrect_df.loc[[i]]['grid_loc_x'].iloc[0]
-            grid_loc_y = incorrect_df.loc[[i]]['grid_loc_y'].iloc[0]
-            grid_loc_z = incorrect_df.loc[[i]]['grid_loc_z'].iloc[0]
-            translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
-            conformer_center = list(get_centroid(c))
-            coords = c.getXYZ(copy=True)
-            rot_x = incorrect_df.loc[[i]]['rot_x'].iloc[0]
-            rot_y = incorrect_df.loc[[i]]['rot_y'].iloc[0]
-            rot_z = incorrect_df.loc[[i]]['rot_z'].iloc[0]
+        with structure.StructureWriter(os.path.join(clash_path,
+                                'correct_tolerable_clash_revised_clash_cutoff_{}.mae'.format(clash_cutoff))) as correct:
+            for i in tolerable_poses:
+                conformer_index = correct_df.loc[[i]]['conformer_index'].iloc[0]
+                c = conformers[conformer_index]
+                old_coords = c.getXYZ(copy=True)
+                grid_loc_x = correct_df.loc[[i]]['grid_loc_x'].iloc[0]
+                grid_loc_y = correct_df.loc[[i]]['grid_loc_y'].iloc[0]
+                grid_loc_z = correct_df.loc[[i]]['grid_loc_z'].iloc[0]
+                translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
+                conformer_center = list(get_centroid(c))
+                coords = c.getXYZ(copy=True)
+                rot_x = correct_df.loc[[i]]['rot_x'].iloc[0]
+                rot_y = correct_df.loc[[i]]['rot_y'].iloc[0]
+                rot_z = correct_df.loc[[i]]['rot_z'].iloc[0]
 
-            displacement_vector = get_coords_array_from_list(conformer_center)
-            to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
-            from_origin_matrix = get_translation_matrix(displacement_vector)
-            rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
-            rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
-            rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
-            new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
-                                          rot_matrix_y, rot_matrix_z)
+                displacement_vector = get_coords_array_from_list(conformer_center)
+                to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
+                from_origin_matrix = get_translation_matrix(displacement_vector)
+                rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
+                rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
+                rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
+                new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
+                                              rot_matrix_y, rot_matrix_z)
 
-            # for clash features dictionary
-            c.setXYZ(new_coords)
+                # for clash features dictionary
+                c.setXYZ(new_coords)
 
-            incorrect.append(c)
+                start_clash = get_clash(c, start_prot_grid, start_origin)
+                if start_clash <= clash_cutoff:
+                    correct.append(c)
+                    num_without_clash += 1
 
-            c.setXYZ(old_coords)
+                c.setXYZ(old_coords)
+
+        print('tolerable: clash cutoff = {}, num without clash = {}, num total = {}'.format(clash_cutoff,
+                                                                                            num_without_clash,
+                                                                                            len(tolerable_poses)))
+        num_without_clash = 0
+
+        with structure.StructureWriter(os.path.join(clash_path,
+                            'correct_intolerable_clash_revised_clash_cutoff_{}.mae'.format(clash_cutoff))) as incorrect:
+            indices = [i for i in incorrect_df.index]
+            random.shuffle(indices)
+            indices = indices[:100]
+            for i in intolerable_poses:
+                conformer_index = incorrect_df.loc[[i]]['conformer_index'].iloc[0]
+                c = conformers[conformer_index]
+                old_coords = c.getXYZ(copy=True)
+                grid_loc_x = incorrect_df.loc[[i]]['grid_loc_x'].iloc[0]
+                grid_loc_y = incorrect_df.loc[[i]]['grid_loc_y'].iloc[0]
+                grid_loc_z = incorrect_df.loc[[i]]['grid_loc_z'].iloc[0]
+                translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
+                conformer_center = list(get_centroid(c))
+                coords = c.getXYZ(copy=True)
+                rot_x = incorrect_df.loc[[i]]['rot_x'].iloc[0]
+                rot_y = incorrect_df.loc[[i]]['rot_y'].iloc[0]
+                rot_z = incorrect_df.loc[[i]]['rot_z'].iloc[0]
+
+                displacement_vector = get_coords_array_from_list(conformer_center)
+                to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
+                from_origin_matrix = get_translation_matrix(displacement_vector)
+                rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
+                rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
+                rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
+                new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
+                                              rot_matrix_y, rot_matrix_z)
+
+                # for clash features dictionary
+                c.setXYZ(new_coords)
+
+                start_clash = get_clash(c, start_prot_grid, start_origin)
+                if start_clash <= clash_cutoff:
+                    incorrect.append(c)
+                    num_without_clash += 1
+
+                c.setXYZ(old_coords)
+            print('intolerable: clash cutoff = {}, num without clash = {}, num total = {}'.format(clash_cutoff,
+                                                                            num_without_clash, len(intolerable_poses)))
 
 
 if __name__ == "__main__":
