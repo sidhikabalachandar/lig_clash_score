@@ -17,6 +17,7 @@ import argparse
 import os
 import random
 import pandas as pd
+import numpy as np
 import math
 import schrodinger.structure as structure
 from schrodinger.structutils.transform import get_centroid
@@ -25,10 +26,11 @@ sys.path.insert(1, '../util')
 from util import *
 from schrod_replacement_util import *
 
-
 X_AXIS = [1.0, 0.0, 0.0]  # x-axis unit vector
 Y_AXIS = [0.0, 1.0, 0.0]  # y-axis unit vector
 Z_AXIS = [0.0, 0.0, 1.0]  # z-axis unit vector
+
+# SCHRODINGER REPLACEMENT FUNCTIONS
 
 
 def main():
