@@ -113,9 +113,6 @@ def main():
 
         with structure.StructureWriter(os.path.join(clash_path,
                             'correct_intolerable_clash_revised_clash_cutoff_{}.mae'.format(clash_cutoff))) as incorrect:
-            indices = [i for i in incorrect_df.index]
-            random.shuffle(indices)
-            indices = indices[:100]
             for i in intolerable_poses:
                 conformer_index = incorrect_df.loc[[i]]['conformer_index'].iloc[0]
                 c = conformers[conformer_index]
