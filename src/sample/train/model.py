@@ -19,27 +19,10 @@ import pandas as pd
 from sklearn import tree
 from sklearn import metrics
 import random
-from tqdm import tqdm
 import pickle
-import matplotlib.pyplot as plt
-
-
-def get_prots(docked_prot_file):
-    """
-    gets list of all protein, target ligands, and starting ligands in the index file
-    :param docked_prot_file: (string) file listing proteins to process
-    :return: process (list) list of all protein, target ligands, and starting ligands to process
-    """
-    process = []
-    with open(docked_prot_file) as fp:
-        for line in fp:
-            if line[0] == '#':
-                continue
-            protein, target, start = line.strip().split()
-            if protein not in process:
-                process.append(protein)
-
-    return process
+import sys
+sys.path.insert(1, '../util')
+from util import *
 
 
 def train_test_split(df, root):

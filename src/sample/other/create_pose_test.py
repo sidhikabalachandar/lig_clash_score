@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 create_pose.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P11838 --target 3wz6 --start 1gvx --conformer_index 28 --grid_loc_x 2 --grid_loc_y 4 --grid_loc_z 0 --rot_x 80 --rot_y 40 --rot_z 320
+$ $SCHRODINGER/run python3 create_pose_test.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P11838 --target 3wz6 --start 1gvx --conformer_index 28 --grid_loc_x 2 --grid_loc_y 4 --grid_loc_z 0 --rot_x 80 --rot_y 40 --rot_z 320
 """
 
 import argparse

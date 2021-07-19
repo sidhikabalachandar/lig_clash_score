@@ -2,14 +2,14 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 create_conformers.py check test /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --num_conformers 2 --index 0
+$ $SCHRODINGER/run python3 create_conformers.py group train /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0 --n 1
 """
 
 import argparse
 import os
 import random
 import sys
-sys.path.insert(1, '../util')
+sys.path.insert(1, 'util')
 from util import *
 
 _CONFGEN_CMD = "$SCHRODINGER/confgenx -WAIT -optimize -drop_problematic -num_conformers {num_conformers} " \
@@ -18,20 +18,14 @@ _CONFGEN_CMD = "$SCHRODINGER/confgenx -WAIT -optimize -drop_problematic -num_con
 # MAIN TASK FUNCTIONS
 
 
-def run_all(grouped_files, raw_root, run_path, docked_prot_file):
-    for i in range(len(grouped_files)):
-        cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 create_conformers.py group {} {} {} ' \
-              '--index {}"'
-        os.system(cmd.format(os.path.join(run_path, 'conformer_{}.out'.format(i)), docked_prot_file, run_path, raw_root,
-                             i))
-
-
-def run_group(protein, target, start, raw_root, num_conformers):
+def run_group(protein, target, start, args):
+    # important dirs
     pair = '{}-to-{}'.format(target, start)
-    protein_path = os.path.join(raw_root, protein)
+    protein_path = os.path.join(args.raw_root, protein)
     pair_path = os.path.join(protein_path, pair)
     target_lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
     current_dir = os.getcwd()
+
     os.chdir(pair_path)
     basename = os.path.basename(target_lig_file)
 
@@ -42,10 +36,14 @@ def run_group(protein, target, start, raw_root, num_conformers):
     # Otherwise, might want consider to generate the conformers to separate
     # folders for each (target, ligand) pair.
     # Run ConfGen
+    # copy ligand file
     run_cmd(f'cp {target_lig_file:} ./{basename:}')
-    command = _CONFGEN_CMD.format(num_conformers=num_conformers,
-                                  input_file=f'./{basename:}')
+    command = _CONFGEN_CMD.format(num_conformers=args.num_conformers, input_file=f'./{basename:}')
+
+    # run confgen
     run_cmd(command, f'Failed to run ConfGen on {target_lig_file:}')
+
+    # remove copied file
     run_cmd(f'rm ./{basename:}')
     os.chdir(current_dir)
 
@@ -53,11 +51,11 @@ def run_group(protein, target, start, raw_root, num_conformers):
         os.remove(os.path.join(pair_path, '{}_lig0.log'.format(target)))
 
 
-def run_check(process, raw_root):
+def run_check(process, args):
     unfinished = []
     for protein, target, start in process:
         pair = '{}-to-{}'.format(target, start)
-        protein_path = os.path.join(raw_root, protein)
+        protein_path = os.path.join(args.raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
         if not os.path.exists(os.path.join(pair_path, '{}_lig0-out.maegz'.format(target))):
             unfinished.append((protein, target, start))
@@ -88,24 +86,48 @@ def main():
         os.mkdir(args.run_path)
 
     if args.task == 'all':
-        process = get_prots(args.docked_prot_file)
-        grouped_files = group_files(args.n, process)
-        run_all(grouped_files, args.raw_root, args.run_path, args.docked_prot_file)
+        if args.mode == 'train':
+            process = get_prots(args.docked_prot_file)
+            grouped_files = group_files(args.n, process)
+            for i in range(len(grouped_files)):
+                cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 create_conformers.py group ' \
+                      'train {} {} {} --index {}"'
+                os.system(
+                    cmd.format(os.path.join(args.run_path, 'conformer_{}.out'.format(i)), args.docked_prot_file,
+                               args.run_path, args.raw_root, i))
+        elif args.mode == 'test':
+            process = get_prots(args.docked_prot_file)
+            random.shuffle(process)
+            for protein, target, start in process[:5]:
+                print(protein, target, start)
+                cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 create_conformers.py group ' \
+                      'test {} {} {} --protein {} --target {} --start {}"'
+                os.system(cmd.format(os.path.join(args.run_path, '{}_{}_{}.out'.format(protein, target, start)),
+                                     args.docked_prot_file, args.run_path, args.raw_root, protein, target, start))
 
     elif args.task == 'group':
-        process = get_prots(args.docked_prot_file)
-        grouped_files = group_files(args.n, process)
-        for protein, target, start in grouped_files[args.index]:
-            pair = '{}-to-{}'.format(target, start)
-            protein_path = os.path.join(args.raw_root, protein)
-            pair_path = os.path.join(protein_path, pair)
-            conformer_file = os.path.join(pair_path, "{}_lig0-out.maegz".format(target))
-            if not os.path.exists(conformer_file):
-                run_group(protein, target, start, args.raw_root, args.num_conformers)
+        if args.mode == 'train':
+            process = get_prots(args.docked_prot_file)
+            grouped_files = group_files(args.n, process)
+            for protein, target, start in grouped_files[args.index]:
+                print(protein, target, start)
+                pair = '{}-to-{}'.format(target, start)
+                protein_path = os.path.join(args.raw_root, protein)
+                pair_path = os.path.join(protein_path, pair)
+                conformer_file = os.path.join(pair_path, "{}_lig0-out.maegz".format(target))
+                if not os.path.exists(conformer_file):
+                    run_group(protein, target, start, args)
+        elif args.mode == 'test':
+            run_group(args.protein, args.target, args.start, args)
 
     if args.task == 'check':
-        process = get_prots(args.docked_prot_file)
-        run_check(process, args.raw_root)
+        if args.mode == 'train':
+            process = get_prots(args.docked_prot_file)
+            run_check(process, args)
+        elif args.mode == 'test':
+            process = get_prots(args.docked_prot_file)
+            random.shuffle(process)
+            run_check(process[:5], args)
 
 if __name__ == "__main__":
     main()
