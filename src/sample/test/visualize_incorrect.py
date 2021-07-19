@@ -245,7 +245,6 @@ def get_grid(s):
 
 def get_clash(s, grid, origin):
     at = s.getXYZ(copy=True)
-    # at = at * 2
     at = (np.around(at - 0.5)).astype(np.int16)
     at = at - origin
     return np.sum(grid[at[:, 0], at[:, 1], at[:, 2]])
