@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 search.py delete /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P11838 --target 3wz6 --start 1gvx --grid_index 0 --conformer_index 9
+$ $SCHRODINGER/run python3 search.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P11838 --target 3wz6 --start 1gvx --grid_index 0 --conformer_index 9
 """
 
 import argparse
@@ -254,7 +254,7 @@ def main():
         os.mkdir(args.run_path)
 
     if args.task == 'all':
-        pairs = get_prots(args)
+        pairs = get_prots(args.docked_prot_file)
         random.shuffle(pairs)
         counter = 0
         for protein, target, start in pairs[:5]:
