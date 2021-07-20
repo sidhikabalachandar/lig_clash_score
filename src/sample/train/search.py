@@ -157,6 +157,7 @@ def search(protein, target, start, args):
         translate_structure(c, -grid_loc[0], -grid_loc[1], -grid_loc[2])
 
     df = pd.DataFrame.from_dict(saved_dict)
+    print(os.path.join(pose_path, 'poses.csv'))
     df.to_csv(os.path.join(pose_path, 'poses.csv'))
 
 
