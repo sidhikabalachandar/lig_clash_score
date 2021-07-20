@@ -71,7 +71,7 @@ def main():
     if not os.path.exists(pose_file):
         cmd = 'sbatch -p owners -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 search.py group {} {} ' \
               '{} --rotation_search_step_size {} --grid_size {} --n 1 --num_conformers {} --index {}"'
-        out_file_name = 'search_{}.out'.format(i)
+        out_file_name = 'search_{}.out'.format(pair_index)
         counter += 1
         os.system(cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.run_path,
                              args.raw_root, args.rotation_search_step_size, args.grid_size, 1, args.num_conformers,
