@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 model.py train /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --group_name train_grid_6_1_rotation_0_360_20
+$ $SCHRODINGER/run python3 model.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --group_name train_grid_6_1_rotation_0_360_20
 """
 
 import argparse
@@ -62,7 +62,6 @@ def train_test_split(df, root):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('task', type=str, help='either align or search')
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('root', type=str, help='directory where raw data will be placed')
     parser.add_argument('--group_name', type=str, default='', help='name of pose group subdir')
