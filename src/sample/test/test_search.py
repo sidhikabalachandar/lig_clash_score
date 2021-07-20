@@ -62,17 +62,17 @@ def main():
     pair = '{}-to-{}'.format(target, start)
     protein_path = os.path.join(args.raw_root, protein)
     pair_path = os.path.join(protein_path, pair)
-    grid_size = get_grid_size(pair_path, args.target, args.start)
+    grid_size = get_grid_size(pair_path, target, start)
     group_name = 'test_grid_{}_{}_rotation_{}_{}_{}_rmsd_{}'.format(grid_size, args.grid_search_step_size,
                                                                     args.min_angle, args.max_angle,
                                                                     args.rotation_search_step_size, args.rmsd_cutoff)
     pose_path = os.path.join(pair_path, group_name)
 
-    grid_size = get_grid_size(pair_path, target, start)
+    # get grid index
     grouped_grid_locs = group_grid(args.grid_n, grid_size, 2)
     grid_index = random.choice([i for i in range(len(grouped_grid_locs))])
 
-    # get conformers
+    # get conformer index
     conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
     conformers = list(structure.StructureReader(conformer_file))[:args.num_conformers]
     conformer_indices = [i for i in range(len(conformers))]
