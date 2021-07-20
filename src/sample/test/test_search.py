@@ -80,7 +80,8 @@ def main():
     grouped_conformer_indices = group_files(args.conformer_n, conformer_indices)
     conformer_index = random.choice([i for i in range(len(grouped_conformer_indices))])
 
-    pose_file = os.path.join(pose_path, 'exhaustive_search_info_{}_{}.csv'.format(grid_index, conformer_index))
+    pose_file = os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(grid_index, conformer_index))
+    print(pose_file)
 
     if not os.path.exists(pose_file):
         cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 search.py group {} {} {} ' \
