@@ -206,6 +206,7 @@ def main():
         pairs = get_prots(args.docked_prot_file)
         grouped_pairs = group_files(args.n, pairs)
         for protein, target, start in grouped_pairs[args.index]:
+            print(protein, target, start)
             search(protein, target, start, args)
 
     elif args.task == 'delete':
