@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 search.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/sample/train/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --group_name train_grid_6_1_rotation_0_360_20 --index 0 --n 1
+$ c --index 0 --n 1
 """
 
 import argparse
@@ -103,14 +103,6 @@ def search(protein, target, start, args):
     start_prot_grid, start_origin = get_grid(start_prot)
     target_prot_grid, target_origin = get_grid(target_prot)
 
-    # get save location
-    group_name = '{}_grid_{}_{}_rotation_{}_{}_{}_rmsd_{}'.format(args.mode, grid_size, args.grid_search_step_size,
-                                                                  args.min_angle, args.max_angle,
-                                                                  args.rotation_search_step_size, args.rmsd_cutoff)
-    pose_path = os.path.join(pair_path, group_name)
-    if not os.path.exists(pose_path):
-        os.mkdir(pose_path)
-
     # get grid
     grid_size = 6
     grid = []
@@ -122,6 +114,14 @@ def search(protein, target, start, args):
         for dy in vals:
             for dz in vals:
                 grid.append((dx, dy, dz))
+
+    # get save location
+    group_name = 'train_grid_{}_{}_rotation_{}_{}_{}_rmsd_{}'.format(grid_size, args.grid_search_step_size,
+                                                                     args.min_angle, args.max_angle,
+                                                                     args.rotation_search_step_size, args.rmsd_cutoff)
+    pose_path = os.path.join(pair_path, group_name)
+    if not os.path.exists(pose_path):
+        os.mkdir(pose_path)
 
     if not os.path.exists(pose_path):
         os.mkdir(pose_path)
@@ -207,6 +207,15 @@ def main():
         grouped_pairs = group_files(args.n, pairs)
         for protein, target, start in grouped_pairs[args.index]:
             search(protein, target, start, args)
+
+    elif args.task == 'delete':
+        pairs = get_prots(args.docked_prot_file)
+        for protein, target, start in pairs:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+            pose_path = os.path.join(pair_path, args.group_name)
+            os.system("rm -rf {}".format(pose_path))
 
 
 if __name__ == "__main__":
