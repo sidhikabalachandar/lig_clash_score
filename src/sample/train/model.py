@@ -43,7 +43,6 @@ def train_test_split(df, root):
             test_dfs.append(prot_df)
         else:
             print(prot)
-            assert(1 == 2)
     test = pd.concat(test_dfs)
     train = pd.concat(train_dfs)
 
