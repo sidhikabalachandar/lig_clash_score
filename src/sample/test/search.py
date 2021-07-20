@@ -30,7 +30,7 @@ Z_AXIS = [0.0, 0.0, 1.0]  # z-axis unit vector
 
 def check_pose(num_poses_searched, i, grid_loc, start_prot_grid, start_origin, c_indices, target_lig,
                target_lig_indices, args, num_correct, num_after_simple_filter, num_correct_after_simple_filter,
-               target_prot_grid, target_origin, saved_dict, c, x, y, z, pair_path):
+               target_prot_grid, target_origin, saved_dict, c, x, y, z):
     # look at potential pose
     num_poses_searched += 1
 
@@ -42,7 +42,7 @@ def check_pose(num_poses_searched, i, grid_loc, start_prot_grid, start_origin, c
     if rmsd_val < args.rmsd_cutoff:
         num_correct += 1
 
-    if start_clash == 0:
+    if start_clash < args.start_clash_cutoff:
         num_after_simple_filter += 1
         if rmsd_val < args.rmsd_cutoff:
             num_correct_after_simple_filter += 1
@@ -88,7 +88,7 @@ def rotate_pose(args, coords, from_origin_matrix, to_origin_matrix, c,
                 num_poses_searched, num_correct, num_after_simple_filter, num_correct_after_simple_filter = \
                     check_pose(num_poses_searched, i, grid_loc, start_prot_grid, start_origin, c_indices, target_lig,
                                target_lig_indices, args, num_correct, num_after_simple_filter,
-                               num_correct_after_simple_filter, target_prot_grid, target_origin, saved_dict, c, x, y, z, pair_path)
+                               num_correct_after_simple_filter, target_prot_grid, target_origin, saved_dict, c, x, y, z)
 
                 c.setXYZ(coords)
 
@@ -243,8 +243,8 @@ def main():
     parser.add_argument('--conformer_index', type=int, default=-1, help='number of grid_points processed in each job')
     parser.add_argument('--rmsd_cutoff', type=int, default=2.5, help='rmsd accuracy cutoff between predicted ligand pose '
                                                                    'and true ligand pose')
-    parser.add_argument('--start_clash_cutoff', type=int, default=100, help='clash cutoff between start protein and '
-                                                                            'ligand pose')
+    parser.add_argument('--start_clash_cutoff', type=int, default=2, help='clash cutoff between start protein and '
+                                                                          'ligand pose')
     parser.add_argument('--protein', type=str, default='', help='name of protein')
     parser.add_argument('--target', type=str, default='', help='name of target ligand')
     parser.add_argument('--start', type=str, default='', help='name of start ligand')
@@ -325,7 +325,12 @@ def main():
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(args.raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
-            pose_path = os.path.join(pair_path, 'exhaustive_grid_6_2_rotation_0_360_20_rmsd_2.5')
+            # get grid
+            # grid_size = get_grid_size(pair_path, args.target, args.start)
+
+            # get save location
+            group_name = 'exhaustive*'
+            pose_path = os.path.join(pair_path, group_name)
             os.system('rm -rf {}'.format(pose_path))
 
 if __name__ == "__main__":
