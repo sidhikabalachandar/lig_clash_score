@@ -22,6 +22,7 @@ from schrod_replacement_util import *
 X_AXIS = [1.0, 0.0, 0.0]  # x-axis unit vector
 Y_AXIS = [0.0, 1.0, 0.0]  # y-axis unit vector
 Z_AXIS = [0.0, 0.0, 1.0]  # z-axis unit vector
+EPS = 1e-6
 
 
 def main():
@@ -138,9 +139,8 @@ def main():
         target_clash = get_clash(c, target_prot_grid, target_origin)
 
         assert(df_start_clash == start_clash)
-        assert (df_target_clash - target_clash < EPS)
-        print(df_rmsd, rmsd_val)
-        assert (df_rmsd == rmsd_val)
+        assert (df_target_clash == target_clash)
+        assert (df_rmsd - rmsd_val < EPS)
         print('All correct!')
 
         c.setXYZ(old_coords)
