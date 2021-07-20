@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 search.py delete /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/sample/train/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --group_name train_grid_6_1_rotation_0_360_20 --index 0 --n 1
+$ $SCHRODINGER/run python3 search.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/sample/train/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --group_name train_grid_6_1_rotation_0_360_20 --index 0 --n 1
 """
 
 import argparse
@@ -209,6 +209,20 @@ def main():
         for protein, target, start in grouped_pairs[args.index]:
             print(protein, target, start)
             search(protein, target, start, args)
+
+    elif args.task == 'check':
+        missing = []
+        pairs = get_prots(args.docked_prot_file)
+        for protein, target, start in pairs:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+            pose_path = os.path.join(pair_path, args.group_name)
+            if not os.path.exists(pose_path):
+                missing.append((protein, target, start))
+
+        print('Missing: {}/{}'.format(len(missing), len(pairs)))
+        print(missing)
 
     elif args.task == 'delete':
         pairs = get_prots(args.docked_prot_file)
