@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 test_search.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 test_search.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 """
 
 import argparse
@@ -28,24 +28,25 @@ EPS = 1e-6
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
-    parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
-    parser.add_argument('--num_conformers', type=int, default=2, help='maximum number of conformers considered')
+    parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
+    parser.add_argument('--num_pairs', type=int, default=10, help='number of protein-ligand pairs considered')
+    parser.add_argument('--grid_n', type=int, default=75, help='number of grid_points processed in each job')
     parser.add_argument('--grid_size', type=int, default=1, help='grid size in positive and negative x, y, z '
                                                                  'directions')
-    parser.add_argument('--grid_search_step_size', type=int, default=1, help='step size between each grid point, in '
+    parser.add_argument('--grid_file', type=str, default='', help='pickle file with grid data dictionary')
+    parser.add_argument('--grid_search_step_size', type=int, default=2, help='step size between each grid point, in '
                                                                              'angstroms')
     parser.add_argument('--rotation_search_step_size', type=int, default=20, help='step size between each angle '
-                                                                                 'checked, in degrees')
+                                                                                  'checked, in degrees')
     parser.add_argument('--min_angle', type=int, default=0, help='min angle of rotation in degrees')
     parser.add_argument('--max_angle', type=int, default=360, help='min angle of rotation in degrees')
-    parser.add_argument('--start_clash_cutoff', type=int, default=100, help='clash cutoff between start protein and '
-                                                                            'ligand pose')
+    parser.add_argument('--conformer_n', type=int, default=3, help='number of conformers processed in each job')
     parser.add_argument('--rmsd_cutoff', type=int, default=2.5,
                         help='rmsd accuracy cutoff between predicted ligand pose '
                              'and true ligand pose')
-    parser.add_argument('--grid_n', type=int, default=75, help='number of grid_points processed in each job')
-    parser.add_argument('--conformer_n', type=int, default=3, help='number of conformers processed in each job')
+    parser.add_argument('--start_clash_cutoff', type=int, default=2, help='clash cutoff between start protein and '
+                                                                          'ligand pose')
     args = parser.parse_args()
 
     random.seed(0)
