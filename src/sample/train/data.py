@@ -225,8 +225,6 @@ def main():
             df['target'] = [target for _ in range(len(df))]
             df['start'] = [start for _ in range(len(df))]
             dfs.append(df)
-            print(time.time() - start_time)
-            return
 
         combined_df = pd.concat(dfs)
         save_path = os.path.join(args.root, 'res_data')

@@ -68,7 +68,28 @@ def main():
     args = parser.parse_args()
     random.seed(0)
 
-    df = pd.read_csv(os.path.join(args.root, 'combined_res_data.csv'))
+    file = os.path.join(args.root, 'combined_res_data.csv')
+    if not os.path.exists(file):
+        pairs = get_prots(args.docked_prot_file)
+        dfs = []
+
+        for protein, target, start in pairs:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+            pose_path = os.path.join(pair_path, args.group_name)
+            out_clash_file = os.path.join(pose_path, 'res_data.csv')
+            pair_df = pd.read_csv(out_clash_file)
+            pair_df['protein'] = [protein for _ in range(len(pair_df))]
+            pair_df['target'] = [target for _ in range(len(pair_df))]
+            pair_df['start'] = [start for _ in range(len(pair_df))]
+            dfs.append(pair_df)
+
+        df = pd.concat(dfs)
+        df.to_csv(file)
+    else:
+        df = pd.read_csv(file)
+
     X_train, X_test, y_train, y_test = train_test_split(df, args.root)
     clf_file = os.path.join(args.root, 'clash_classifier.pkl')
     if os.path.exists(clf_file):
