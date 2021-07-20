@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 data.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/sample/train/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --group_name train_grid_6_1_rotation_0_360_20 --index 0 --n 1
+$ $SCHRODINGER/run python3 data.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/sample/train/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --group_name train_grid_6_1_rotation_0_360_20 --index 0 --n 1
 """
 
 import argparse
@@ -142,7 +142,7 @@ def main():
     parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('root', type=str, help='directory where raw data will be placed')
     parser.add_argument('--index', type=int, default=-1, help='grid point group index')
-    parser.add_argument('--n', type=int, default=25, help='number of grid_points processed in each job')
+    parser.add_argument('--n', type=int, default=6, help='number of grid_points processed in each job')
     parser.add_argument('--group_name', type=str, default='', help='name of pose group subdir')
     parser.add_argument('--rmsd_cutoff', type=float, default=2.5, help='name of pose group subdir')
     args = parser.parse_args()
