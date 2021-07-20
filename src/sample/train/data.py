@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 data.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/sample/train/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --group_name train_grid_6_1_rotation_0_360_20 --index 0 --n 1
+$ $SCHRODINGER/run python3 data.py group_combine /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/sample/train/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --group_name train_grid_6_1_rotation_0_360_20 --index 0 --n 1
 """
 
 import argparse
@@ -71,7 +71,8 @@ def run_group(protein, target, start, raw_root, args):
     i_to_r_map_target = map_index_to_residue(alignment_target, r_list_target)
 
     # create feature dictionary
-    features = {'name': [], 'residue': [], 'bfactor': [], 'mcss': [], 'volume_docking': [], 'volume_target': []}
+    features = {'protein': [], 'target': [], 'start': [], 'name': [], 'residue': [], 'bfactor': [], 'mcss': [],
+                'volume_docking': [], 'volume_target': []}
 
     for i in df.index:
         name = df.loc[[i]]['name'].iloc[0]
@@ -123,6 +124,9 @@ def run_group(protein, target, start, raw_root, args):
                     if i in i_to_r_map_target:
                         atoms = list(i_to_r_map_target[i][1])
                         volume_target = steric_clash.clash_volume(prot_target, atoms1=atoms, struc2=c)
+                        features['protein'].append(protein)
+                        features['target'].append(target)
+                        features['start'].append(start)
                         features['name'].append(name)
                         features['residue'].append(r.getAsl())
                         features['bfactor'].append(normalizedBFactor(r, mean, stdev))
@@ -154,8 +158,7 @@ def main():
         os.mkdir(args.run_path)
 
     if args.task == 'all':
-        # pairs = get_prots(args.docked_prot_file)
-        pairs = [('P61823', '1rnm', '1afl'), ('P61964', '4ql1', '6dar'), ('P61964', '5m23', '5sxm'), ('P61964', '5m25', '5sxm'), ('P61964', '5sxm', '6dar'), ('P61964', '6d9x', '5m25'), ('P61964', '6dai', '6dak'), ('P61964', '6dak', '6dai'), ('P61964', '6dar', '6dai'), ('P62508', '2p7a', '2p7g'), ('P62508', '2p7g', '2p7z'), ('P62617', '2amt', '3elc'), ('P62617', '2gzl', '3elc'), ('P62617', '3elc', '2amt'), ('P62937', '5t9u', '6gjj'), ('P62937', '5t9w', '5ta4'), ('P62937', '5t9z', '6gjm'), ('P62937', '6gji', '5t9w'), ('P62937', '6gjj', '5ta4'), ('P62937', '6gjl', '6gjm'), ('P62937', '6gjm', '5t9z'), ('P62937', '6gjn', '5t9z'), ('P62942', '1d7i', '1fkf'), ('P62942', '1d7j', '1fkb'), ('P62993', '3s8l', '3s8o'), ('P62993', '3s8n', '3ov1'), ('P62993', '3s8o', '3ove'), ('P63086', '4qyy', '6cpw'), ('P63086', '6cpw', '4qyy'), ('P64012', '3zhx', '3zi0'), ('P64012', '3zi0', '3zhx'), ('P66034', '2c92', '2c97'), ('P66034', '2c94', '2c97'), ('P66034', '2c97', '2c94'), ('P66992', '3qqs', '3r88'), ('P66992', '3r88', '4m0r'), ('P66992', '4owm', '4m0r'), ('P66992', '4owv', '3twp'), ('P68400', '2zjw', '5h8e'), ('P68400', '3bqc', '5cu4'), ('P68400', '3h30', '3pe2'), ('P68400', '3pe1', '5cu4'), ('P68400', '3pe2', '3pe1'), ('P68400', '5cqu', '5cu4'), ('P68400', '5csp', '3h30'), ('P68400', '5cu4', '3pe1'), ('P68400', '5h8e', '5csp'), ('P69834', '5mrm', '5mro'), ('P69834', '5mro', '5mrp'), ('P69834', '5mrp', '5mro'), ('P71094', '2jke', '2zq0'), ('P71094', '2jkp', '2zq0'), ('P71094', '2zq0', '2jkp'), ('P71447', '1z4o', '2wf5'), ('P71447', '2wf5', '1z4o'), ('P76141', '4l4z', '4l51'), ('P76141', '4l50', '4l51'), ('P76141', '4l51', '4l50'), ('P76637', '1ec9', '1ecq'), ('P76637', '1ecq', '1ec9'), ('P78536', '2oi0', '3l0v'), ('P78536', '3b92', '3le9'), ('P78536', '3ewj', '3le9'), ('P78536', '3kmc', '3le9'), ('P78536', '3l0v', '3lea'), ('P78536', '3le9', '3ewj'), ('P78536', '3lea', '3le9'), ('P80188', '3dsz', '3tf6'), ('P80188', '3tf6', '3dsz'), ('P84887', '2hjb', '2q7q'), ('P84887', '2q7q', '2hjb'), ('P95607', '3i4y', '3i51'), ('P95607', '3i51', '3i4y'), ('P96257', '6h1u', '6h2t'), ('P96257', '6h2t', '6h1u'), ('P98170', '2vsl', '4j46'), ('P98170', '3cm2', '3hl5'), ('P98170', '3hl5', '4j48'), ('P98170', '4j44', '4j45'), ('P98170', '4j45', '4j44'), ('P98170', '4j46', '3hl5'), ('P98170', '4j47', '4j44'), ('P98170', '4j48', '3cm2'), ('P9WMC0', '5f08', '5j3l'), ('P9WMC0', '5f0f', '5j3l'), ('P9WMC0', '5j3l', '5f08'), ('P9WPQ5', '6cvf', '6czc'), ('P9WPQ5', '6czb', '6cze'), ('P9WPQ5', '6czc', '6czb'), ('P9WPQ5', '6cze', '6czc'), ('Q00972', '3tz0', '4h7q'), ('Q00972', '4dzy', '4h85'), ('Q00972', '4h7q', '4h85'), ('Q00972', '4h81', '4h7q'), ('Q00972', '4h85', '4dzy'), ('Q00987', '4erf', '4wt2')]
+        pairs = get_prots(args.docked_prot_file)
         grouped_files = group_files(args.n, pairs)
         counter = 0
         for i in range(len(grouped_files)):
@@ -168,39 +171,7 @@ def main():
         print(counter)
 
     elif args.task == "group":
-        # pairs = get_prots(args.docked_prot_file)
-        pairs = [('P61823', '1rnm', '1afl'), ('P61964', '4ql1', '6dar'), ('P61964', '5m23', '5sxm'),
-                 ('P61964', '5m25', '5sxm'), ('P61964', '5sxm', '6dar'), ('P61964', '6d9x', '5m25'),
-                 ('P61964', '6dai', '6dak'), ('P61964', '6dak', '6dai'), ('P61964', '6dar', '6dai'),
-                 ('P62508', '2p7a', '2p7g'), ('P62508', '2p7g', '2p7z'), ('P62617', '2amt', '3elc'),
-                 ('P62617', '2gzl', '3elc'), ('P62617', '3elc', '2amt'), ('P62937', '5t9u', '6gjj'),
-                 ('P62937', '5t9w', '5ta4'), ('P62937', '5t9z', '6gjm'), ('P62937', '6gji', '5t9w'),
-                 ('P62937', '6gjj', '5ta4'), ('P62937', '6gjl', '6gjm'), ('P62937', '6gjm', '5t9z'),
-                 ('P62937', '6gjn', '5t9z'), ('P62942', '1d7i', '1fkf'), ('P62942', '1d7j', '1fkb'),
-                 ('P62993', '3s8l', '3s8o'), ('P62993', '3s8n', '3ov1'), ('P62993', '3s8o', '3ove'),
-                 ('P63086', '4qyy', '6cpw'), ('P63086', '6cpw', '4qyy'), ('P64012', '3zhx', '3zi0'),
-                 ('P64012', '3zi0', '3zhx'), ('P66034', '2c92', '2c97'), ('P66034', '2c94', '2c97'),
-                 ('P66034', '2c97', '2c94'), ('P66992', '3qqs', '3r88'), ('P66992', '3r88', '4m0r'),
-                 ('P66992', '4owm', '4m0r'), ('P66992', '4owv', '3twp'), ('P68400', '2zjw', '5h8e'),
-                 ('P68400', '3bqc', '5cu4'), ('P68400', '3h30', '3pe2'), ('P68400', '3pe1', '5cu4'),
-                 ('P68400', '3pe2', '3pe1'), ('P68400', '5cqu', '5cu4'), ('P68400', '5csp', '3h30'),
-                 ('P68400', '5cu4', '3pe1'), ('P68400', '5h8e', '5csp'), ('P69834', '5mrm', '5mro'),
-                 ('P69834', '5mro', '5mrp'), ('P69834', '5mrp', '5mro'), ('P71094', '2jke', '2zq0'),
-                 ('P71094', '2jkp', '2zq0'), ('P71094', '2zq0', '2jkp'), ('P71447', '1z4o', '2wf5'),
-                 ('P71447', '2wf5', '1z4o'), ('P76141', '4l4z', '4l51'), ('P76141', '4l50', '4l51'),
-                 ('P76141', '4l51', '4l50'), ('P76637', '1ec9', '1ecq'), ('P76637', '1ecq', '1ec9'),
-                 ('P78536', '2oi0', '3l0v'), ('P78536', '3b92', '3le9'), ('P78536', '3ewj', '3le9'),
-                 ('P78536', '3kmc', '3le9'), ('P78536', '3l0v', '3lea'), ('P78536', '3le9', '3ewj'),
-                 ('P78536', '3lea', '3le9'), ('P80188', '3dsz', '3tf6'), ('P80188', '3tf6', '3dsz'),
-                 ('P84887', '2hjb', '2q7q'), ('P84887', '2q7q', '2hjb'), ('P95607', '3i4y', '3i51'),
-                 ('P95607', '3i51', '3i4y'), ('P96257', '6h1u', '6h2t'), ('P96257', '6h2t', '6h1u'),
-                 ('P98170', '2vsl', '4j46'), ('P98170', '3cm2', '3hl5'), ('P98170', '3hl5', '4j48'),
-                 ('P98170', '4j44', '4j45'), ('P98170', '4j45', '4j44'), ('P98170', '4j46', '3hl5'),
-                 ('P98170', '4j47', '4j44'), ('P98170', '4j48', '3cm2'), ('P9WMC0', '5f08', '5j3l'),
-                 ('P9WMC0', '5f0f', '5j3l'), ('P9WMC0', '5j3l', '5f08'), ('P9WPQ5', '6cvf', '6czc'),
-                 ('P9WPQ5', '6czb', '6cze'), ('P9WPQ5', '6czc', '6czb'), ('P9WPQ5', '6cze', '6czc'),
-                 ('Q00972', '3tz0', '4h7q'), ('Q00972', '4dzy', '4h85'), ('Q00972', '4h7q', '4h85'),
-                 ('Q00972', '4h81', '4h7q'), ('Q00972', '4h85', '4dzy'), ('Q00987', '4erf', '4wt2')]
+        pairs = get_prots(args.docked_prot_file)
         grouped_files = group_files(args.n, pairs)
 
         for protein, target, start in grouped_files[args.index]:
@@ -243,6 +214,7 @@ def main():
         dfs = []
 
         for protein, target, start in grouped_files[args.index]:
+            start_time = time.time()
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
@@ -253,6 +225,8 @@ def main():
             df['target'] = [target for _ in range(len(df))]
             df['start'] = [start for _ in range(len(df))]
             dfs.append(df)
+            print(time.time() - start_time)
+            return
 
         combined_df = pd.concat(dfs)
         save_path = os.path.join(args.root, 'res_data')
