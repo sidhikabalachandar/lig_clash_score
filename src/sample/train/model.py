@@ -29,7 +29,9 @@ def train_test_split(df, root):
     proteins = df.protein.unique()
     random.shuffle(proteins)
     train_prots = get_prots(os.path.join(root, 'splits', 'search_train_index.txt'))
+    print(train_prots)
     test_prots = get_prots(os.path.join(root, 'splits', 'search_test_index.txt'))
+    print(test_prots)
     print(len(train_prots), len(test_prots))
     test_dfs = []
     train_dfs = []
@@ -41,6 +43,7 @@ def train_test_split(df, root):
             test_dfs.append(prot_df)
         else:
             print(prot)
+            assert(1 == 2)
     test = pd.concat(test_dfs)
     train = pd.concat(train_dfs)
 
