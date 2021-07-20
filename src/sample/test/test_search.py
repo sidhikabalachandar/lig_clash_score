@@ -28,6 +28,7 @@ EPS = 1e-6
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
+    parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
     parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
     parser.add_argument('--num_pairs', type=int, default=10, help='number of protein-ligand pairs considered')
