@@ -139,6 +139,7 @@ def main():
 
         assert(df_start_clash == start_clash)
         assert (df_target_clash == target_clash)
+        print(df_rmsd, rmsd_val)
         assert (df_rmsd == rmsd_val)
         print('All correct!')
 
