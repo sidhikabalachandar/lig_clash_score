@@ -69,7 +69,7 @@ def main():
     conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
     conformers = list(structure.StructureReader(conformer_file))[:args.num_conformers]
     if not os.path.exists(pose_file):
-        cmd = 'sbatch -p owners -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 search.py group {} {} ' \
+        cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 search.py group {} {} ' \
               '{} --rotation_search_step_size {} --grid_size {} --n 1 --num_conformers {} --index {}"'
         out_file_name = 'search_{}.out'.format(pair_index)
         counter += 1
