@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 data.py combine /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/sample/train/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --group_name train_grid_6_1_rotation_0_360_20 --index 0 --n 1
+$ $SCHRODINGER/run python3 data.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /home/users/sidhikab/lig_clash_score/src/sample/train/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --group_name train_grid_6_1_rotation_0_360_20 --index 0 --n 1
 """
 
 import argparse
@@ -23,6 +23,7 @@ from schrodinger.structutils.transform import get_centroid
 import schrodinger.structutils.interactions.steric_clash as steric_clash
 import matplotlib.pyplot as plt
 import seaborn as sns
+import time
 import sys
 sys.path.insert(1, '../util')
 from util import *
@@ -92,8 +93,15 @@ def run_group(protein, target, start, raw_root, args):
         rot_x = df.loc[[i]]['rot_x'].iloc[0]
         rot_y = df.loc[[i]]['rot_y'].iloc[0]
         rot_z = df.loc[[i]]['rot_z'].iloc[0]
-        new_coords = rotate_structure(coords, math.radians(rot_x), math.radians(rot_y), math.radians(rot_z),
-                                      conformer_center)
+
+        displacement_vector = get_coords_array_from_list(conformer_center)
+        to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
+        from_origin_matrix = get_translation_matrix(displacement_vector)
+        rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
+        rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
+        rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
+        new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
+                                      rot_matrix_y, rot_matrix_z)
         c.setXYZ(new_coords)
 
         # find all residues in docking protein with clash
@@ -163,7 +171,9 @@ def main():
         grouped_files = group_files(args.n, pairs)
 
         for protein, target, start in grouped_files[args.index]:
+            start_time = time.time()
             run_group(protein, target, start, raw_root, args)
+            print(time.time() - start_time)
 
     elif args.task == 'check':
         pairs = get_prots(args.docked_prot_file)
