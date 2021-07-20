@@ -51,6 +51,7 @@ def main():
     counter = 0
     pair_index = random.choice([i for i in range(len(pairs))])
     protein, target, start = pairs[pair_index]
+    print(protein, target, start)
     pair = '{}-to-{}'.format(target, start)
     protein_path = os.path.join(args.raw_root, protein)
     pair_path = os.path.join(protein_path, pair)
