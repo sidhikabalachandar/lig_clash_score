@@ -29,9 +29,9 @@ def train_test_split(df, root):
     proteins = df.protein.unique()
     random.shuffle(proteins)
     train_prots = get_prots(os.path.join(root, 'splits', 'search_train_index.txt'))
-    print(train_prots)
+    train_prots = [x[0] for x in train_prots]
     test_prots = get_prots(os.path.join(root, 'splits', 'search_test_index.txt'))
-    print(test_prots)
+    test_prots = [x[0] for x in test_prots]
     print(len(train_prots), len(test_prots))
     test_dfs = []
     train_dfs = []
