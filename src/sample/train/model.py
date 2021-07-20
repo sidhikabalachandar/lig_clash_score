@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 model.py train /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --save_path /home/users/sidhikab/lig_clash_score/reports/figures/bfactor_vs_volume.png --docked_prot_file /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt
+$ $SCHRODINGER/run python3 model.py train /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d
 """
 
 import argparse
@@ -62,11 +62,12 @@ def train_test_split(df, root):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('task', type=str, help='either align or search')
+    parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('root', type=str, help='directory where raw data will be placed')
-    parser.add_argument('--save_path', type=str, default="", help='grid point group index')
-    parser.add_argument('--docked_prot_file', type=str, help='file listing proteins to process')
     args = parser.parse_args()
     random.seed(0)
+
+    raw_root = os.path.join(args.root, 'raw')
 
     file = os.path.join(args.root, 'combined_res_data.csv')
     if not os.path.exists(file):
