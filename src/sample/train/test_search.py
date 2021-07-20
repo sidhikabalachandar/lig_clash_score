@@ -73,9 +73,12 @@ def main():
               '{} --rotation_search_step_size {} --grid_size {} --n 1 --num_conformers {} --index {}"'
         out_file_name = 'search_{}.out'.format(pair_index)
         counter += 1
-        os.system(cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.run_path,
+        print(cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.run_path,
                              args.raw_root, args.rotation_search_step_size, args.grid_size, 1, args.num_conformers,
                              pair_index))
+        # os.system(cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.run_path,
+        #                      args.raw_root, args.rotation_search_step_size, args.grid_size, 1, args.num_conformers,
+        #                      pair_index))
     else:
         df = pd.read_csv(pose_file)
         tolerable_indices = [i for i in df.index]
