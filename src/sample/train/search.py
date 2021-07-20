@@ -116,9 +116,9 @@ def search(protein, target, start, args):
                 grid.append((dx, dy, dz))
 
     # get save location
-    group_name = 'train_grid_{}_{}_rotation_{}_{}_{}_rmsd_{}'.format(grid_size, args.grid_search_step_size,
+    group_name = 'train_grid_{}_{}_rotation_{}_{}_{}'.format(grid_size, args.grid_search_step_size,
                                                                      args.min_angle, args.max_angle,
-                                                                     args.rotation_search_step_size, args.rmsd_cutoff)
+                                                                     args.rotation_search_step_size)
     pose_path = os.path.join(pair_path, group_name)
     if not os.path.exists(pose_path):
         os.mkdir(pose_path)

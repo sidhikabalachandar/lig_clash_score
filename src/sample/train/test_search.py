@@ -59,9 +59,9 @@ def main():
     # get grid
     grid_size = 6
 
-    group_name = 'train_grid_{}_{}_rotation_{}_{}_{}_rmsd_{}'.format(grid_size, args.grid_search_step_size,
+    group_name = 'train_grid_{}_{}_rotation_{}_{}_{}'.format(grid_size, args.grid_search_step_size,
                                                                      args.min_angle, args.max_angle,
-                                                                     args.rotation_search_step_size, args.rmsd_cutoff)
+                                                                     args.rotation_search_step_size)
     pose_path = os.path.join(pair_path, group_name)
     pose_file = os.path.join(pose_path, 'poses.csv')
 
