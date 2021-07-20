@@ -77,7 +77,7 @@ def main():
                              args.raw_root, args.rotation_search_step_size, args.grid_size, args.num_conformers,
                              pair_index))
         os.system(cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.run_path,
-                             args.raw_root, args.rotation_search_step_size, args.grid_size, 1, args.num_conformers,
+                             args.raw_root, args.rotation_search_step_size, args.grid_size, args.num_conformers,
                              pair_index))
     else:
         df = pd.read_csv(pose_file)
