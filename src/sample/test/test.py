@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 test_correct.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein P00797 --target 3own --start 3d91 --index 0
+$ $SCHRODINGER/run python3 test.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein P00797 --target 3own --start 3d91 --index 0 --n 1
 """
 
 import argparse
@@ -22,6 +22,7 @@ import pickle
 import schrodinger.structure as structure
 from schrodinger.structutils.transform import get_centroid
 import schrodinger.structutils.interactions.steric_clash as steric_clash
+import time
 import sys
 sys.path.insert(1, '../util')
 from util import *
@@ -78,7 +79,7 @@ def main():
             grouped_indices = group_files(args.n, indices)
 
             for i in range(len(grouped_indices)):
-                cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 test_correct.py group {} {} ' \
+                cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 test.py group {} {} ' \
                       '{} --protein {} --target {} --start {} --index {}"'
                 counter += 1
                 os.system(cmd.format(os.path.join(args.run_path, 'test_{}_{}_{}.out'.format(protein, pair, i)),
@@ -128,6 +129,7 @@ def main():
         grouped_files = group_files(args.n, files)
 
         for file in grouped_files[args.index]:
+            start_time = time.time()
             # create feature dictionary
             clash_features = {'name': [], 'residue': [], 'bfactor': [], 'mcss': [], 'volume_docking': []}
 
@@ -214,6 +216,7 @@ def main():
 
             pose_file = os.path.join(clash_path, 'pose_pred_data_{}.csv'.format(file_name))
             subset_df.to_csv(pose_file, index=False)
+            print(time.time() - start_time)
 
     elif args.task == 'check':
         pairs = get_prots(args.docked_prot_file)
