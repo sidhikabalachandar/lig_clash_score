@@ -34,8 +34,8 @@ def main():
 
         for protein, target, start in pairs[:5]:
             print(protein, target, start)
-            if protein == 'Q86WV6':
-                continue
+            # if protein == 'Q86WV6':
+            #     continue
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(args.raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
