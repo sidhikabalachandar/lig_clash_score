@@ -38,7 +38,7 @@ def main():
         pair_path = os.path.join(protein_path, pair)
 
         grid_size = get_grid_size(pair_path, target, start)
-        group_name = 'exhaustive_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+        group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
         pose_path = os.path.join(pair_path, group_name)
 
         num_correct = 0
