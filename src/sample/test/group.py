@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 group.py all_combine /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P00797 --target 3own --start 3d91 --index 0 --n 1
+$ $SCHRODINGER/run python3 group.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P00797 --target 3own --start 3d91 --index 0 --n 1
 """
 
 import argparse
@@ -48,7 +48,7 @@ def main():
             protein_path = os.path.join(args.raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
             grid_size = get_grid_size(pair_path, target, start)
-            pose_path = os.path.join(pair_path, 'exhaustive_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
+            pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
             prefix = 'exhaustive_search_poses_'
             files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
             grouped_files = group_files(args.n, files)
@@ -69,7 +69,7 @@ def main():
         protein_path = os.path.join(args.raw_root, args.protein)
         pair_path = os.path.join(protein_path, pair)
         grid_size = get_grid_size(pair_path, args.target, args.start)
-        pose_path = os.path.join(pair_path, 'exhaustive_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
+        pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
         correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
         if not os.path.exists(correct_path):
             os.mkdir(correct_path)
