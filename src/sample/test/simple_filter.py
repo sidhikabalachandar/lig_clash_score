@@ -52,9 +52,9 @@ def main():
                 start_time = time.time()
                 data_dict = {'start_clash_cutoff': [], 'num_poses_searched': [], 'num_correct': [],
                              'num_after_simple_filter': [], 'num_correct_after_simple_filter': []}
-                info_file = os.path.join(pose_path, 'exhaustive_search_info_{}_{}'.format(i, j))
+                info_file = os.path.join(pose_path, 'exhaustive_search_info_{}_{}.csv'.format(i, j))
                 info_df = pd.read_csv(info_file)
-                pose_file = os.path.join(pose_path, 'exhaustive_search_poses_{}_{}'.format(i, j))
+                pose_file = os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(i, j))
                 pose_df = pd.read_csv(pose_file)
 
                 # cutoff = 2
