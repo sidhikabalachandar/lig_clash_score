@@ -74,63 +74,29 @@ def main():
         correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
         if not os.path.exists(correct_path):
             os.mkdir(correct_path)
-        subsample_path = os.path.join(pose_path, 'subsample_incorrect')
+        subsample_path = os.path.join(pose_path, 'subsample_incorrect_after_simple_filter')
         if not os.path.exists(subsample_path):
             os.mkdir(subsample_path)
 
         prefix = 'exhaustive_search_poses_'
         suffix = '.csv'
         files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
-        grouped_files = group_files(args.n, files)
 
-        for file in grouped_files[args.index]:
-            start_time = time.time()
+        for file in files:
             name = file[len(prefix):-len(suffix)]
             df = pd.read_csv(os.path.join(pose_path, file))
             correct_df = df[df['rmsd'] <= args.rmsd_cutoff]
-            correct_df.to_csv(os.path.join(correct_path, 'correct_{}.csv'.format(name)))
-            incorrect_df = df[df['rmsd'] > args.rmsd_cutoff]
-            indices = [i for i in range(len(incorrect_df))]
-            random.shuffle(indices)
-            indices = indices[:300]
-            conformers = sorted(indices)
+            correct_indices = correct_df.index
             outfile = open(os.path.join(subsample_path, 'index_{}.pkl'.format(name)), 'wb')
-            pickle.dump(conformers, outfile)
-            print(time.time() - start_time)
+            pickle.dump(correct_indices, outfile)
 
-    elif args.task == 'all_combine':
-        pairs = get_prots(args.docked_prot_file)
-        random.shuffle(pairs)
-        for protein, target, start in pairs[:5]:
-            if protein == 'Q86WV6':
-                continue
-            cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 group.py group_combine ' \
-                  '{} {} {} --protein {} --target {} --start {}"'
-            out_file_name = 'subsample_combine_{}_{}_{}.out'.format(protein, target, start)
-            os.system(
-                cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.run_path,
-                           args.raw_root, protein, target, start))
-
-    elif args.task == 'group_combine':
-        pair = '{}-to-{}'.format(args.target, args.start)
-        protein_path = os.path.join(args.raw_root, args.protein)
-        pair_path = os.path.join(protein_path, pair)
-        grid_size = get_grid_size(pair_path, args.target, args.start)
-        pose_path = os.path.join(pair_path, 'exhaustive_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
-        correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
-
-        prefix = 'exhaustive_search_poses_'
-        suffix = '.csv'
-        files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
-        dfs = []
-        for file in files:
-            name = file[len(prefix):-len(suffix)]
-            correct_file = os.path.join(correct_path, 'correct_{}.csv'.format(name))
-            df = pd.read_csv(correct_file)
-            dfs.append(df)
-
-        combined_df = pd.concat(dfs)
-        combined_df.to_csv(os.path.join(correct_path, 'combined.csv'))
+            incorrect_df = df[df['rmsd'] > args.rmsd_cutoff]
+            incorrect_indices = incorrect_df.index
+            random.shuffle(incorrect_indices)
+            incorrect_indices = incorrect_indices[:300]
+            incorrect_indices = sorted(incorrect_indices)
+            outfile = open(os.path.join(subsample_path, 'index_{}.pkl'.format(name)), 'wb')
+            pickle.dump(incorrect_indices, outfile)
 
 
 if __name__ == "__main__":
