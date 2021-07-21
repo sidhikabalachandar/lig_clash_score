@@ -84,7 +84,7 @@ def main():
                 df = pd.read_csv(os.path.join(clash_path, file))
                 total_after_subsample += len(df)
                 correct_after_subsample += len(df[df['rmsd'] < args.rmsd_cutoff])
-                filter_df = df[df['pred_num_intolerable'] < args.residue_cutoff]
+                filter_df = df[df['pred_num_intolerable'] < residue_cutoff]
                 total_after_filter += len(filter_df)
                 correct_after_filter += len(filter_df[filter_df['rmsd'] < args.rmsd_cutoff])
 
