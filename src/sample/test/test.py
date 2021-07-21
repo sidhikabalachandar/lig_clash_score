@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 test.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein P00797 --target 3own --start 3d91 --index 0 
+$ $SCHRODINGER/run python3 test.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein P00797 --target 3own --start 3d91 --index 0
 """
 
 import argparse
@@ -53,6 +53,7 @@ def main():
     parser.add_argument('--rmsd_cutoff', type=int, default=2.5,
                         help='rmsd accuracy cutoff between predicted ligand pose '
                              'and true ligand pose')
+    parser.add_argument('--n', type=int, default=9, help='number of files processed in each job')
     args = parser.parse_args()
     random.seed(0)
 
@@ -75,13 +76,14 @@ def main():
             pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
             prefix = 'exhaustive_search_poses_'
             files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
+            grouped_files = group_files(args.n, files)
 
-            for i in range(len(files)):
+            for i in range(len(grouped_files)):
                 cmd = 'sbatch -p owners -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 test.py group {} {} ' \
                       '{} --protein {} --target {} --start {} --index {}"'
                 counter += 1
-                os.system(cmd.format(os.path.join(args.run_path, 'test_{}_{}_{}.out'.format(protein, pair, i)),
-                                     args.docked_prot_file, args.run_path, args.root, protein, target, start, i))
+                # os.system(cmd.format(os.path.join(args.run_path, 'test_{}_{}_{}.out'.format(protein, pair, i)),
+                #                      args.docked_prot_file, args.run_path, args.root, protein, target, start, i))
 
         print(counter)
 
@@ -120,96 +122,95 @@ def main():
         prefix = 'exhaustive_search_poses_'
         suffix = '.csv'
         files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
+        grouped_files = group_files(args.n, files)
 
-        file = files[args.index]
-        start_time = time.time()
-        # create feature dictionary
-        clash_features = {'name': [], 'residue': [], 'bfactor': [], 'mcss': [], 'volume_docking': []}
+        for file in grouped_files[args.index]:
+            # create feature dictionary
+            clash_features = {'name': [], 'residue': [], 'bfactor': [], 'mcss': [], 'volume_docking': []}
 
-        # get indices
-        df = pd.read_csv(os.path.join(pose_path, file))
-        correct_df = df[df['rmsd'] <= args.rmsd_cutoff]
-        correct_indices = [i for i in correct_df.index]
+            # get indices
+            df = pd.read_csv(os.path.join(pose_path, file))
+            correct_df = df[df['rmsd'] <= args.rmsd_cutoff]
+            correct_indices = [i for i in correct_df.index]
 
-        incorrect_df = df[df['rmsd'] > args.rmsd_cutoff]
-        incorrect_indices = [i for i in incorrect_df.index]
-        random.shuffle(incorrect_indices)
-        incorrect_indices = incorrect_indices[:300]
-        incorrect_indices = sorted(incorrect_indices)
-        all_indices = correct_indices + incorrect_indices
-        subset_df = df.iloc[all_indices, :]
+            incorrect_df = df[df['rmsd'] > args.rmsd_cutoff]
+            incorrect_indices = [i for i in incorrect_df.index]
+            random.shuffle(incorrect_indices)
+            incorrect_indices = incorrect_indices[:300]
+            incorrect_indices = sorted(incorrect_indices)
+            all_indices = correct_indices + incorrect_indices
+            subset_df = df.iloc[all_indices, :]
 
-        for i in all_indices:
-            name = df.loc[[i]]['name'].iloc[0]
-            conformer_index = df.loc[[i]]['conformer_index'].iloc[0]
-            c = conformers[conformer_index]
-            old_coords = c.getXYZ(copy=True)
-            grid_loc_x = df.loc[[i]]['grid_loc_x'].iloc[0]
-            grid_loc_y = df.loc[[i]]['grid_loc_y'].iloc[0]
-            grid_loc_z = df.loc[[i]]['grid_loc_z'].iloc[0]
-            translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
-            conformer_center = list(get_centroid(c))
-            coords = c.getXYZ(copy=True)
-            rot_x = df.loc[[i]]['rot_x'].iloc[0]
-            rot_y = df.loc[[i]]['rot_y'].iloc[0]
-            rot_z = df.loc[[i]]['rot_z'].iloc[0]
+            for i in all_indices:
+                name = df.loc[[i]]['name'].iloc[0]
+                conformer_index = df.loc[[i]]['conformer_index'].iloc[0]
+                c = conformers[conformer_index]
+                old_coords = c.getXYZ(copy=True)
+                grid_loc_x = df.loc[[i]]['grid_loc_x'].iloc[0]
+                grid_loc_y = df.loc[[i]]['grid_loc_y'].iloc[0]
+                grid_loc_z = df.loc[[i]]['grid_loc_z'].iloc[0]
+                translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
+                conformer_center = list(get_centroid(c))
+                coords = c.getXYZ(copy=True)
+                rot_x = df.loc[[i]]['rot_x'].iloc[0]
+                rot_y = df.loc[[i]]['rot_y'].iloc[0]
+                rot_z = df.loc[[i]]['rot_z'].iloc[0]
 
-            displacement_vector = get_coords_array_from_list(conformer_center)
-            to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
-            from_origin_matrix = get_translation_matrix(displacement_vector)
-            rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
-            rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
-            rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
-            new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
-                                          rot_matrix_y, rot_matrix_z)
+                displacement_vector = get_coords_array_from_list(conformer_center)
+                to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
+                from_origin_matrix = get_translation_matrix(displacement_vector)
+                rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
+                rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
+                rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
+                new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
+                                              rot_matrix_y, rot_matrix_z)
 
-            # for clash features dictionary
-            c.setXYZ(new_coords)
+                # for clash features dictionary
+                c.setXYZ(new_coords)
 
-            for r in res:
-                volume_docking = steric_clash.clash_volume(prot_docking, atoms1=r.getAtomIndices(), struc2=c)
-                if volume_docking != 0:
-                    clash_features['name'].append(name)
-                    clash_features['residue'].append(r.getAsl())
-                    clash_features['bfactor'].append(normalizedBFactor(r, mean, stdev))
-                    clash_features['mcss'].append(mcss)
-                    clash_features['volume_docking'].append(volume_docking)
+                for r in res:
+                    volume_docking = steric_clash.clash_volume(prot_docking, atoms1=r.getAtomIndices(), struc2=c)
+                    if volume_docking != 0:
+                        clash_features['name'].append(name)
+                        clash_features['residue'].append(r.getAsl())
+                        clash_features['bfactor'].append(normalizedBFactor(r, mean, stdev))
+                        clash_features['mcss'].append(mcss)
+                        clash_features['volume_docking'].append(volume_docking)
 
-            c.setXYZ(old_coords)
+                c.setXYZ(old_coords)
 
-        # run ML model
-        out_clash_df = pd.DataFrame.from_dict(clash_features)
-        infile = open(os.path.join(args.root, 'clash_classifier.pkl'), 'rb')
-        clf = pickle.load(infile)
-        infile.close()
-        if len(out_clash_df) != 0:
-            pred = clf.predict(out_clash_df[['bfactor', 'mcss', 'volume_docking']])
-        else:
-            pred = []
-        out_clash_df['pred'] = pred
-        file_name = file[len(prefix):-len(suffix)]
-        out_clash_file = os.path.join(clash_path, 'clash_data_{}.csv'.format(file_name))
-        out_clash_df.to_csv(out_clash_file, index=False)
+            # run ML model
+            out_clash_df = pd.DataFrame.from_dict(clash_features)
+            infile = open(os.path.join(args.root, 'clash_classifier.pkl'), 'rb')
+            clf = pickle.load(infile)
+            infile.close()
+            if len(out_clash_df) != 0:
+                pred = clf.predict(out_clash_df[['bfactor', 'mcss', 'volume_docking']])
+            else:
+                pred = []
+            out_clash_df['pred'] = pred
+            file_name = file[len(prefix):-len(suffix)]
+            out_clash_file = os.path.join(clash_path, 'clash_data_{}.csv'.format(file_name))
+            out_clash_df.to_csv(out_clash_file, index=False)
 
-        # add clash info to pose data frame
-        zeros = [0 for _ in range(len(subset_df))]
-        subset_df['pred_num_intolerable'] = zeros
-        subset_df['num_clash_docking'] = zeros
+            # add clash info to pose data frame
+            zeros = [0 for _ in range(len(subset_df))]
+            subset_df['pred_num_intolerable'] = zeros
+            subset_df['num_clash_docking'] = zeros
 
-        for pos, idx in enumerate(subset_df.index):
-            name = subset_df.loc[[idx]]['name'].iloc[0]
-            name_df = out_clash_df[out_clash_df['name'] == name]
-            if len(name_df) != 0:
-                pred = name_df['pred'].to_list()
-                subset_df.iat[pos, subset_df.columns.get_loc('pred_num_intolerable')] = sum(pred)
-                subset_df.iat[pos, subset_df.columns.get_loc('num_clash_docking')] = len(pred)
+            for pos, idx in enumerate(subset_df.index):
+                name = subset_df.loc[[idx]]['name'].iloc[0]
+                name_df = out_clash_df[out_clash_df['name'] == name]
+                if len(name_df) != 0:
+                    pred = name_df['pred'].to_list()
+                    subset_df.iat[pos, subset_df.columns.get_loc('pred_num_intolerable')] = sum(pred)
+                    subset_df.iat[pos, subset_df.columns.get_loc('num_clash_docking')] = len(pred)
 
-            # else
-            # default set to 0
+                # else
+                # default set to 0
 
-        pose_file = os.path.join(clash_path, 'pose_pred_data_{}.csv'.format(file_name))
-        subset_df.to_csv(pose_file, index=False)
-        print(time.time() - start_time)
+            pose_file = os.path.join(clash_path, 'pose_pred_data_{}.csv'.format(file_name))
+            subset_df.to_csv(pose_file, index=False)
 
     elif args.task == 'check':
         pairs = get_prots(args.docked_prot_file)
