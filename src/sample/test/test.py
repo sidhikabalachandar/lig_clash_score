@@ -82,8 +82,8 @@ def main():
                 cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 test.py group {} {} ' \
                       '{} --protein {} --target {} --start {} --index {}"'
                 counter += 1
-                # os.system(cmd.format(os.path.join(args.run_path, 'test_{}_{}_{}.out'.format(protein, pair, i)),
-                #                      args.docked_prot_file, args.run_path, args.root, protein, target, start, i))
+                os.system(cmd.format(os.path.join(args.run_path, 'test_{}_{}_{}.out'.format(protein, pair, i)),
+                                     args.docked_prot_file, args.run_path, args.root, protein, target, start, i))
 
         print(counter)
 
