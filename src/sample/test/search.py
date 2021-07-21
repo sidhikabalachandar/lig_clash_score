@@ -241,7 +241,7 @@ def main():
     parser.add_argument('--conformer_index', type=int, default=-1, help='number of grid_points processed in each job')
     parser.add_argument('--rmsd_cutoff', type=int, default=2.5, help='rmsd accuracy cutoff between predicted ligand pose '
                                                                    'and true ligand pose')
-    parser.add_argument('--start_clash_cutoff', type=int, default=2, help='clash cutoff between start protein and '
+    parser.add_argument('--start_clash_cutoff', type=int, default=1, help='clash cutoff between start protein and '
                                                                           'ligand pose')
     parser.add_argument('--protein', type=str, default='', help='name of protein')
     parser.add_argument('--target', type=str, default='', help='name of target ligand')

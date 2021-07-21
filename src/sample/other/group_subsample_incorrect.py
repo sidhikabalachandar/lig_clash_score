@@ -11,103 +11,10 @@ import os
 import pandas as pd
 import pickle
 import time
-import schrodinger.structure as structure
-from schrodinger.structutils.transform import get_centroid
-import numpy as np
-
-
-def split(filehandler, delimiter=',', row_limit=10000,
-          output_name_template='output_%s.csv', output_path='.', keep_headers=True):
-    """
-    Splits a CSV file into multiple pieces.
-
-    A quick bastardization of the Python CSV library.
-    Arguments:
-        `row_limit`: The number of rows you want in each output file. 10,000 by default.
-        `output_name_template`: A %s-style template for the numbered output files.
-        `output_path`: Where to stick the output files.
-        `keep_headers`: Whether or not to print the headers in each output file.
-    Example usage:
-
-        >> from toolbox import csv_splitter;
-        >> csv_splitter.split(open('/home/ben/input.csv', 'r'));
-
-    """
-    import csv
-    reader = csv.reader(filehandler, delimiter=delimiter)
-    current_piece = 1
-    current_out_path = os.path.join(
-        output_path,
-        output_name_template % current_piece
-    )
-    current_out_writer = csv.writer(open(current_out_path, 'w'), delimiter=delimiter)
-    current_limit = row_limit
-    if keep_headers:
-        headers = next(reader)
-        current_out_writer.writerow(headers)
-    for i, row in enumerate(reader):
-        if i + 1 > current_limit:
-            current_piece += 1
-            current_limit = row_limit * current_piece
-            current_out_path = os.path.join(
-                output_path,
-                output_name_template % current_piece
-            )
-            current_out_writer = csv.writer(open(current_out_path, 'w'), delimiter=delimiter)
-            if keep_headers:
-                current_out_writer.writerow(headers)
-        current_out_writer.writerow(row)
-
-
-def group_files(n, process):
-    """
-    groups pairs into sublists of size n
-    :param n: (int) sublist size
-    :param process: (list) list of pairs to process
-    :return: grouped_files (list) list of sublists of pairs
-    """
-    grouped_files = []
-
-    for i in range(0, len(process), n):
-        grouped_files += [process[i: i + n]]
-
-    return grouped_files
-
-
-def get_prots(docked_prot_file):
-    """
-    gets list of all protein, target ligands, and starting ligands in the index file
-    :param docked_prot_file: (string) file listing proteins to process
-    :return: process (list) list of all protein, target ligands, and starting ligands to process
-    """
-    process = []
-    with open(docked_prot_file) as fp:
-        for line in fp:
-            if line[0] == '#':
-                continue
-            protein, target, start = line.strip().split()
-            process.append((protein, target, start))
-
-    return process
-
-
-def get_grid_size(pair_path, target, start):
-    target_lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
-    target_lig = list(structure.StructureReader(target_lig_file))[0]
-    target_center = get_centroid(target_lig)
-
-    start_lig_file = os.path.join(pair_path, '{}_lig.mae'.format(start))
-    start_lig = list(structure.StructureReader(start_lig_file))[0]
-    start_center = get_centroid(start_lig)
-
-    dist = np.sqrt((target_center[0] - start_center[0]) ** 2 +
-                   (target_center[1] - start_center[1]) ** 2 +
-                   (target_center[2] - start_center[2]) ** 2)
-
-    grid_size = int(dist + 1)
-    if grid_size % 2 == 1:
-        grid_size += 1
-    return grid_size
+import sys
+sys.path.insert(1, '../util')
+from util import *
+from prot_util import *
 
 
 def main():
