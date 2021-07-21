@@ -201,13 +201,13 @@ def main():
             subset_df['pred_num_intolerable'] = zeros
             subset_df['num_clash_docking'] = zeros
 
-            for i in subset_df.index:
-                name = subset_df.loc[[i]]['name'].iloc[0]
+            for pos, idx in enumerate(subset_df.index):
+                name = subset_df.loc[[idx]]['name'].iloc[0]
                 name_df = out_clash_df[out_clash_df['name'] == name]
                 if len(name_df) != 0:
                     pred = name_df['pred'].to_list()
-                    subset_df.iat[i, subset_df.columns.get_loc('pred_num_intolerable')] = sum(pred)
-                    subset_df.iat[i, subset_df.columns.get_loc('num_clash_docking')] = len(pred)
+                    subset_df.iat[pos, subset_df.columns.get_loc('pred_num_intolerable')] = sum(pred)
+                    subset_df.iat[pos, subset_df.columns.get_loc('num_clash_docking')] = len(pred)
 
                 # else
                 # default set to 0
