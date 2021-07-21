@@ -206,8 +206,8 @@ def main():
                 name_df = out_clash_df[out_clash_df['name'] == name]
                 if len(name_df) != 0:
                     pred = name_df['pred'].to_list()
-                    subset_df.iat[i, incorrect_df.columns.get_loc('pred_num_intolerable')] = sum(pred)
-                    subset_df.iat[i, incorrect_df.columns.get_loc('num_clash_docking')] = len(pred)
+                    subset_df.iat[i, subset_df.columns.get_loc('pred_num_intolerable')] = sum(pred)
+                    subset_df.iat[i, subset_df.columns.get_loc('num_clash_docking')] = len(pred)
 
                 # else
                 # default set to 0
