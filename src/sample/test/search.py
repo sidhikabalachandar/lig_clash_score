@@ -287,7 +287,7 @@ def main():
         search(args)
 
     elif args.task == 'check':
-        pairs = get_prots(args)
+        pairs = get_prots(args.docked_prot_file)
         random.shuffle(pairs)
         missing = []
         counter = 0
