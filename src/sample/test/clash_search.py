@@ -31,6 +31,10 @@ def main():
     pairs = get_prots(args.docked_prot_file)
     random.shuffle(pairs)
 
+    print('Simple filter: start clash cutoff is {}'.format(args.start_clash_cutoff))
+    print('Advanced filter: num intolerable residue cutoff is {}'.format(args.residue_cutoff))
+    print('Correct: rmsd cutoff is {}'.format(args.rmsd_cutoff))
+
     for protein, target, start in pairs[:5]:
         print(protein, target, start)
         if protein == 'Q86WV6':
