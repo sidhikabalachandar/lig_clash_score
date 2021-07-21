@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 test.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein P00797 --target 3own --start 3d91 --index 0 --n 1
+$ $SCHRODINGER/run python3 test.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein P00797 --target 3own --start 3d91 --index 0 --n 1
 """
 
 import argparse
@@ -71,7 +71,7 @@ def main():
             protein_path = os.path.join(raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
             grid_size = get_grid_size(pair_path, target, start)
-            pose_path = os.path.join(pair_path, 'exhaustive_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
+            pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
             correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
             file = os.path.join(correct_path, 'combined.csv')
             df = pd.read_csv(file)
@@ -93,7 +93,7 @@ def main():
         protein_path = os.path.join(raw_root, args.protein)
         pair_path = os.path.join(protein_path, pair)
         grid_size = get_grid_size(pair_path, args.target, args.start)
-        pose_path = os.path.join(pair_path, 'exhaustive_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
+        pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
 
         clash_path = os.path.join(pose_path, 'clash_data')
         if not os.path.exists(clash_path):
