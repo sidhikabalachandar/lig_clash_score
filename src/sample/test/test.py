@@ -224,53 +224,26 @@ def main():
             protein_path = os.path.join(raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
             grid_size = get_grid_size(pair_path, target, start)
-            pose_path = os.path.join(pair_path, 'exhaustive_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
-            correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
-            clash_path = os.path.join(correct_path, 'clash_data')
-            file = os.path.join(correct_path, 'combined.csv')
-            df = pd.read_csv(file)
-            indices = [i for i in range(len(df))]
-            grouped_indices = group_files(args.n, indices)
+            pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
+            clash_path = os.path.join(pose_path, 'clash_data')
 
-            for i in range(len(grouped_indices)):
-                out_clash_file = os.path.join(clash_path, 'clash_data_{}.csv'.format(i))
-                pose_file = os.path.join(clash_path, 'pose_pred_data_{}.csv'.format(i))
+            prefix = 'exhaustive_search_poses_'
+            suffix = '.csv'
+            files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
+
+            for file in files:
+                file_name = file[len(prefix):-len(suffix)]
+                out_clash_file = os.path.join(clash_path, 'clash_data_{}.csv'.format(file_name))
+                pose_file = os.path.join(clash_path, 'pose_pred_data_{}.csv'.format(file_name))
                 counter += 1
                 if not os.path.exists(out_clash_file):
-                    missing.append((protein, target, start, i))
+                    missing.append((protein, target, start, file))
                     continue
                 if not os.path.exists(pose_file):
-                    missing.append((protein, target, start, i))
+                    missing.append((protein, target, start, file))
 
         print('Missing: {}/{}'.format(len(missing), counter))
         print(missing)
-
-    elif args.task == 'combine':
-        pairs = get_prots(args.docked_prot_file)
-        random.shuffle(pairs)
-        for protein, target, start in pairs[:5]:
-            print(protein, target, start)
-            if protein == 'Q86WV6':
-                continue
-            pair = '{}-to-{}'.format(target, start)
-            protein_path = os.path.join(raw_root, protein)
-            pair_path = os.path.join(protein_path, pair)
-            grid_size = get_grid_size(pair_path, target, start)
-            pose_path = os.path.join(pair_path, 'exhaustive_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
-            correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
-            clash_path = os.path.join(correct_path, 'clash_data')
-            file = os.path.join(correct_path, 'combined.csv')
-            df = pd.read_csv(file)
-            indices = [i for i in range(len(df))]
-            grouped_indices = group_files(args.n, indices)
-            dfs = []
-
-            for i in range(len(grouped_indices)):
-                pose_file = os.path.join(clash_path, 'pose_pred_data_{}.csv'.format(i))
-                dfs.append(pd.read_csv(pose_file))
-
-            df = pd.concat(dfs)
-            df.to_csv(os.path.join(clash_path, 'combined.csv'), index=False)
 
 
 if __name__ == "__main__":
