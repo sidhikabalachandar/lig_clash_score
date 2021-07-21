@@ -4,7 +4,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 clash_search.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 simple_filter.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 """
 
 import argparse
@@ -24,6 +24,7 @@ def main():
     parser.add_argument('raw_root', type=str, help='directory where script and output files will be written')
     parser.add_argument('--residue_cutoff', type=int, default=0, help='name of pose group subdir')
     parser.add_argument('--rmsd_cutoff', type=float, default=2.5, help='name of pose group subdir')
+    parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
     args = parser.parse_args()
     random.seed(0)
 
