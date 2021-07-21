@@ -29,34 +29,38 @@ def main():
     pairs = get_prots(args.docked_prot_file)
     random.shuffle(pairs)
 
-    for protein, target, start in pairs[:5]:
-        print(protein, target, start)
-        if protein == 'Q86WV6':
-            continue
-        pair = '{}-to-{}'.format(target, start)
-        protein_path = os.path.join(args.raw_root, protein)
-        pair_path = os.path.join(protein_path, pair)
+    for cutoff in [1, 2]:
+        print('CUTOFF IS {}\n\n'.format(cutoff))
 
-        grid_size = get_grid_size(pair_path, target, start)
-        group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
-        pose_path = os.path.join(pair_path, group_name)
+        for protein, target, start in pairs[:5]:
+            print(protein, target, start)
+            if protein == 'Q86WV6':
+                continue
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
 
-        num_correct = 0
-        num_total = 0
-        num_after_simple_filter = 0
-        num_correct_after_simple_filter = 0
-        for file in os.listdir(pose_path):
-            prefix = 'exhaustive_search_info'
-            if file[:len(prefix)] == prefix:
-                df = pd.read_csv(os.path.join(pose_path, file))
-                num_total += df['num_poses_searched'].iloc[0]
-                num_correct += df['num_correct'].iloc[0]
-                num_after_simple_filter += df['num_after_simple_filter'].iloc[0]
-                num_correct_after_simple_filter += df['num_correct_after_simple_filter'].iloc[0]
+            grid_size = get_grid_size(pair_path, target, start)
+            group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+            pose_path = os.path.join(pair_path, group_name)
 
-        print('Before simple filter, num_correct: {}, num_total: {}'.format(num_correct, num_total))
-        print('After simple filter, num_correct: {}, num_total: {}'.format(num_correct_after_simple_filter,
-                                                                           num_after_simple_filter))
+            num_correct = 0
+            num_total = 0
+            num_after_simple_filter = 0
+            num_correct_after_simple_filter = 0
+            for file in os.listdir(pose_path):
+                prefix = 'exhaustive_search_info'
+                if file[:len(prefix)] == prefix:
+                    df = pd.read_csv(os.path.join(pose_path, file))
+                    cutoff_df = df[df['start_clash_cutoff'] == cutoff]
+                    num_total += cutoff_df['num_poses_searched'].iloc[0]
+                    num_correct += cutoff_df['num_correct'].iloc[0]
+                    num_after_simple_filter += cutoff_df['num_after_simple_filter'].iloc[0]
+                    num_correct_after_simple_filter += cutoff_df['num_correct_after_simple_filter'].iloc[0]
+
+            print('Before simple filter, num_correct: {}, num_total: {}'.format(num_correct, num_total))
+            print('After simple filter, num_correct: {}, num_total: {}'.format(num_correct_after_simple_filter,
+                                                                               num_after_simple_filter))
 
         # correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
         # clash_path = os.path.join(correct_path, 'clash_data')
