@@ -11,6 +11,7 @@ import argparse
 import os
 import random
 import pandas as pd
+import time
 import sys
 sys.path.insert(1, '../util')
 from util import *
@@ -28,7 +29,6 @@ def main():
 
     pairs = get_prots(args.docked_prot_file)
     random.shuffle(pairs)
-    counter = 0
     for protein, target, start in pairs[:5]:
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(args.raw_root, protein)
@@ -46,6 +46,7 @@ def main():
 
         for i in range(len(grouped_grid_locs)):
             for j in range(len(grouped_conformer_indices)):
+                start_time = time.time()
                 data_dict = {'start_clash_cutoff': [], 'num_poses_searched': [], 'num_correct': [],
                              'num_after_simple_filter': [], 'num_correct_after_simple_filter': []}
                 info_file = os.path.join(pose_path, 'exhaustive_search_info_{}_{}'.format(i, j))
@@ -69,8 +70,9 @@ def main():
                 data_dict['num_correct_after_simple_filter'].append(
                     len(filtered_df[filtered_df['rmsd'] < args.rmsd_cutoff]))
 
-
-    print(counter)
+                data_dict.to_csv(info_file)
+                print(time.time() - start_time)
+                return
 
 
 if __name__ == "__main__":
