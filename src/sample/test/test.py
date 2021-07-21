@@ -35,16 +35,6 @@ Y_AXIS = [0.0, 1.0, 0.0]  # y-axis unit vector
 Z_AXIS = [0.0, 0.0, 1.0]  # z-axis unit vector
 
 
-def get_res(s):
-    res = []
-
-    for m in list(s.molecule):
-        for r in list(m.residue):
-            res.append(r)
-
-    return res
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('task', type=str, help='either align or search')

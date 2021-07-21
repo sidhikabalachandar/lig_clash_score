@@ -175,3 +175,13 @@ def get_grid_size(pair_path, target, start):
     if grid_size % 2 == 1:
         grid_size += 1
     return grid_size
+
+
+def get_res(s):
+    res = []
+
+    for m in list(s.molecule):
+        for r in list(m.residue):
+            res.append(r)
+
+    return res
