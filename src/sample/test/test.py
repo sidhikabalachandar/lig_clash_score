@@ -51,7 +51,9 @@ def main():
     parser.add_argument('--target_clash_cutoff', type=int, default=0, help='clash cutoff between target protein and '
                                                                             'ligand pose')
     parser.add_argument('--intolerable_cutoff', type=int, default=0, help='cutoff of max num intolerable residues')
-
+    parser.add_argument('--rmsd_cutoff', type=int, default=2.5,
+                        help='rmsd accuracy cutoff between predicted ligand pose '
+                             'and true ligand pose')
     args = parser.parse_args()
     random.seed(0)
 
