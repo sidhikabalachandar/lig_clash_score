@@ -35,6 +35,16 @@ Y_AXIS = [0.0, 1.0, 0.0]  # y-axis unit vector
 Z_AXIS = [0.0, 0.0, 1.0]  # z-axis unit vector
 
 
+def get_res(s):
+    res = []
+
+    for m in list(s.molecule):
+        for r in list(m.residue):
+            res.append(r)
+
+    return res
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('task', type=str, help='either align or search')
@@ -111,16 +121,12 @@ def main():
         with open('{}/{}_mcss.csv'.format(pair_path, pair)) as f:
             mcss = int(f.readline().strip().split(',')[4])
 
-        # clash preprocessing part 1 (prot_docking has all res)
-        docking_dim, docking_origin = get_dim(prot_docking)
-
         # pocket res only
         target_lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(args.target))
         target_lig = list(structure.StructureReader(target_lig_file))[0]
         get_pocket_res(prot_docking, target_lig, 6)
+        res = get_res(prot_docking)
 
-        # clash preprocessing part 2 (prot_docking only has pocket res)
-        prot_docking_grid, grids = get_grid(prot_docking, docking_dim, docking_origin)
 
         # get files to loop over
         prefix = 'exhaustive_search_poses_'
@@ -173,14 +179,14 @@ def main():
                 # for clash features dictionary
                 c.setXYZ(new_coords)
 
-                for grid, r in grids:
+                for r in res:
                     volume_docking = steric_clash.clash_volume(prot_docking, atoms1=r.getAtomIndices(), struc2=c)
                     if volume_docking != 0:
-                        correct_clash_features['name'].append(name)
-                        correct_clash_features['residue'].append(r.getAsl())
-                        correct_clash_features['bfactor'].append(normalizedBFactor(r, mean, stdev))
-                        correct_clash_features['mcss'].append(mcss)
-                        correct_clash_features['volume_docking'].append(volume_docking)
+                        clash_features['name'].append(name)
+                        clash_features['residue'].append(r.getAsl())
+                        clash_features['bfactor'].append(normalizedBFactor(r, mean, stdev))
+                        clash_features['mcss'].append(mcss)
+                        clash_features['volume_docking'].append(volume_docking)
 
                 c.setXYZ(old_coords)
 
