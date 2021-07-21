@@ -49,7 +49,6 @@ def main():
 
         for i in range(len(grouped_grid_locs)):
             for j in range(len(grouped_conformer_indices)):
-                start_time = time.time()
                 data_dict = {'start_clash_cutoff': [], 'num_poses_searched': [], 'num_correct': [],
                              'num_after_simple_filter': [], 'num_correct_after_simple_filter': []}
                 info_file = os.path.join(pose_path, 'exhaustive_search_info_{}_{}.csv'.format(i, j))
@@ -75,8 +74,6 @@ def main():
 
                 df = pd.DataFrame.from_dict(data_dict)
                 df.to_csv(info_file)
-                print(time.time() - start_time)
-                return
 
 
 if __name__ == "__main__":
