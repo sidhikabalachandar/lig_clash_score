@@ -201,7 +201,7 @@ def main():
             subset_df['pred_num_intolerable'] = zeros
             subset_df['num_clash_docking'] = zeros
 
-            for i in all_indices:
+            for i in subset_df.index:
                 name = subset_df.loc[[i]]['name'].iloc[0]
                 name_df = out_clash_df[out_clash_df['name'] == name]
                 if len(name_df) != 0:
