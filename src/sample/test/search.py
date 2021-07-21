@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 search.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P11838 --target 3wz6 --start 1gvx --grid_index 0 --conformer_index 9
+$ $SCHRODINGER/run python3 search.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P11838 --target 3wz6 --start 1gvx --grid_index 0 --conformer_index 9
 """
 
 import argparse
@@ -301,7 +301,7 @@ def main():
 
             grid_size = get_grid_size(pair_path, target, start)
             grouped_grid_locs = group_grid(args.grid_n, grid_size, 2)
-            pose_path = os.path.join(pair_path, 'exhaustive_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
+            pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
 
             for i in range(len(grouped_grid_locs)):
                 for j in range(len(grouped_conformers)):
