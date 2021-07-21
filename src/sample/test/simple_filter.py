@@ -73,7 +73,8 @@ def main():
                 data_dict['num_correct_after_simple_filter'].append(
                     len(filtered_df[filtered_df['rmsd'] < args.rmsd_cutoff]))
 
-                data_dict.to_csv(info_file)
+                df = pd.DataFrame.from_dict(data_dict)
+                df.to_csv(info_file)
                 print(time.time() - start_time)
                 return
 
