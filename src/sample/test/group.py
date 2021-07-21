@@ -9,7 +9,6 @@ import argparse
 import random
 import os
 import pandas as pd
-import time
 import pickle
 import sys
 sys.path.insert(1, '../util')
@@ -33,10 +32,10 @@ def main():
         if protein == 'Q86WV6':
             continue
 
-        pair = '{}-to-{}'.format(args.target, args.start)
-        protein_path = os.path.join(args.raw_root, args.protein)
+        pair = '{}-to-{}'.format(target, start)
+        protein_path = os.path.join(args.raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
-        grid_size = get_grid_size(pair_path, args.target, args.start)
+        grid_size = get_grid_size(pair_path, target, start)
         pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
         correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
         if not os.path.exists(correct_path):
