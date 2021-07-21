@@ -74,13 +74,10 @@ def main():
             pair_path = os.path.join(protein_path, pair)
             grid_size = get_grid_size(pair_path, target, start)
             pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
-            correct_path = os.path.join(pose_path, 'correct_after_simple_filter')
-            file = os.path.join(correct_path, 'combined.csv')
-            df = pd.read_csv(file)
-            indices = [i for i in range(len(df))]
-            grouped_indices = group_files(args.n, indices)
+            prefix = 'exhaustive_search_poses_'
+            files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
 
-            for i in range(len(grouped_indices)):
+            for i in range(len(files)):
                 cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 test.py group {} {} ' \
                       '{} --protein {} --target {} --start {} --index {}"'
                 counter += 1
@@ -124,9 +121,8 @@ def main():
         prefix = 'exhaustive_search_poses_'
         suffix = '.csv'
         files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
-        grouped_files = group_files(args.n, files)
 
-        for file in grouped_files[args.index]:
+        for file in files[args.index]:
             start_time = time.time()
             # create feature dictionary
             clash_features = {'name': [], 'residue': [], 'bfactor': [], 'mcss': [], 'volume_docking': []}
