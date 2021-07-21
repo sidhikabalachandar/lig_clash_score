@@ -57,7 +57,7 @@ def main():
             pickle.dump(correct_indices, outfile)
 
             incorrect_df = df[df['rmsd'] > args.rmsd_cutoff]
-            incorrect_indices = incorrect_df.index
+            incorrect_indices = [i for i in incorrect_df.index]
             random.shuffle(incorrect_indices)
             incorrect_indices = incorrect_indices[:300]
             incorrect_indices = sorted(incorrect_indices)
