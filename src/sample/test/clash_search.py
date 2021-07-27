@@ -68,9 +68,9 @@ def main():
                     num_after_simple_filter += cutoff_df['num_after_simple_filter'].iloc[0]
                     num_correct_after_simple_filter += cutoff_df['num_correct_after_simple_filter'].iloc[0]
 
-            print('Exhaustive search, num_correct: {}, num_total: {}'.format(num_correct, num_total))
-            print('After simple filter, num_correct: {}, num_total: {}'.format(num_correct_after_simple_filter,
-                                                                               num_after_simple_filter))
+            print('Exhaustive search, num_correct: {}, num_total: {}, proportion: {}'.format(num_correct, num_total, num_correct / num_total))
+            print('After simple filter, num_correct: {}, num_total: {}, proportion: {}'.format(num_correct_after_simple_filter,
+                                                                               num_after_simple_filter, num_correct_after_simple_filter / num_after_simple_filter))
 
             clash_path = os.path.join(pose_path, 'clash_data')
             total_after_subsample = 0
@@ -87,8 +87,8 @@ def main():
                     total_after_filter += len(filter_df)
                     correct_after_filter += len(filter_df[filter_df['rmsd'] < args.rmsd_cutoff])
 
-            print('After subsample, num_correct: {}, num_total: {}'.format(correct_after_subsample, total_after_subsample))
-            print('After advanced filter, num_correct: {}, num_total: {}'.format(correct_after_filter, total_after_filter))
+            print('After subsample, num_correct: {}, num_total: {}, proportion: {}'.format(correct_after_subsample, total_after_subsample, correct_after_subsample / total_after_subsample))
+            print('After advanced filter, num_correct: {}, num_total: {}, proportion: {}'.format(correct_after_filter, total_after_filter, correct_after_filter / total_after_filter))
 
 
 if __name__ == "__main__":
