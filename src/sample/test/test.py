@@ -84,6 +84,7 @@ def main():
                 counter += 1
                 os.system(cmd.format(os.path.join(args.run_path, 'test_{}_{}_{}.out'.format(protein, pair, i)),
                                      args.docked_prot_file, args.run_path, args.root, protein, target, start, i))
+            break
 
         print(counter)
 
