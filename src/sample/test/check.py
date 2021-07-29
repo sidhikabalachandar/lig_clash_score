@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 test.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein P00797 --target 3own --start 3d91 --index 0
+$ $SCHRODINGER/run python3 check.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d
 """
 
 import argparse
@@ -69,11 +69,10 @@ def main():
         pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
         prefix = 'exhaustive_search_poses_'
         files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
-        grouped_files = group_files(args.n, files)
 
         counter = 0
 
-        for file in grouped_files:
+        for file in files:
             # get indices
             df = pd.read_csv(os.path.join(pose_path, file))
             correct_df = df[df['rmsd'] <= args.rmsd_cutoff]
