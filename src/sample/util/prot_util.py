@@ -175,7 +175,7 @@ def get_grid_size(pair_path, target, start):
     if grid_size % 2 == 1:
         grid_size += 1
 
-    # grid_size = max(grid_size, 6)
+    grid_size = max(grid_size, 6)
     return grid_size
 
 
