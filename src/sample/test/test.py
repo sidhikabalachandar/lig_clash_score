@@ -136,11 +136,10 @@ def main():
             correct_df = df[df['rmsd'] <= args.rmsd_cutoff]
 
             incorrect_df = df[df['rmsd'] > args.rmsd_cutoff]
-            incorrect_indices = [i for i in incorrect_df.index]
-            random.shuffle(incorrect_indices)
-            incorrect_indices = incorrect_indices[:300]
-            incorrect_indices = sorted(incorrect_indices)
-            subset_incorrect_df = incorrect_df.iloc[incorrect_indices, :]
+            incorrect_names = incorrect_df['name'].to_list()
+            random.shuffle(incorrect_names)
+            incorrect_names = incorrect_names[:300]
+            subset_incorrect_df = incorrect_df.loc[incorrect_df['name'].isin(incorrect_names)]
 
             subset_df = pd.concat([correct_df, subset_incorrect_df])
 
