@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 shape_align_conformers.py test group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov --conformer_n 1 --conformer_index 0
+$ $SCHRODINGER/run python3 shape_align_conformers.py test all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov --conformer_index 0
 """
 
 import argparse
@@ -125,6 +125,7 @@ def main():
         elif args.mode == 'test':
             process = get_prots(args.docked_prot_file)
             random.shuffle(process)
+            counter = 0
             for protein, target, start in process[:5]:
                 pair = '{}-to-{}'.format(target, start)
                 protein_path = os.path.join(args.raw_root, protein)
@@ -136,13 +137,16 @@ def main():
                 grouped_indices = group_files(args.conformer_n, indices)
 
                 for i in range(len(grouped_indices)):
+                    counter += 1
                     cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 ' \
                           'shape_align_conformers.py test group {} {} {} --protein {} --target {} --conformer_n {} ' \
                           '--conformer_index {}"'
-                    os.system(
-                        cmd.format(os.path.join(args.run_path, '{}_{}_{}_{}.out'.format(protein, target, start, i)),
-                                   args.docked_prot_file, args.run_path, args.raw_root, protein, target, start,
-                                   args.conformer_n, i))
+                    # os.system(
+                    #     cmd.format(os.path.join(args.run_path, '{}_{}_{}_{}.out'.format(protein, target, start, i)),
+                    #                args.docked_prot_file, args.run_path, args.raw_root, protein, target, start,
+                    #                args.conformer_n, i))
+
+            print(counter)
 
     elif args.task == 'group':
         if args.mode == 'train':
