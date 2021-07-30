@@ -254,12 +254,10 @@ def main():
         os.mkdir(args.run_path)
 
     if args.task == 'all':
-        # pairs = get_prots(args.docked_prot_file)
-        pairs = [('P03368', '1gno', '1zp8', 0, 23), ('P03368', '1gno', '1zp8', 0, 24), ('P03368', '1gno', '1zp8', 0, 25), ('P03368', '1gno', '1zp8', 0, 26), ('P02829', '2fxs', '2weq', 0, 45), ('P02829', '2fxs', '2weq', 0, 50)]
+        pairs = get_prots(args.docked_prot_file)
         random.shuffle(pairs)
         counter = 0
-        # for protein, target, start in pairs[:5]:
-        for protein, target, start, i, j in pairs:
+        for protein, target, start in pairs[:5]:
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(args.raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
@@ -271,17 +269,19 @@ def main():
             grid_size = get_grid_size(pair_path, target, start)
             grouped_grid_locs = group_grid(args.grid_n, grid_size, 2)
 
+            print(protein, target, start, len(conformers))
+
             # for i in range(len(grouped_grid_locs)):
             #     for j in range(len(grouped_conformer_indices)):
-            cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 search.py group {} {} {} ' \
-                  '--rotation_search_step_size {} --grid_size {} --grid_n {} --num_conformers {} ' \
-                  '--conformer_n {} --grid_index {} --conformer_index {} --protein {} --target {} --start {}"'
-            out_file_name = 'search_{}_{}_{}_{}_{}.out'.format(protein, target, start, i, j)
-            counter += 1
-            os.system(
-                cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.run_path,
-                           args.raw_root, args.rotation_search_step_size, args.grid_size, args.grid_n,
-                           args.num_conformers, args.conformer_n, i, j, protein, target, start))
+            #         cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 search.py group {} {} {} ' \
+            #               '--rotation_search_step_size {} --grid_size {} --grid_n {} --num_conformers {} ' \
+            #               '--conformer_n {} --grid_index {} --conformer_index {} --protein {} --target {} --start {}"'
+            #         out_file_name = 'search_{}_{}_{}_{}_{}.out'.format(protein, target, start, i, j)
+            #         counter += 1
+            #         os.system(
+            #             cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.run_path,
+            #                        args.raw_root, args.rotation_search_step_size, args.grid_size, args.grid_n,
+            #                        args.num_conformers, args.conformer_n, i, j, protein, target, start))
 
         print(counter)
 
