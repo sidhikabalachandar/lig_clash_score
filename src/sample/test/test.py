@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 test.py remove /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein P00797 --target 3own --start 3d91 --index 0
+$ $SCHRODINGER/run python3 test.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein P00797 --target 3own --start 3d91 --index 0
 """
 
 import argparse
@@ -134,15 +134,15 @@ def main():
             all_df = pd.read_csv(os.path.join(pose_path, file))
             df = all_df[all_df['start_clash'] < args.start_clash_cutoff]
             correct_df = df[df['rmsd'] <= args.rmsd_cutoff]
-            correct_indices = [i for i in correct_df.index]
 
             incorrect_df = df[df['rmsd'] > args.rmsd_cutoff]
             incorrect_indices = [i for i in incorrect_df.index]
             random.shuffle(incorrect_indices)
             incorrect_indices = incorrect_indices[:300]
             incorrect_indices = sorted(incorrect_indices)
-            all_indices = correct_indices + incorrect_indices
-            subset_df = df.iloc[all_indices, :]
+            subset_incorrect_df = incorrect_df.iloc[incorrect_indices, :]
+
+            subset_df = pd.concat([correct_df, subset_incorrect_df])
 
             for i in all_indices:
                 name = df.loc[[i]]['name'].iloc[0]
