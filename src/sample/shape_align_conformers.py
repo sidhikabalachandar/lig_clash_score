@@ -104,8 +104,8 @@ def run_check(conformer_prots, args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('task', type=str, help='either align or search')
     parser.add_argument('mode', type=str, help='either train or test')
+    parser.add_argument('task', type=str, help='either align or search')
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
