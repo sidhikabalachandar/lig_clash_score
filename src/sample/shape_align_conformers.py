@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 shape_align_conformers.py test group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov --conforemr_n 1 --conformer_index 0
+$ $SCHRODINGER/run python3 shape_align_conformers.py test group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov --conformer_n 1 --conformer_index 0
 """
 
 import argparse
@@ -40,7 +40,6 @@ def run_group(protein, target, start, args):
 
     # align each conformer to starting ligand
     for i in grouped_indices[args.conformer_index]:
-        start_time = time.time()
         aligned_conformer_file = os.path.join(output_path, '{}_align.maegz'.format(i))
         if not os.path.exists(aligned_conformer_file):
             os.chdir(output_path)
@@ -66,25 +65,6 @@ def run_group(protein, target, start, args):
 
             with structure.StructureWriter(no_hydrogen_file) as no_h:
                 no_h.append(aligned_conformer)
-        print(time.time() - start_time)
-        return
-
-
-    # combine all ligands with hydrogen
-    combined_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
-    with structure.StructureWriter(combined_file) as combined:
-        for i in range(num):
-            aligned_file = os.path.join(output_path, '{}_align_with_hydrogen.mae'.format(i))
-            s = list(structure.StructureReader(aligned_file))[0]
-            combined.append(s)
-
-    # combine all ligands without hydrogen
-    combined_file = os.path.join(pair_path, "aligned_to_start_without_hydrogen_conformers.mae")
-    with structure.StructureWriter(combined_file) as combined:
-        for i in range(num):
-            aligned_file = os.path.join(output_path, '{}_align_without_hydrogen.mae'.format(i))
-            s = list(structure.StructureReader(aligned_file))[0]
-            combined.append(s)
 
 
 def run_check(conformer_prots, args):
@@ -118,8 +98,8 @@ def main():
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
     parser.add_argument('--n', type=int, default=10, help='number of alignments processed in each job')
     parser.add_argument('--index', type=int, default=-1, help='grid point group index')
-    parser.add_argument('--conformer_n', type=int, default=100, help='grid point group index')
-    parser.add_argument('--conformer_index', type=int, default=100, help='grid point group index')
+    parser.add_argument('--conformer_n', type=int, default=6, help='grid point group index')
+    parser.add_argument('--conformer_index', type=int, default=-1, help='grid point group index')
     parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
     parser.add_argument('--protein', type=str, default='', help='name of protein')
     parser.add_argument('--target', type=str, default='', help='name of target ligand')
@@ -197,6 +177,35 @@ def main():
             os.system('rm {}'.format(combined_file))
             combined_file = os.path.join(pair_path, "aligned_to_start_without_hydrogen_conformers.mae")
             os.system('rm {}'.format(combined_file))
+
+    elif args.tasks == 'combine':
+        process = get_prots(args.docked_prot_file)
+        random.shuffle(process)
+        for protein, target, start in process[5:15]:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+            output_path = os.path.join(pair_path, 'conformers')
+
+            conformer_file = os.path.join(pair_path, "{}_lig0-out.maegz".format(target))
+            conformers = list(structure.StructureReader(conformer_file))
+            num = min(args.num_conformers, len(conformers))
+
+            # combine all ligands with hydrogen
+            combined_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
+            with structure.StructureWriter(combined_file) as combined:
+                for i in range(num):
+                    aligned_file = os.path.join(output_path, '{}_align_with_hydrogen.mae'.format(i))
+                    s = list(structure.StructureReader(aligned_file))[0]
+                    combined.append(s)
+
+            # combine all ligands without hydrogen
+            combined_file = os.path.join(pair_path, "aligned_to_start_without_hydrogen_conformers.mae")
+            with structure.StructureWriter(combined_file) as combined:
+                for i in range(num):
+                    aligned_file = os.path.join(output_path, '{}_align_without_hydrogen.mae'.format(i))
+                    s = list(structure.StructureReader(aligned_file))[0]
+                    combined.append(s)
 
 
 if __name__ == "__main__":
