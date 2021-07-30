@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 shape_align_conformers.py test all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein A2IC68 --target 4avi --start 4av4 --index 0 --n 1
+$ $SCHRODINGER/run python3 shape_align_conformers.py test group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov --conforemr_n 1 --conformer_index 0
 """
 
 import argparse
@@ -35,9 +35,11 @@ def run_group(protein, target, start, args):
     conformer_file = os.path.join(pair_path, "{}_lig0-out.maegz".format(target))
     conformers = list(structure.StructureReader(conformer_file))
     num = min(args.num_conformers, len(conformers))
+    indices = [i for i in range(num)]
+    grouped_indices = group_files(args.conformer_n, indices)
 
     # align each conformer to starting ligand
-    for i in range(num):
+    for i in grouped_indices[args.conformer_index]:
         start_time = time.time()
         aligned_conformer_file = os.path.join(output_path, '{}_align.maegz'.format(i))
         if not os.path.exists(aligned_conformer_file):
@@ -65,7 +67,7 @@ def run_group(protein, target, start, args):
             with structure.StructureWriter(no_hydrogen_file) as no_h:
                 no_h.append(aligned_conformer)
         print(time.time() - start_time)
-        return 
+        return
 
 
     # combine all ligands with hydrogen
@@ -116,6 +118,8 @@ def main():
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
     parser.add_argument('--n', type=int, default=10, help='number of alignments processed in each job')
     parser.add_argument('--index', type=int, default=-1, help='grid point group index')
+    parser.add_argument('--conformer_n', type=int, default=100, help='grid point group index')
+    parser.add_argument('--conformer_index', type=int, default=100, help='grid point group index')
     parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
     parser.add_argument('--protein', type=str, default='', help='name of protein')
     parser.add_argument('--target', type=str, default='', help='name of target ligand')
@@ -133,10 +137,11 @@ def main():
             grouped_files = group_files(args.n, process)
             for i in range(len(grouped_files)):
                 cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 shape_align_conformers.py ' \
-                      'train group {} {} {} --n {} --num_conformers {} --index {}"'
+                      'train group {} {} {} --n {} --num_conformers {} --index {} --conformer_n {} ' \
+                      '--conformer_index {}"'
                 os.system(
                     cmd.format(os.path.join(args.run_path, 'align_{}.out'.format(i)), args.docked_prot_file, args.run_path,
-                               args.raw_root, args.n, args.num_conformers, i))
+                               args.raw_root, args.n, args.num_conformers, i, args.num_conformers, 0))
         elif args.mode == 'test':
             process = get_prots(args.docked_prot_file)
             random.shuffle(process)
@@ -147,15 +152,17 @@ def main():
                 conformer_file = os.path.join(pair_path, "{}_lig0-out.maegz".format(target))
                 conformers = list(structure.StructureReader(conformer_file))
                 num = min(args.num_conformers, len(conformers))
-                ls = [i for i in range(num)]
-                grouped_files = group_files(args.n, ls)
-                for i in range(len(grouped_files)):
+                indices = [i for i in range(num)]
+                grouped_indices = group_files(args.conformer_n, indices)
+
+                for i in range(len(grouped_indices)):
                     cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 ' \
-                          'shape_align_conformers.py test group {} {} {} --protein {} --target {} --start {} --index ' \
-                          '{}"'
+                          'shape_align_conformers.py test group {} {} {} --protein {} --target {} --conformer_n {} ' \
+                          '--conformer_index {}"'
                     os.system(
                         cmd.format(os.path.join(args.run_path, '{}_{}_{}_{}.out'.format(protein, target, start, i)),
-                                   args.docked_prot_file, args.run_path, args.raw_root, protein, target, start, i))
+                                   args.docked_prot_file, args.run_path, args.raw_root, protein, target, start,
+                                   args.conformer_n, i))
 
     elif args.task == 'group':
         if args.mode == 'train':
