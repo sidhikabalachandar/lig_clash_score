@@ -98,7 +98,7 @@ def main():
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
     parser.add_argument('--n', type=int, default=10, help='number of alignments processed in each job')
     parser.add_argument('--index', type=int, default=-1, help='grid point group index')
-    parser.add_argument('--conformer_n', type=int, default=6, help='grid point group index')
+    parser.add_argument('--conformer_n', type=int, default=12, help='grid point group index')
     parser.add_argument('--conformer_index', type=int, default=-1, help='grid point group index')
     parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
     parser.add_argument('--protein', type=str, default='', help='name of protein')
@@ -138,7 +138,7 @@ def main():
 
                 for i in range(len(grouped_indices)):
                     counter += 1
-                    cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 ' \
+                    cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 ' \
                           'shape_align_conformers.py test group {} {} {} --protein {} --target {} --conformer_n {} ' \
                           '--conformer_index {}"'
                     # os.system(
