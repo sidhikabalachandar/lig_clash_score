@@ -37,14 +37,18 @@ def run_group(protein, target, start, args):
     # folders for each (target, ligand) pair.
     # Run ConfGen
     # copy ligand file
+    print(f'cp {target_lig_file:} ./{basename:}')
     run_cmd(f'cp {target_lig_file:} ./{basename:}')
     command = _CONFGEN_CMD.format(num_conformers=args.num_conformers, input_file=f'./{basename:}')
 
     # run confgen
+    print(command)
     run_cmd(command, f'Failed to run ConfGen on {target_lig_file:}')
 
     # remove copied file
+    print(f'rm ./{basename:}')
     run_cmd(f'rm ./{basename:}')
+    print('done')
     os.chdir(current_dir)
 
     if os.path.exists(os.path.join(pair_path, '{}_lig0.log'.format(target))):
