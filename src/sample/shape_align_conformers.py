@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 shape_align_conformers.py test delete /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0 --n 1
+$ $SCHRODINGER/run python3 shape_align_conformers.py test all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein A2IC68 --target 4avi --start 4av4 --index 0 --n 1
 """
 
 import argparse
@@ -10,6 +10,7 @@ import os
 import schrodinger.structure as structure
 import schrodinger.structutils.build as build
 import random
+import time
 import sys
 sys.path.insert(1, 'util')
 from util import *
@@ -37,6 +38,7 @@ def run_group(protein, target, start, args):
 
     # align each conformer to starting ligand
     for i in range(num):
+        start_time = time.time()
         aligned_conformer_file = os.path.join(output_path, '{}_align.maegz'.format(i))
         if not os.path.exists(aligned_conformer_file):
             os.chdir(output_path)
@@ -62,6 +64,8 @@ def run_group(protein, target, start, args):
 
             with structure.StructureWriter(no_hydrogen_file) as no_h:
                 no_h.append(aligned_conformer)
+
+
 
     # combine all ligands with hydrogen
     combined_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
@@ -156,7 +160,7 @@ def main():
         if args.mode == 'train':
             process = get_prots(args.docked_prot_file)
             grouped_files = group_files(args.n, process)
-            for protein, target, start in grouped_files[index]:
+            for protein, target, start in grouped_files[args.index]:
                 run_group(protein, target, start, args)
         elif args.mode == 'test':
             run_group(args.protein, args.target, args.start, args)
@@ -168,7 +172,7 @@ def main():
         elif args.mode == 'test':
             process = get_prots(args.docked_prot_file)
             random.shuffle(process)
-            run_check(process[:5], args)
+            run_check(process[5:15], args)
 
     elif args.task == 'delete':
         process = get_prots(args.docked_prot_file)
@@ -180,6 +184,11 @@ def main():
             output_path = os.path.join(pair_path, 'conformers')
 
             os.system('rm -rf {}'.format(output_path))
+
+            combined_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
+            os.system('rm {}'.format(combined_file))
+            combined_file = os.path.join(pair_path, "aligned_to_start_without_hydrogen_conformers.mae")
+            os.system('rm {}'.format(combined_file))
 
 
 if __name__ == "__main__":
