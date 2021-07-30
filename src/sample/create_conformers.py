@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 create_conformers.py group train /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0 --n 1
+$ $SCHRODINGER/run python3 create_conformers.py test delete /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0 --n 1
 """
 
 import argparse
@@ -66,14 +66,14 @@ def run_check(process, args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('task', type=str, help='either align or search')
     parser.add_argument('mode', type=str, help='either train or test')
+    parser.add_argument('task', type=str, help='either align or search')
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
     parser.add_argument('--index', type=int, default=-1, help='protein-ligand pair group index')
     parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
-    parser.add_argument('--n', type=int, default=3, help='number of protein, target, start groups processed in '
+    parser.add_argument('--n', type=int, default=1, help='number of protein, target, start groups processed in '
                                                          'group task')
     parser.add_argument('--protein', type=str, default='', help='name of protein')
     parser.add_argument('--target', type=str, default='', help='name of target ligand')
@@ -98,7 +98,7 @@ def main():
         elif args.mode == 'test':
             process = get_prots(args.docked_prot_file)
             random.shuffle(process)
-            for protein, target, start in process[:5]:
+            for protein, target, start in process[5:15]:
                 print(protein, target, start)
                 cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 create_conformers.py group ' \
                       'test {} {} {} --protein {} --target {} --start {}"'
@@ -128,6 +128,16 @@ def main():
             process = get_prots(args.docked_prot_file)
             random.shuffle(process)
             run_check(process[:5], args)
+
+    if args.task == 'delete':
+        process = get_prots(args.docked_prot_file)
+        random.shuffle(process)
+        for protein, target, start in process[5:15]:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+            conformer_file = os.path.join(pair_path, "{}_lig0-out.maegz".format(target))
+            os.system('rm -rf {}'.format(conformer_file))
 
 if __name__ == "__main__":
     main()

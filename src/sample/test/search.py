@@ -237,7 +237,7 @@ def main():
                                                                                  'checked, in degrees')
     parser.add_argument('--min_angle', type=int, default=0, help='min angle of rotation in degrees')
     parser.add_argument('--max_angle', type=int, default=360, help='min angle of rotation in degrees')
-    parser.add_argument('--conformer_n', type=int, default=3, help='number of conformers processed in each job')
+    parser.add_argument('--conformer_n', type=int, default=10, help='number of conformers processed in each job')
     parser.add_argument('--conformer_index', type=int, default=-1, help='number of grid_points processed in each job')
     parser.add_argument('--rmsd_cutoff', type=int, default=2.5, help='rmsd accuracy cutoff between predicted ligand pose '
                                                                    'and true ligand pose')
