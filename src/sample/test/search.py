@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 search.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P03368 --target 1gno --start 1zp8 --grid_index 0 --conformer_index 0 --grid_n 1 --conformer_n 1
+$ $SCHRODINGER/run python3 search.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P03368 --target 1gno --start 1zp8 --grid_index 0 --conformer_index 0 --grid_n 1 --conformer_n 1
 """
 
 import argparse
@@ -267,7 +267,6 @@ def main():
             grouped_conformer_indices = group_files(args.conformer_n, conformer_indices)
 
             grid_size = get_grid_size(pair_path, target, start)
-            print(len(grid_size))
             grouped_grid_locs = group_grid(args.grid_n, grid_size, 2)
 
             print(protein, target, start, len(conformers))
