@@ -37,18 +37,14 @@ def run_group(protein, target, start, args):
     # folders for each (target, ligand) pair.
     # Run ConfGen
     # copy ligand file
-    print(f'cp {target_lig_file:} ./{basename:}')
     run_cmd(f'cp {target_lig_file:} ./{basename:}')
     command = _CONFGEN_CMD.format(num_conformers=args.num_conformers, input_file=f'./{basename:}')
 
     # run confgen
-    print(command)
     run_cmd(command, f'Failed to run ConfGen on {target_lig_file:}')
 
     # remove copied file
-    print(f'rm ./{basename:}')
     run_cmd(f'rm ./{basename:}')
-    print('done')
     os.chdir(current_dir)
 
     if os.path.exists(os.path.join(pair_path, '{}_lig0.log'.format(target))):
@@ -94,8 +90,8 @@ def main():
             process = get_prots(args.docked_prot_file)
             grouped_files = group_files(args.n, process)
             for i in range(len(grouped_files)):
-                cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 create_conformers.py group ' \
-                      'train {} {} {} --index {}"'
+                cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 create_conformers.py train ' \
+                      'group {} {} {} --index {}"'
                 os.system(
                     cmd.format(os.path.join(args.run_path, 'conformer_{}.out'.format(i)), args.docked_prot_file,
                                args.run_path, args.raw_root, i))
@@ -104,11 +100,10 @@ def main():
             random.shuffle(process)
             for protein, target, start in process[5:15]:
                 print(protein, target, start)
-                cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 create_conformers.py group ' \
-                      'test {} {} {} --protein {} --target {} --start {}"'
+                cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 create_conformers.py test ' \
+                      'group {} {} {} --protein {} --target {} --start {}"'
                 os.system(cmd.format(os.path.join(args.run_path, '{}_{}_{}.out'.format(protein, target, start)),
                                      args.docked_prot_file, args.run_path, args.raw_root, protein, target, start))
-                return
 
     elif args.task == 'group':
         if args.mode == 'train':
