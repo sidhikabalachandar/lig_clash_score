@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 create_conformers.py test delete /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0 --n 1
+$ $SCHRODINGER/run python3 create_conformers.py test all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0 --n 1
 """
 
 import argparse
@@ -127,7 +127,7 @@ def main():
         elif args.mode == 'test':
             process = get_prots(args.docked_prot_file)
             random.shuffle(process)
-            run_check(process[:5], args)
+            run_check(process[5:15], args)
 
     if args.task == 'delete':
         process = get_prots(args.docked_prot_file)
