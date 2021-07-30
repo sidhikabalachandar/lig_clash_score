@@ -64,7 +64,8 @@ def run_group(protein, target, start, args):
 
             with structure.StructureWriter(no_hydrogen_file) as no_h:
                 no_h.append(aligned_conformer)
-
+        print(time.time() - start_time)
+        return 
 
 
     # combine all ligands with hydrogen
