@@ -54,6 +54,8 @@ def main():
                         help='rmsd accuracy cutoff between predicted ligand pose '
                              'and true ligand pose')
     parser.add_argument('--n', type=int, default=9, help='number of files processed in each job')
+    parser.add_argument('--start_clash_cutoff', type=int, default=1, help='clash cutoff between start protein and '
+                                                                          'ligand pose')
     args = parser.parse_args()
     random.seed(0)
 
@@ -130,7 +132,8 @@ def main():
             clash_features = {'name': [], 'residue': [], 'bfactor': [], 'mcss': [], 'volume_docking': []}
 
             # get indices
-            df = pd.read_csv(os.path.join(pose_path, file))
+            all_df = pd.read_csv(os.path.join(pose_path, file))
+            df = all_df[all_df['start_clash'] < args.start_clash_cutoff]
             correct_df = df[df['rmsd'] <= args.rmsd_cutoff]
             correct_indices = [i for i in correct_df.index]
 
@@ -245,6 +248,20 @@ def main():
 
         print('Missing: {}/{}'.format(len(missing), counter))
         print(missing)
+
+    elif args.task == 'remove':
+        pairs = get_prots(args.docked_prot_file)
+        random.shuffle(pairs)
+        for protein, target, start in pairs[:5]:
+            if protein == 'Q86WV6':
+                continue
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+            grid_size = get_grid_size(pair_path, target, start)
+            pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
+            clash_path = os.path.join(pose_path, 'clash_data')
+            os.system('rm -rf {}'.format(clash_path))
 
 
 if __name__ == "__main__":
