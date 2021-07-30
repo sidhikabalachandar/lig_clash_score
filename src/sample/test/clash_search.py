@@ -44,8 +44,7 @@ def main():
         for protein, target, start in pairs[:5]:
             print()
             print(protein, target, start)
-            if protein == 'Q86WV6':
-                continue
+
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(args.raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
@@ -71,6 +70,9 @@ def main():
             print('Exhaustive search, num_correct: {}, num_total: {}, proportion: {}'.format(num_correct, num_total, num_correct / num_total))
             print('After simple filter, num_correct: {}, num_total: {}, proportion: {}'.format(num_correct_after_simple_filter,
                                                                                num_after_simple_filter, num_correct_after_simple_filter / num_after_simple_filter))
+
+            if protein == 'Q86WV6':
+                continue
 
             clash_path = os.path.join(pose_path, 'clash_data')
             total_after_subsample = 0
