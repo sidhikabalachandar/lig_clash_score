@@ -57,6 +57,8 @@ def group_grid(n, grid_size, step):
             for dz in vals:
                 grid.append((dx, dy, dz))
 
+    print(len(grid))
+
     grouped_files = []
 
     for i in range(0, len(grid), n):
