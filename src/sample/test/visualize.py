@@ -4,7 +4,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 clash_search.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 visualize.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 """
 
 import argparse
@@ -18,6 +18,7 @@ import sys
 sys.path.insert(1, '../util')
 from util import *
 from prot_util import *
+from schrod_replacement_util import *
 
 
 X_AXIS = [1.0, 0.0, 0.0]  # x-axis unit vector
@@ -102,7 +103,7 @@ def main():
     write_poses(protein, pair, tolerable_incorrect_df, conformers, 'tolerable_incorrect')
     write_poses(protein, pair, intolerable_correct_df, conformers, 'intolerable_correct')
     write_poses(protein, pair, intolerable_incorrect_df, conformers, 'intolerable_incorrect')
-    
+
 
 if __name__ == "__main__":
     main()
