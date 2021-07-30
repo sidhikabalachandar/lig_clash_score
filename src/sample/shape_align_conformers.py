@@ -11,7 +11,7 @@ import schrodinger.structure as structure
 import schrodinger.structutils.build as build
 import random
 import sys
-sys.path.insert(1, '../util')
+sys.path.insert(1, 'util')
 from util import *
 
 _ALIGN_CMD = "$SCHRODINGER/shape_screen -shape {shape} -screen {screen} -WAIT -JOB {job_name}"
