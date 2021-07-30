@@ -63,7 +63,7 @@ def main():
                 if file[:len(prefix)] == prefix:
                     df = pd.read_csv(os.path.join(pose_path, file))
                     num_total += len(df)
-                    num_correct += len(df[df['rmsd'] < args.rmsd_cutoff].iloc[0])
+                    num_correct += len(df[df['rmsd'] < args.rmsd_cutoff])
                     filtered_df = df[df['start_clash'] < args.start_clash_cutoff]
                     num_after_simple_filter += len(filtered_df)
                     num_correct_after_simple_filter += len(filtered_df[filtered_df['rmsd'] < args.rmsd_cutoff])
