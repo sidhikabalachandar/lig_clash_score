@@ -102,11 +102,9 @@ def main():
                 print(protein, target, start)
                 cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 create_conformers.py group ' \
                       'test {} {} {} --protein {} --target {} --start {}"'
-                # os.system(cmd.format(os.path.join(args.run_path, '{}_{}_{}.out'.format(protein, target, start)),
-                #                      args.docked_prot_file, args.run_path, args.raw_root, protein, target, start))
-                print(cmd.format(os.path.join(args.run_path, '{}_{}_{}.out'.format(protein, target, start)),
-                                 args.docked_prot_file, args.run_path, args.raw_root, protein, target, start))
-                return 
+                os.system(cmd.format(os.path.join(args.run_path, '{}_{}_{}.out'.format(protein, target, start)),
+                                     args.docked_prot_file, args.run_path, args.raw_root, protein, target, start))
+                return
 
     elif args.task == 'group':
         if args.mode == 'train':
