@@ -143,7 +143,7 @@ def main():
 
             subset_df = pd.concat([correct_df, subset_incorrect_df])
 
-            for i in all_indices:
+            for i in subset_df.index:
                 name = df.loc[[i]]['name'].iloc[0]
                 conformer_index = df.loc[[i]]['conformer_index'].iloc[0]
                 c = conformers[conformer_index]
