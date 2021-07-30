@@ -138,7 +138,7 @@ def main():
 
                 for i in range(len(grouped_indices)):
                     counter += 1
-                    cmd = 'sbatch -p owners -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 ' \
+                    cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 ' \
                           'shape_align_conformers.py test group {} {} {} --protein {} --target {} --conformer_n {} ' \
                           '--conformer_index {}"'
                     # os.system(
