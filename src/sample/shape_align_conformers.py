@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 shape_align_conformers.py group train /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0 --n 1
+$ $SCHRODINGER/run python3 shape_align_conformers.py test delete /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0 --n 1
 """
 
 import argparse
@@ -128,7 +128,7 @@ def main():
             grouped_files = group_files(args.n, process)
             for i in range(len(grouped_files)):
                 cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 shape_align_conformers.py ' \
-                      'group train {} {} {} --n {} --num_conformers {} --index {}"'
+                      'train group {} {} {} --n {} --num_conformers {} --index {}"'
                 os.system(
                     cmd.format(os.path.join(args.run_path, 'align_{}.out'.format(i)), args.docked_prot_file, args.run_path,
                                args.raw_root, args.n, args.num_conformers, i))
@@ -146,7 +146,7 @@ def main():
                 grouped_files = group_files(args.n, ls)
                 for i in range(len(grouped_files)):
                     cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 ' \
-                          'shape_align_conformers.py group test {} {} {} --protein {} --target {} --start {} --index ' \
+                          'shape_align_conformers.py test group {} {} {} --protein {} --target {} --start {} --index ' \
                           '{}"'
                     os.system(
                         cmd.format(os.path.join(args.run_path, '{}_{}_{}_{}.out'.format(protein, target, start, i)),
@@ -169,6 +169,17 @@ def main():
             process = get_prots(args.docked_prot_file)
             random.shuffle(process)
             run_check(process[:5], args)
+
+    elif args.task == 'delete':
+        process = get_prots(args.docked_prot_file)
+        random.shuffle(process)
+        for protein, target, start in process[5:15]:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+            output_path = os.path.join(pair_path, 'conformers')
+
+            os.system('rm -rf {}'.format(output_path))
 
 
 if __name__ == "__main__":
