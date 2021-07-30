@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 search.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P03368 --target 1gno --start 1zp8 --grid_index 0 --conformer_index 23
+$ $SCHRODINGER/run python3 search.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P03368 --target 1gno --start 1zp8 --grid_index 0 --conformer_index 23
 """
 
 import argparse
@@ -148,14 +148,15 @@ def search(args):
     saved_dict = {'name': [], 'conformer_index': [], 'grid_loc_x': [], 'grid_loc_y': [], 'grid_loc_z': [],
                   'rot_x': [], 'rot_y': [], 'rot_z': [], 'start_clash': [], 'target_clash': [], 'rmsd': []}
 
-    with open(
-            os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(args.grid_index, args.conformer_index)),
-            'w') as f:
-        df = pd.DataFrame.from_dict(saved_dict)
-        df.to_csv(f)
+    # with open(
+    #         os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(args.grid_index, args.conformer_index)),
+    #         'w') as f:
+    #     df = pd.DataFrame.from_dict(saved_dict)
+    #     df.to_csv(f)
 
     decoy_start_time = time.time()
 
+    start_time = time.time()
     for i in conformer_group_indices:
         c = conformers[i]
         saved_dict = {'name': [], 'conformer_index': [], 'grid_loc_x': [], 'grid_loc_y': [], 'grid_loc_z': [],
@@ -183,10 +184,13 @@ def search(args):
 
             translate_structure(c, -grid_loc[0], -grid_loc[1], -grid_loc[2])
 
-        with open(os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(
-                args.grid_index, args.conformer_index)), 'a') as f:
-            df = pd.DataFrame.from_dict(saved_dict)
-            df.to_csv(f, header=False)
+    print(time.time() - start_time)
+    return 
+
+        # with open(os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(
+        #         args.grid_index, args.conformer_index)), 'a') as f:
+        #     df = pd.DataFrame.from_dict(saved_dict)
+        #     df.to_csv(f, header=False)
 
     # save info for grid_loc
     decoy_end_time = time.time()
@@ -202,7 +206,7 @@ def search(args):
     data_dict['time_elapsed'].append(decoy_end_time - decoy_start_time)
 
     df = pd.DataFrame.from_dict(data_dict)
-    df.to_csv(os.path.join(pose_path, 'exhaustive_search_info_{}_{}.csv'.format(args.grid_index, args.conformer_index)))
+    # df.to_csv(os.path.join(pose_path, 'exhaustive_search_info_{}_{}.csv'.format(args.grid_index, args.conformer_index)))
 
 
 def check_search(pairs, raw_root):
