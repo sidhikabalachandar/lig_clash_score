@@ -141,10 +141,10 @@ def main():
                     cmd = 'sbatch -p owners -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 ' \
                           'shape_align_conformers.py test group {} {} {} --protein {} --target {} --conformer_n {} ' \
                           '--conformer_index {}"'
-                    # os.system(
-                    #     cmd.format(os.path.join(args.run_path, '{}_{}_{}_{}.out'.format(protein, target, start, i)),
-                    #                args.docked_prot_file, args.run_path, args.raw_root, protein, target, start,
-                    #                args.conformer_n, i))
+                    os.system(
+                        cmd.format(os.path.join(args.run_path, '{}_{}_{}_{}.out'.format(protein, target, start, i)),
+                                   args.docked_prot_file, args.run_path, args.raw_root, protein, target, start,
+                                   args.conformer_n, i))
 
             print(counter)
 
