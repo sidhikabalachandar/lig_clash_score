@@ -57,30 +57,32 @@ def main():
 
     raw_root = os.path.join(args.root, 'raw')
 
-    pairs = get_prots(args.docked_prot_file)
-    random.shuffle(pairs)
-    for protein, target, start in pairs[:5]:
-        if protein == 'Q86WV6':
-            continue
-        pair = '{}-to-{}'.format(target, start)
-        protein_path = os.path.join(raw_root, protein)
-        pair_path = os.path.join(protein_path, pair)
-        grid_size = get_grid_size(pair_path, target, start)
-        pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
-        prefix = 'exhaustive_search_poses_'
-        files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
+    # pairs = get_prots(args.docked_prot_file)
+    # random.shuffle(pairs)
+    # for protein, target, start in pairs[:5]:
+    #     if protein == 'Q86WV6':
+    #         continue
+    #     pair = '{}-to-{}'.format(target, start)
+    #     protein_path = os.path.join(raw_root, protein)
+    #     pair_path = os.path.join(protein_path, pair)
+    #     grid_size = get_grid_size(pair_path, target, start)
+    #     pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
+    #     prefix = 'exhaustive_search_poses_'
+    #     files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
+    #
+    #     counter = 0
+    #
+    #     for file in files:
+    #         # get indices
+    #         df = pd.read_csv(os.path.join(pose_path, file))
+    #         correct_df = df[df['rmsd'] <= args.rmsd_cutoff]
+    #         correct_indices = [i for i in correct_df.index]
+    #         counter += len(correct_indices)
+    #
+    #     print(protein, target, start, counter)
+    #     break
 
-        counter = 0
 
-        for file in files:
-            # get indices
-            df = pd.read_csv(os.path.join(pose_path, file))
-            correct_df = df[df['rmsd'] <= args.rmsd_cutoff]
-            correct_indices = [i for i in correct_df.index]
-            counter += len(correct_indices)
-
-        print(protein, target, start, counter)
-        break
 
 
 if __name__ == "__main__":

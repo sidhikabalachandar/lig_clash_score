@@ -59,14 +59,14 @@ def main():
             num_after_simple_filter = 0
             num_correct_after_simple_filter = 0
             for file in os.listdir(pose_path):
-                prefix = 'exhaustive_search_info'
+                prefix = 'exhaustive_search_poses'
                 if file[:len(prefix)] == prefix:
                     df = pd.read_csv(os.path.join(pose_path, file))
-                    cutoff_df = df[df['start_clash_cutoff'] == args.start_clash_cutoff]
-                    num_total += cutoff_df['num_poses_searched'].iloc[0]
-                    num_correct += cutoff_df['num_correct'].iloc[0]
-                    num_after_simple_filter += cutoff_df['num_after_simple_filter'].iloc[0]
-                    num_correct_after_simple_filter += cutoff_df['num_correct_after_simple_filter'].iloc[0]
+                    num_total += len(df)
+                    num_correct += len(df[df['rmsd'] < args.rmsd_cutoff].iloc[0])
+                    filtered_df = df[df['start_clash'] < args.start_clash_cutoff]
+                    num_after_simple_filter += len(filtered_df)
+                    num_correct_after_simple_filter += len(filtered_df[filtered_df['rmsd'] < args.rmsd_cutoff])
 
             print('Exhaustive search, num_correct: {}, num_total: {}, proportion: {}'.format(num_correct, num_total, num_correct / num_total))
             print('After simple filter, num_correct: {}, num_total: {}, proportion: {}'.format(num_correct_after_simple_filter,
