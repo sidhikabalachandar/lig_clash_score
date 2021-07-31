@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 shape_align_conformers.py test all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov --conformer_index 0
+$ $SCHRODINGER/run python3 shape_align_conformers.py test combine /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov --conformer_index 0
 """
 
 import argparse
@@ -190,7 +190,7 @@ def main():
             combined_file = os.path.join(pair_path, "aligned_to_start_without_hydrogen_conformers.mae")
             os.system('rm {}'.format(combined_file))
 
-    elif args.tasks == 'combine':
+    elif args.task == 'combine':
         process = get_prots(args.docked_prot_file)
         random.shuffle(process)
         for protein, target, start in process[5:15]:
