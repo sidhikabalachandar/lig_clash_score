@@ -257,7 +257,8 @@ def main():
         pairs = get_prots(args.docked_prot_file)
         random.shuffle(pairs)
         counter = 0
-        for protein, target, start in pairs[5:10]:
+        pairs = [('C8B467', '5ult', '5uov', 0, 2), ('P00523', '4ybk', '2oiq', 4, 13), ('P00523', '4ybk', '2oiq', 4, 14), ('P00523', '4ybk', '2oiq', 4, 16), ('P00523', '4ybk', '2oiq', 4, 17), ('P00523', '4ybk', '2oiq', 4, 20), ('P00523', '4ybk', '2oiq', 4, 23), ('P00523', '4ybk', '2oiq', 4, 24), ('P00523', '4ybk', '2oiq', 4, 28), ('P00523', '4ybk', '2oiq', 4, 29), ('P00519', '4twp', '5hu9', 0, 8), ('P00519', '4twp', '5hu9', 1, 0), ('P00519', '4twp', '5hu9', 1, 12)]
+        for protein, target, start, i, j in pairs[5:10]:
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(args.raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
@@ -271,17 +272,17 @@ def main():
 
             print(protein, target, start, len(conformers), grid_size)
 
-            for i in range(len(grouped_grid_locs)):
-                for j in range(len(grouped_conformer_indices)):
-                    cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 search.py group {} {} {} ' \
-                          '--rotation_search_step_size {} --grid_size {} --grid_n {} --num_conformers {} ' \
-                          '--conformer_n {} --grid_index {} --conformer_index {} --protein {} --target {} --start {}"'
-                    out_file_name = 'search_{}_{}_{}_{}_{}.out'.format(protein, target, start, i, j)
-                    counter += 1
-                    os.system(
-                        cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.run_path,
-                                   args.raw_root, args.rotation_search_step_size, args.grid_size, args.grid_n,
-                                   args.num_conformers, args.conformer_n, i, j, protein, target, start))
+            # for i in range(len(grouped_grid_locs)):
+            #     for j in range(len(grouped_conformer_indices)):
+            cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 search.py group {} {} {} ' \
+                  '--rotation_search_step_size {} --grid_size {} --grid_n {} --num_conformers {} ' \
+                  '--conformer_n {} --grid_index {} --conformer_index {} --protein {} --target {} --start {}"'
+            out_file_name = 'search_{}_{}_{}_{}_{}.out'.format(protein, target, start, i, j)
+            counter += 1
+            os.system(
+                cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.run_path,
+                           args.raw_root, args.rotation_search_step_size, args.grid_size, args.grid_n,
+                           args.num_conformers, args.conformer_n, i, j, protein, target, start))
 
         print(counter)
 
