@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 shape_align_conformers.py test check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov --conformer_index 0
+$ $SCHRODINGER/run python3 shape_align_conformers.py test all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov --conformer_index 0
 """
 
 import argparse
@@ -69,6 +69,7 @@ def run_group(protein, target, start, args):
 
 def run_check(conformer_prots, args):
     unfinished = []
+    counter = 0
     for protein, target, start in conformer_prots:
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(args.raw_root, protein)
@@ -84,12 +85,13 @@ def run_check(conformer_prots, args):
 
         for i in range(len(grouped_indices)):
             for j in grouped_indices[i]:
+                counter += 1
                 if not os.path.exists(os.path.join(output_path, '{}_align_without_hydrogen.mae'.format(j))) or \
                         not os.path.exists(os.path.join(output_path, '{}_align_with_hydrogen.mae'.format(j))):
                     unfinished.append((protein, target, start, i))
                     break
 
-    print("Missing: {} / {}".format(len(unfinished), len(conformer_prots)))
+    print("Missing: {} / {}".format(len(unfinished), counter))
     print(unfinished)
 
 
