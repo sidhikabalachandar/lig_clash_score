@@ -273,7 +273,7 @@ def main():
 
             for i in range(len(grouped_grid_locs)):
                 for j in range(len(grouped_conformer_indices)):
-                    cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 search.py group {} {} {} ' \
+                    cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 search.py group {} {} {} ' \
                           '--rotation_search_step_size {} --grid_size {} --grid_n {} --num_conformers {} ' \
                           '--conformer_n {} --grid_index {} --conformer_index {} --protein {} --target {} --start {}"'
                     out_file_name = 'search_{}_{}_{}_{}_{}.out'.format(protein, target, start, i, j)
