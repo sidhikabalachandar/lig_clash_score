@@ -136,7 +136,7 @@ def rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
     return transform_structure(coords, combined_rot_matrix)
 
 
-def get_grid(s):
+def get_grid(s, dim=None):
     """
     Generate the 3d grid from coordinate format.
     Args:
@@ -154,7 +154,9 @@ def get_grid(s):
     at = (np.around(at - 0.5)).astype(np.int16)
     origin = np.full((3), np.amin(at))
     at = at - origin
-    dim = np.amax(at) * 2
+    if dim != None:
+        dim = np.amax(at) * 2
+    print(dim)
     grid = np.zeros((dim, dim, dim))
     np.add.at(grid, (at[:, 0], at[:, 1], at[:, 2]), 1)
 
