@@ -84,8 +84,8 @@ def run_check(conformer_prots, args):
         grouped_indices = group_files(args.conformer_n, indices)
 
         for i in range(len(grouped_indices)):
+            counter += 1
             for j in grouped_indices[i]:
-                counter += 1
                 if not os.path.exists(os.path.join(output_path, '{}_align_without_hydrogen.mae'.format(j))) or \
                         not os.path.exists(os.path.join(output_path, '{}_align_with_hydrogen.mae'.format(j))):
                     unfinished.append((protein, target, start, i))
