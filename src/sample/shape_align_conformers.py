@@ -130,7 +130,9 @@ def main():
             process = get_prots(args.docked_prot_file)
             random.shuffle(process)
             counter = 0
-            for protein, target, start in process[5:15]:
+            process = [('P00523', '4ybk', '2oiq', 6), ('P00523', '4ybk', '2oiq', 7), ('P00523', '4ybk', '2oiq', 10), ('P00519', '4twp', '5hu9', 2), ('P0DOX7', '6msy', '6mub', 13), ('P0DOX7', '6msy', '6mub', 15), ('Q9HPW4', '2ccb', '2cc7', 3), ('Q9HPW4', '2ccb', '2cc7', 5), ('P00915', '2nn7', '6evr', 2), ('P00915', '2nn7', '6evr', 3)]
+            # for protein, target, start in process[5:15]:
+            for protein, target, start, i, in process:
                 pair = '{}-to-{}'.format(target, start)
                 protein_path = os.path.join(args.raw_root, protein)
                 pair_path = os.path.join(protein_path, pair)
@@ -140,15 +142,15 @@ def main():
                 indices = [i for i in range(num)]
                 grouped_indices = group_files(args.conformer_n, indices)
 
-                for i in range(len(grouped_indices)):
-                    counter += 1
-                    cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 ' \
-                          'shape_align_conformers.py test group {} {} {} --protein {} --target {} --start {} ' \
-                          '--conformer_n {} --conformer_index {}"'
-                    os.system(
-                        cmd.format(os.path.join(args.run_path, '{}_{}_{}_{}.out'.format(protein, target, start, i)),
-                                   args.docked_prot_file, args.run_path, args.raw_root, protein, target, start,
-                                   args.conformer_n, i))
+                # for i in range(len(grouped_indices)):
+                counter += 1
+                cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 ' \
+                      'shape_align_conformers.py test group {} {} {} --protein {} --target {} --start {} ' \
+                      '--conformer_n {} --conformer_index {}"'
+                os.system(
+                    cmd.format(os.path.join(args.run_path, '{}_{}_{}_{}.out'.format(protein, target, start, i)),
+                               args.docked_prot_file, args.run_path, args.raw_root, protein, target, start,
+                               args.conformer_n, i))
 
             print(counter)
 
