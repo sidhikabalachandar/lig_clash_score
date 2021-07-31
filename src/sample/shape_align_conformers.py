@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 shape_align_conformers.py test all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov --conformer_index 0
+$ $SCHRODINGER/run python3 shape_align_conformers.py test check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov --conformer_index 0
 """
 
 import argparse
@@ -83,7 +83,6 @@ def run_check(conformer_prots, args):
             if not os.path.exists(os.path.join(output_path, '{}_align_without_hydrogen.mae'.format(i))) or \
                     not os.path.exists(os.path.join(output_path, '{}_align_with_hydrogen.mae'.format(i))):
                 unfinished.append((protein, target, start, i))
-                break
 
     print("Missing: {} / {}".format(len(unfinished), len(conformer_prots)))
     print(unfinished)
