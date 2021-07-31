@@ -257,7 +257,7 @@ def main():
         pairs = get_prots(args.docked_prot_file)
         random.shuffle(pairs)
         counter = 0
-        for protein, target, start in pairs[5:15]:
+        for protein, target, start in pairs[5:10]:
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(args.raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
