@@ -157,7 +157,7 @@ def main():
 
         rmsd_val = rmsd.calculate_in_place_rmsd(c, c_indices, target_lig, target_lig_indices)
         start_clash = get_clash(c, start_prot_grid, start_origin)
-        target_clash = get_clash(c, target_prot_grid, target_origin)
+        # target_clash = get_clash(c, target_prot_grid, target_origin)
 
         volume_docking = steric_clash.clash_volume(start_prot, struc2=c)
         print('volume docking:', volume_docking)
