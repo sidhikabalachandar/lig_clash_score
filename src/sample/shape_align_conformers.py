@@ -79,10 +79,15 @@ def run_check(conformer_prots, args):
         output_path = os.path.join(pair_path, 'conformers')
 
         num = min(args.num_conformers, len(conformers))
-        for i in range(num):
-            if not os.path.exists(os.path.join(output_path, '{}_align_without_hydrogen.mae'.format(i))) or \
-                    not os.path.exists(os.path.join(output_path, '{}_align_with_hydrogen.mae'.format(i))):
-                unfinished.append((protein, target, start, i))
+        indices = [i for i in range(num)]
+        grouped_indices = group_files(args.conformer_n, indices)
+
+        for i in range(len(grouped_indices)):
+            for j in grouped_indices[i]:
+                if not os.path.exists(os.path.join(output_path, '{}_align_without_hydrogen.mae'.format(j))) or \
+                        not os.path.exists(os.path.join(output_path, '{}_align_with_hydrogen.mae'.format(j))):
+                    unfinished.append((protein, target, start, i))
+                    break
 
     print("Missing: {} / {}".format(len(unfinished), len(conformer_prots)))
     print(unfinished)
