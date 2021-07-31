@@ -154,7 +154,7 @@ def get_grid(s, dim=None):
     at = (np.around(at - 0.5)).astype(np.int16)
     origin = np.full((3), np.amin(at))
     at = at - origin
-    if dim != None:
+    if dim == None:
         dim = np.amax(at) * 2
     print(dim)
     grid = np.zeros((dim, dim, dim))
