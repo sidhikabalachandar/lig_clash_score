@@ -269,7 +269,7 @@ def main():
             grid_size = get_grid_size(pair_path, target, start)
             grouped_grid_locs = group_grid(args.grid_n, grid_size, 2)
 
-            print(protein, target, start, len(conformers))
+            print(protein, target, start, len(conformers), grid_size)
 
             for i in range(len(grouped_grid_locs)):
                 for j in range(len(grouped_conformer_indices)):
