@@ -278,10 +278,10 @@ def main():
                           '--conformer_n {} --grid_index {} --conformer_index {} --protein {} --target {} --start {}"'
                     out_file_name = 'search_{}_{}_{}_{}_{}.out'.format(protein, target, start, i, j)
                     counter += 1
-                    # os.system(
-                    #     cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.run_path,
-                    #                args.raw_root, args.rotation_search_step_size, args.grid_size, args.grid_n,
-                    #                args.num_conformers, args.conformer_n, i, j, protein, target, start))
+                    os.system(
+                        cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.run_path,
+                                   args.raw_root, args.rotation_search_step_size, args.grid_size, args.grid_n,
+                                   args.num_conformers, args.conformer_n, i, j, protein, target, start))
 
         print(counter)
 
