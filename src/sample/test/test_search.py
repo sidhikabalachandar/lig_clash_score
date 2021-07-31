@@ -57,7 +57,7 @@ def main():
 
     pairs = get_prots(args.docked_prot_file)
     random.shuffle(pairs)
-    pair_index = random.choice([i for i in range(5)])
+    pair_index = random.choice([i for i in range(5, 10)])
     protein, target, start = pairs[pair_index]
     print(protein, target, start, pair_index)
 
