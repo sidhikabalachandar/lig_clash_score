@@ -107,7 +107,7 @@ def main():
         grid_loc_y = df.loc[[pose_index]]['grid_loc_y'].iloc[0]
         grid_loc_z = df.loc[[pose_index]]['grid_loc_z'].iloc[0]
         translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
-        translate_structure(c, 5, 0, 0)
+        translate_structure(c, 10, 0, 0)
         conformer_center = list(get_centroid(c))
         coords = c.getXYZ(copy=True)
         rot_x = df.loc[[pose_index]]['rot_x'].iloc[0]
