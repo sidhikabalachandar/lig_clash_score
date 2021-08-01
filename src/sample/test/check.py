@@ -171,6 +171,7 @@ def main():
         volume_docking = steric_clash.clash_volume(start_prot, struc2=c)
         print('volume docking:', volume_docking)
         print('start_clash', start_clash)
+        print(rmsd.calculate_in_place_rmsd(a_lig, a_s))
 
         assert(df_start_clash == start_clash)
         # assert (df_target_clash == target_clash)
