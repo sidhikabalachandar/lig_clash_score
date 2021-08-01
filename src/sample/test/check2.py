@@ -168,7 +168,7 @@ def main():
 
             c.setXYZ(old_coords)
 
-    print('final idx:', max_clash_idx)
+        print('final idx:', max_clash_idx)
 
 
 
