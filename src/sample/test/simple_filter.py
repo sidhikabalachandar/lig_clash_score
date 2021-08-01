@@ -4,7 +4,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 simple_filter.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 simple_filter.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov
 """
 
 import argparse
@@ -21,6 +21,7 @@ from prot_util import *
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('task', type=str, help='either align or search')
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('raw_root', type=str, help='directory where script and output files will be written')
     parser.add_argument('--residue_cutoff', type=int, default=0, help='name of pose group subdir')
@@ -30,21 +31,33 @@ def main():
     parser.add_argument('--conformer_n', type=int, default=3, help='number of conformers processed in each job')
     parser.add_argument('--start_clash_cutoff', type=int, default=1, help='clash cutoff between start protein and '
                                                                           'ligand pose')
+    parser.add_argument('--protein', type=str, default='', help='name of protein')
+    parser.add_argument('--target', type=str, default='', help='name of target ligand')
+    parser.add_argument('--start', type=str, default='', help='name of start ligand')
     args = parser.parse_args()
     random.seed(0)
 
-    pairs = get_prots(args.docked_prot_file)
-    random.shuffle(pairs)
-    for protein, target, start in pairs[5:10]:
-        pair = '{}-to-{}'.format(target, start)
-        protein_path = os.path.join(args.raw_root, protein)
+    if args.task == 'all':
+        pairs = get_prots(args.docked_prot_file)
+        random.shuffle(pairs)
+        for protein, target, start in pairs[5:10]:
+            cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 simple_filter.py group {} {} ' \
+                  '--protein {} --target {} --start {}"'
+            out_file_name = 'filter_{}_{}_{}.out'.format(protein, target, start)
+            os.system(
+                cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.raw_root, protein,
+                           target, start))
+
+    if args.task == 'group':
+        pair = '{}-to-{}'.format(args.target, args.start)
+        protein_path = os.path.join(args.raw_root, args.protein)
         pair_path = os.path.join(protein_path, pair)
         conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
         conformers = list(structure.StructureReader(conformer_file))[:args.num_conformers]
         conformer_indices = [i for i in range(len(conformers))]
         grouped_conformer_indices = group_files(args.conformer_n, conformer_indices)
 
-        grid_size = get_grid_size(pair_path, target, start)
+        grid_size = get_grid_size(pair_path, args.target, args.start)
         grouped_grid_locs = group_grid(args.grid_n, grid_size, 2)
 
         group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
