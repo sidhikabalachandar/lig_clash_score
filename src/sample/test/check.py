@@ -145,12 +145,14 @@ def main():
         for m in list(start_prot.molecule):
             for r in list(m.residue):
                 if r.resnum == 49:
-                    for a in r.atom:
-                        if a.element == 'C':
-                            with structure.StructureWriter('prot_{}.mae'.format(a.index)) as save:
-                                save.append(start_prot.extract([a.index]))
+                    res_s = r.extractStructure()
 
-        for a in list(c.molecule):
+        for a in res_s.atom:
+            if a.element == 'C':
+                with structure.StructureWriter('prot_{}.mae'.format(a.index)) as save:
+                    save.append(res_s.extract([a.index]))
+
+        for a in c.atom:
             if a.element == 'H':
                 with structure.StructureWriter('lig_{}.mae'.format(a.index)) as save:
                     save.append(c.extract([a.index]))
