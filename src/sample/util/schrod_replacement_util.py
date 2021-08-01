@@ -152,7 +152,7 @@ def get_grid(s, dim=None, origin=None):
     """
     at = s.getXYZ(copy=True)
     at = (np.around(at - 0.5)).astype(np.int16)
-    if origin == None
+    if origin == None:
         origin = np.full((3), np.amin(at))
     at = at - origin
     if dim == None:
