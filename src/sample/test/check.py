@@ -145,13 +145,15 @@ def main():
         for m in list(start_prot.molecule):
             for r in list(m.residue):
                 if r.resnum == 49:
-                    res_s = r.extractStructure()
+                    for a in r.atom:
+                        if a.element == 'C':
+                            with structure.StructureWriter('prot_{}.mae'.format(a.index)) as save:
+                                save.append(start_prot.extract([a.index]))
 
-        with structure.StructureWriter('prot.mae') as save:
-            save.append(start_prot.extract([2361]))
-
-        with structure.StructureWriter('lig.mae') as save:
-            save.append(c.extract([44]))
+        for a in list(c.molecule):
+            if a.element == 'H':
+                with structure.StructureWriter('lig_{}.mae'.format(a.index)) as save:
+                    save.append(c.extract([a.index]))
 
         # clash preprocessing
         start_prot_grid, start_origin = get_grid(start_prot)
