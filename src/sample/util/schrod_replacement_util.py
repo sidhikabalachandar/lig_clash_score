@@ -158,6 +158,7 @@ def get_grid(s, dim=None):
         dim = np.amax(at) * 2
     print(dim)
     grid = np.zeros((dim, dim, dim))
+    print(at)
     np.add.at(grid, (at[:, 0], at[:, 1], at[:, 2]), 1)
 
     return grid, origin

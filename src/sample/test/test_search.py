@@ -9,7 +9,6 @@ import argparse
 import os
 import schrodinger.structure as structure
 from schrodinger.structutils.transform import get_centroid
-import schrodinger.structutils.interactions.steric_clash as steric_clash
 import schrodinger.structutils.rmsd as rmsd
 import random
 import math
@@ -128,9 +127,6 @@ def main():
                                                                                            grid_loc_y, grid_loc_z,
                                                                                            rot_x, rot_y, rot_z))
 
-        with structure.StructureWriter('pose.mae') as save:
-            save.append(c)
-
         df_start_clash = df.loc[[pose_index]]['start_clash'].iloc[0]
         df_target_clash = df.loc[[pose_index]]['target_clash'].iloc[0]
         df_rmsd = df.loc[[pose_index]]['rmsd'].iloc[0]
@@ -141,14 +137,6 @@ def main():
 
         target_prot_file = os.path.join(pair_path, '{}_prot.mae'.format(target))
         target_prot = list(structure.StructureReader(target_prot_file))[0]
-
-        for m in list(start_prot.molecule):
-            for r in list(m.residue):
-                if r.resnum == 49:
-                    res_s = r.extractStructure()
-
-        with structure.StructureWriter('res_s.mae') as save:
-            save.append(res_s)
 
         # clash preprocessing
         start_prot_grid, start_origin = get_grid(start_prot)
@@ -165,11 +153,7 @@ def main():
 
         rmsd_val = rmsd.calculate_in_place_rmsd(c, c_indices, target_lig, target_lig_indices)
         start_clash = get_clash(c, start_prot_grid, start_origin)
-        # target_clash = get_clash(c, target_prot_grid, target_origin)
-
-        volume_docking = steric_clash.clash_volume(start_prot, struc2=c)
-        print('volume docking:', volume_docking)
-        print('start_clash', start_clash)
+        target_clash = get_clash(c, target_prot_grid, target_origin)
 
         assert(df_start_clash == start_clash)
         assert (df_target_clash == target_clash)
