@@ -142,6 +142,14 @@ def main():
         target_prot_file = os.path.join(pair_path, '{}_prot.mae'.format(target))
         target_prot = list(structure.StructureReader(target_prot_file))[0]
 
+
+        for m in list(start_prot.molecule):
+            for r in list(m.residue):
+                res_s = r.extractStructure()
+
+        with structure.StructureWriter('res_s.mae') as save:
+            save.append(res_s)
+
         # clash preprocessing
         start_prot_grid, start_origin = get_grid(start_prot)
         target_prot_grid, target_origin = get_grid(target_prot)
@@ -161,6 +169,7 @@ def main():
 
         volume_docking = steric_clash.clash_volume(start_prot, struc2=c)
         print('volume docking:', volume_docking)
+        print('start_clash', start_clash)
 
         assert(df_start_clash == start_clash)
         assert (df_target_clash == target_clash)
