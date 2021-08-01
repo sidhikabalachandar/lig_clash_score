@@ -147,8 +147,11 @@ def main():
                 if r.resnum == 49:
                     res_s = r.extractStructure()
 
-        with structure.StructureWriter('res_s.mae') as save:
-            save.append(res_s)
+        with structure.StructureWriter('prot.mae') as save:
+            save.append(start_prot.extract([2361]))
+
+        with structure.StructureWriter('lig.mae') as save:
+            save.append(c.extract([44]))
 
         # clash preprocessing
         start_prot_grid, start_origin = get_grid(start_prot)
