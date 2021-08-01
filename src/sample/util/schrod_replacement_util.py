@@ -151,15 +151,12 @@ def get_grid(s, dim=None, origin=None):
         is atom channel.  First 3 dimension are of size radius_ang * 2 + 1.
     """
     at = s.getXYZ(copy=True)
-    print(at)
     at = (np.around(at - 0.5)).astype(np.int16)
     origin = np.full((3), np.amin(at))
     at = at - origin
     if dim == None:
         dim = np.amax(at) * 2
-    print(dim, origin)
     grid = np.zeros((dim, dim, dim))
-    print(at)
     np.add.at(grid, (at[:, 0], at[:, 1], at[:, 2]), 1)
 
     return grid, origin
@@ -167,8 +164,6 @@ def get_grid(s, dim=None, origin=None):
 
 def get_clash(s, grid, origin):
     at = s.getXYZ(copy=True)
-    print(at)
     at = (np.around(at - 0.5)).astype(np.int16)
     at = at - origin
-    print(at)
     return np.sum(grid[at[:, 0], at[:, 1], at[:, 2]])
