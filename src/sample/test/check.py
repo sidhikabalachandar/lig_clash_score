@@ -147,18 +147,11 @@ def main():
                 if r.resnum == 49:
                     res_s = r.extractStructure()
 
-        for a in res_s.atom:
-            if a.element == 'C':
-                with structure.StructureWriter('prot_{}.mae'.format(a.index)) as save:
-                    save.append(res_s.extract([a.index]))
-
-        for a in c.atom:
-            if a.element == 'H':
-                with structure.StructureWriter('lig_{}.mae'.format(a.index)) as save:
-                    save.append(c.extract([a.index]))
+        a_s = res_s.extract([3])
+        a_lig = c.extract([59])
 
         # clash preprocessing
-        start_prot_grid, start_origin = get_grid(res_s, 108)
+        start_prot_grid, start_origin = get_grid(a_s, 108)
         # target_prot_grid, target_origin = get_grid(target_prot)
 
         c_indices = [a.index for a in c.atom if a.element != 'H']
@@ -171,7 +164,7 @@ def main():
         target_lig_indices = [a.index for a in target_lig.atom if a.element != 'H']
 
         rmsd_val = rmsd.calculate_in_place_rmsd(c, c_indices, target_lig, target_lig_indices)
-        start_clash = get_clash(c, start_prot_grid, start_origin)
+        start_clash = get_clash(a_lig, start_prot_grid, start_origin)
         # target_clash = get_clash(c, target_prot_grid, target_origin)
 
         volume_docking = steric_clash.clash_volume(start_prot, struc2=c)
