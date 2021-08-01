@@ -41,7 +41,7 @@ def main():
         print('Correct: rmsd cutoff is {}'.format(args.rmsd_cutoff))
         print()
 
-        for protein, target, start in pairs[5:10]:
+        for protein, target, start in pairs[0:5]:
             print()
             print(protein, target, start)
 
@@ -58,14 +58,14 @@ def main():
             num_after_simple_filter = 0
             num_correct_after_simple_filter = 0
             for file in os.listdir(pose_path):
-                prefix = 'exhaustive_search_poses'
+                prefix = 'exhaustive_search_info'
                 if file[:len(prefix)] == prefix:
                     df = pd.read_csv(os.path.join(pose_path, file))
-                    num_total += len(df)
-                    num_correct += len(df[df['rmsd'] < args.rmsd_cutoff])
-                    filtered_df = df[df['start_clash'] < args.start_clash_cutoff]
-                    num_after_simple_filter += len(filtered_df)
-                    num_correct_after_simple_filter += len(filtered_df[filtered_df['rmsd'] < args.rmsd_cutoff])
+                    filtered_df = df[df['start_clash_cutoff'] == args.start_clash_cutoff]
+                    num_total += filtered_df['num_poses_searched'].iloc[0]
+                    num_correct += filtered_df['num_correct'].iloc[0]
+                    num_after_simple_filter += filtered_df['num_after_simple_filter'].iloc[0]
+                    num_correct_after_simple_filter += filtered_df['num_correct_after_simple_filter'].iloc[0]
 
             print('Exhaustive search, num_correct: {}, num_total: {}, proportion: {}'.format(num_correct, num_total, num_correct / num_total))
             print('After simple filter, num_correct: {}, num_total: {}, proportion: {}'.format(num_correct_after_simple_filter,
@@ -74,23 +74,23 @@ def main():
             if protein == 'Q86WV6':
                 continue
 
-            # clash_path = os.path.join(pose_path, 'clash_data')
-            # total_after_subsample = 0
-            # total_after_filter = 0
-            # correct_after_subsample = 0
-            # correct_after_filter = 0
-            # for file in os.listdir(clash_path):
-            #     prefix = 'pose_pred_data'
-            #     if file[:len(prefix)] == prefix:
-            #         df = pd.read_csv(os.path.join(clash_path, file))
-            #         total_after_subsample += len(df)
-            #         correct_after_subsample += len(df[df['rmsd'] < args.rmsd_cutoff])
-            #         filter_df = df[df['pred_num_intolerable'] < residue_cutoff]
-            #         total_after_filter += len(filter_df)
-            #         correct_after_filter += len(filter_df[filter_df['rmsd'] < args.rmsd_cutoff])
-            #
-            # print('After subsample, num_correct: {}, num_total: {}, proportion: {}'.format(correct_after_subsample, total_after_subsample, correct_after_subsample / total_after_subsample))
-            # print('After advanced filter, num_correct: {}, num_total: {}, proportion: {}'.format(correct_after_filter, total_after_filter, correct_after_filter / total_after_filter))
+            clash_path = os.path.join(pose_path, 'clash_data')
+            total_after_subsample = 0
+            total_after_filter = 0
+            correct_after_subsample = 0
+            correct_after_filter = 0
+            for file in os.listdir(clash_path):
+                prefix = 'pose_pred_data'
+                if file[:len(prefix)] == prefix:
+                    df = pd.read_csv(os.path.join(clash_path, file))
+                    total_after_subsample += len(df)
+                    correct_after_subsample += len(df[df['rmsd'] < args.rmsd_cutoff])
+                    filter_df = df[df['pred_num_intolerable'] < residue_cutoff]
+                    total_after_filter += len(filter_df)
+                    correct_after_filter += len(filter_df[filter_df['rmsd'] < args.rmsd_cutoff])
+
+            print('After subsample, num_correct: {}, num_total: {}, proportion: {}'.format(correct_after_subsample, total_after_subsample, correct_after_subsample / total_after_subsample))
+            print('After advanced filter, num_correct: {}, num_total: {}, proportion: {}'.format(correct_after_filter, total_after_filter, correct_after_filter / total_after_filter))
 
 
 if __name__ == "__main__":

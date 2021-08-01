@@ -13,6 +13,7 @@ import random
 import pandas as pd
 import time
 import sys
+import schrodinger.structure as structure
 sys.path.insert(1, '../util')
 from util import *
 from prot_util import *
@@ -27,12 +28,14 @@ def main():
     parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
     parser.add_argument('--grid_n', type=int, default=75, help='number of grid_points processed in each job')
     parser.add_argument('--conformer_n', type=int, default=3, help='number of conformers processed in each job')
+    parser.add_argument('--start_clash_cutoff', type=int, default=1, help='clash cutoff between start protein and '
+                                                                          'ligand pose')
     args = parser.parse_args()
     random.seed(0)
 
     pairs = get_prots(args.docked_prot_file)
     random.shuffle(pairs)
-    for protein, target, start in pairs[:5]:
+    for protein, target, start in pairs[5:10]:
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(args.raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
@@ -56,18 +59,12 @@ def main():
                 pose_file = os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(i, j))
                 pose_df = pd.read_csv(pose_file)
 
-                # cutoff = 2
-                data_dict['start_clash_cutoff'].append(2)
-                data_dict['num_poses_searched'].append(info_df['num_poses_searched'].iloc[0])
-                data_dict['num_correct'].append(info_df['num_correct'].iloc[0])
-                data_dict['num_after_simple_filter'].append(info_df['num_after_simple_filter'].iloc[0])
-                data_dict['num_correct_after_simple_filter'].append(info_df['num_correct_after_simple_filter'].iloc[0])
-
                 # cutoff = 1
                 data_dict['start_clash_cutoff'].append(1)
                 data_dict['num_poses_searched'].append(info_df['num_poses_searched'].iloc[0])
                 data_dict['num_correct'].append(info_df['num_correct'].iloc[0])
-                filtered_df = pose_df[pose_df['start_clash'] < 1]
+
+                filtered_df = pose_df[pose_df['start_clash'] < args.start_clash_cutoff]
                 data_dict['num_after_simple_filter'].append(len(filtered_df))
                 data_dict['num_correct_after_simple_filter'].append(
                     len(filtered_df[filtered_df['rmsd'] < args.rmsd_cutoff]))
