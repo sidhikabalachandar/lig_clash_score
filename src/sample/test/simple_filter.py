@@ -4,7 +4,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 simple_filter.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov
+$ $SCHRODINGER/run python3 simple_filter.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov
 """
 
 import argparse
@@ -23,6 +23,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('task', type=str, help='either align or search')
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
+    parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('raw_root', type=str, help='directory where script and output files will be written')
     parser.add_argument('--residue_cutoff', type=int, default=0, help='name of pose group subdir')
     parser.add_argument('--rmsd_cutoff', type=float, default=2.5, help='name of pose group subdir')
@@ -42,11 +43,11 @@ def main():
         random.shuffle(pairs)
         for protein, target, start in pairs[5:10]:
             cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 simple_filter.py group {} {} ' \
-                  '--protein {} --target {} --start {}"'
+                  '{} --protein {} --target {} --start {}"'
             out_file_name = 'filter_{}_{}_{}.out'.format(protein, target, start)
             os.system(
-                cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.raw_root, protein,
-                           target, start))
+                cmd.format(os.path.join(args.run_path, out_file_name), args.docked_prot_file, args.run_path,
+                           args.raw_root, protein, target, start))
 
     if args.task == 'group':
         pair = '{}-to-{}'.format(args.target, args.start)
