@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 test_search.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 check.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 """
 
 import argparse
@@ -151,7 +151,7 @@ def main():
             save.append(res_s)
 
         # clash preprocessing
-        start_prot_grid, start_origin = get_grid(res_s, dim=108)
+        start_prot_grid, start_origin = get_grid(start_prot)
         # target_prot_grid, target_origin = get_grid(target_prot)
 
         c_indices = [a.index for a in c.atom if a.element != 'H']
