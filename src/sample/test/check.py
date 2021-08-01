@@ -151,7 +151,7 @@ def main():
         a_lig = c.extract([59])
 
         # clash preprocessing
-        start_prot_grid, start_origin = get_grid(a_s, 108)
+        start_prot_grid, start_origin = get_grid(start_prot)
         # target_prot_grid, target_origin = get_grid(target_prot)
 
         c_indices = [a.index for a in c.atom if a.element != 'H']
