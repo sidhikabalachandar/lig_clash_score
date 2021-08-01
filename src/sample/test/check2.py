@@ -139,16 +139,8 @@ def main():
             target_prot_file = os.path.join(pair_path, '{}_prot.mae'.format(target))
             target_prot = list(structure.StructureReader(target_prot_file))[0]
 
-            for m in list(start_prot.molecule):
-                for r in list(m.residue):
-                    if r.resnum == 49:
-                        res_s = r.extractStructure()
-
-            a_s = res_s.extract([3])
-            a_lig = c.extract([59])
-
             # clash preprocessing
-            start_prot_grid, start_origin = get_grid(a_s, 108,  np.full((3), -7))
+            start_prot_grid, start_origin = get_grid(start_prot)
             target_prot_grid, target_origin = get_grid(target_prot)
 
             c_indices = [a.index for a in c.atom if a.element != 'H']
@@ -161,7 +153,7 @@ def main():
             target_lig_indices = [a.index for a in target_lig.atom if a.element != 'H']
 
             rmsd_val = rmsd.calculate_in_place_rmsd(c, c_indices, target_lig, target_lig_indices)
-            start_clash = get_clash(a_lig, start_prot_grid, start_origin)
+            start_clash = get_clash(c, start_prot_grid, start_origin)
             target_clash = get_clash(c, target_prot_grid, target_origin)
 
             volume_docking = steric_clash.clash_volume(start_prot, struc2=c)
