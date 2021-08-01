@@ -31,7 +31,7 @@ def main():
     pairs = get_prots(args.docked_prot_file)
     random.shuffle(pairs)
 
-    for residue_cutoff in [1, 2]:
+    for residue_cutoff in [2, 3]:
         print()
         print()
         print()
@@ -41,7 +41,7 @@ def main():
         print('Correct: rmsd cutoff is {}'.format(args.rmsd_cutoff))
         print()
 
-        for protein, target, start in pairs[5:10]:
+        for protein, target, start in pairs[:10]:
             print()
             print(protein, target, start)
 
