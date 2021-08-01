@@ -98,7 +98,7 @@ def main():
     else:
         df = pd.read_csv(pose_file)
         tolerable_indices = [i for i in df.index]
-        pose_index = random.choice(tolerable_indices)
+        pose_index = 27491
 
         conformer_index = df.loc[[pose_index]]['conformer_index'].iloc[0]
         c = conformers[conformer_index]
