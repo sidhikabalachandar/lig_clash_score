@@ -142,10 +142,10 @@ def main():
         target_prot_file = os.path.join(pair_path, '{}_prot.mae'.format(target))
         target_prot = list(structure.StructureReader(target_prot_file))[0]
 
-
         for m in list(start_prot.molecule):
             for r in list(m.residue):
-                res_s = r.extractStructure()
+                if r.number == 49:
+                    res_s = r.extractStructure()
 
         with structure.StructureWriter('res_s.mae') as save:
             save.append(res_s)
