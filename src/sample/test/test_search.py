@@ -144,7 +144,7 @@ def main():
 
         for m in list(start_prot.molecule):
             for r in list(m.residue):
-                if r.number == 49:
+                if r.resnum == 49:
                     res_s = r.extractStructure()
 
         with structure.StructureWriter('res_s.mae') as save:
