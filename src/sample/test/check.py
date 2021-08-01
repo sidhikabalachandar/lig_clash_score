@@ -14,6 +14,7 @@ import schrodinger.structutils.rmsd as rmsd
 import random
 import math
 import pandas as pd
+import numpy as np
 import sys
 sys.path.insert(1, '../util')
 from util import *
@@ -151,7 +152,7 @@ def main():
         a_lig = c.extract([59])
 
         # clash preprocessing
-        start_prot_grid, start_origin = get_grid(start_prot)
+        start_prot_grid, start_origin = get_grid(a_s, 108,  np.full((3), -7))
         # target_prot_grid, target_origin = get_grid(target_prot)
 
         c_indices = [a.index for a in c.atom if a.element != 'H']
