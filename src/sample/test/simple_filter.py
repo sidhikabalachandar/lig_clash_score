@@ -28,7 +28,7 @@ def main():
     parser.add_argument('--rmsd_cutoff', type=float, default=2.5, help='name of pose group subdir')
     parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
     parser.add_argument('--grid_n', type=int, default=75, help='number of grid_points processed in each job')
-    parser.add_argument('--conformer_n', type=int, default=3, help='number of conformers processed in each job')
+    parser.add_argument('--conformer_n', type=int, default=10, help='number of conformers processed in each job')
     parser.add_argument('--start_clash_cutoff', type=int, default=1, help='clash cutoff between start protein and '
                                                                           'ligand pose')
     parser.add_argument('--protein', type=str, default='', help='name of protein')
