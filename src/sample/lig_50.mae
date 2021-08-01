@@ -1,0 +1,35 @@
+{ 
+ s_m_m2io_version
+ :::
+ 2.0.0 
+} 
+
+f_m_ct { 
+ s_m_title
+ i_m_ct_format
+ :::
+ "" 
+  2
+ m_atom[1] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  r_m_charge1
+  r_m_charge2
+  s_m_pdb_residue_name
+  s_m_pdb_atom_name
+  i_m_atomic_number
+  i_i_constraint
+  i_i_internal_atom_index
+  i_pa_atomindex
+  i_plep_ligand
+  :::
+  1 41 20.286749 26.094294 19.088915 1 21 0.03000 0.03000 "8FM " " H24" 1 0 3203 3533 1
+  :::
+ } 
+} 
+

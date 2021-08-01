@@ -158,7 +158,7 @@ def get_grid(s, dim=None):
         dim = np.amax(at) * 2
     print(dim)
     grid = np.zeros((dim, dim, dim))
-    print(at[2361])
+    print(at[3])
     np.add.at(grid, (at[:, 0], at[:, 1], at[:, 2]), 1)
 
     return grid, origin
@@ -168,5 +168,5 @@ def get_clash(s, grid, origin):
     at = s.getXYZ(copy=True)
     at = (np.around(at - 0.5)).astype(np.int16)
     at = at - origin
-    print(at[44])
+    print(at[59])
     return np.sum(grid[at[:, 0], at[:, 1], at[:, 2]])
