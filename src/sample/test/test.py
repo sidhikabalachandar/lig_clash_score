@@ -232,17 +232,21 @@ def main():
             prefix = 'exhaustive_search_poses_'
             suffix = '.csv'
             files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
+            grouped_files = group_files(args.n, files)
 
-            for file in files:
-                file_name = file[len(prefix):-len(suffix)]
-                out_clash_file = os.path.join(clash_path, 'clash_data_{}.csv'.format(file_name))
-                pose_file = os.path.join(clash_path, 'pose_pred_data_{}.csv'.format(file_name))
+            for i in range(len(grouped_files)):
                 counter += 1
-                if not os.path.exists(out_clash_file):
-                    missing.append((protein, target, start, file))
-                    continue
-                if not os.path.exists(pose_file):
-                    missing.append((protein, target, start, file))
+                for file in grouped_files[i]:
+                    file_name = file[len(prefix):-len(suffix)]
+                    out_clash_file = os.path.join(clash_path, 'clash_data_{}.csv'.format(file_name))
+                    pose_file = os.path.join(clash_path, 'pose_pred_data_{}.csv'.format(file_name))
+
+                    if not os.path.exists(out_clash_file):
+                        missing.append((protein, target, start, i))
+                        break
+                    if not os.path.exists(pose_file):
+                        missing.append((protein, target, start, i))
+                        break
 
         print('Missing: {}/{}'.format(len(missing), counter))
         print(missing)
