@@ -219,7 +219,7 @@ def main():
         random.shuffle(pairs)
         missing = []
         counter = 0
-        for protein, target, start in pairs[:5]:
+        for protein, target, start in pairs[5:10]:
             if protein == 'Q86WV6':
                 continue
             pair = '{}-to-{}'.format(target, start)
