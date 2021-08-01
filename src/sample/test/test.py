@@ -10,7 +10,7 @@ Then the top glide poses are added
 Then the decoys are created
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 test.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein P00797 --target 3own --start 3d91 --index 0
+$ $SCHRODINGER/run python3 test.py all /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein P00797 --target 3own --start 3d91 --index 0
 """
 
 import argparse
@@ -53,7 +53,7 @@ def main():
     parser.add_argument('--rmsd_cutoff', type=int, default=2.5,
                         help='rmsd accuracy cutoff between predicted ligand pose '
                              'and true ligand pose')
-    parser.add_argument('--n', type=int, default=9, help='number of files processed in each job')
+    parser.add_argument('--n', type=int, default=4, help='number of files processed in each job')
     parser.add_argument('--start_clash_cutoff', type=int, default=1, help='clash cutoff between start protein and '
                                                                           'ligand pose')
     args = parser.parse_args()
@@ -84,8 +84,8 @@ def main():
                 cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 test.py group {} {} ' \
                       '{} --protein {} --target {} --start {} --index {}"'
                 counter += 1
-                # os.system(cmd.format(os.path.join(args.run_path, 'test_{}_{}_{}.out'.format(protein, pair, i)),
-                #                      args.docked_prot_file, args.run_path, args.root, protein, target, start, i))
+                os.system(cmd.format(os.path.join(args.run_path, 'test_{}_{}_{}.out'.format(protein, pair, i)),
+                                     args.docked_prot_file, args.run_path, args.root, protein, target, start, i))
 
         print(counter)
 
