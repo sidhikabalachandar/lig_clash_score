@@ -65,10 +65,12 @@ def main():
         os.mkdir(args.run_path)
 
     if args.task == 'all':
-        pairs = get_prots(args.docked_prot_file)
-        random.shuffle(pairs)
+        # pairs = get_prots(args.docked_prot_file)
+        # random.shuffle(pairs)
         counter = 0
-        for protein, target, start in pairs[5:10]:
+        pairs = [('C8B467', '5ult', '5uov', 0), ('C8B467', '5ult', '5uov', 1), ('C8B467', '5ult', '5uov', 4), ('P0DOX7', '6msy', '6mub', 1), ('P0DOX7', '6msy', '6mub', 9)]
+        # for protein, target, start in pairs[5:10]:
+        for protein, target, start, i in pairs:
             if protein == 'Q86WV6':
                 continue
             pair = '{}-to-{}'.format(target, start)
@@ -80,12 +82,12 @@ def main():
             files = [f for f in os.listdir(pose_path) if f[:len(prefix)] == prefix]
             grouped_files = group_files(args.n, files)
 
-            for i in range(len(grouped_files)):
-                cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 test.py group {} {} ' \
-                      '{} --protein {} --target {} --start {} --index {}"'
-                counter += 1
-                os.system(cmd.format(os.path.join(args.run_path, 'test_{}_{}_{}.out'.format(protein, pair, i)),
-                                     args.docked_prot_file, args.run_path, args.root, protein, target, start, i))
+            # for i in range(len(grouped_files)):
+            cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 test.py group {} {} ' \
+                  '{} --protein {} --target {} --start {} --index {}"'
+            counter += 1
+            os.system(cmd.format(os.path.join(args.run_path, 'test_{}_{}_{}.out'.format(protein, pair, i)),
+                                 args.docked_prot_file, args.run_path, args.root, protein, target, start, i))
 
         print(counter)
 
