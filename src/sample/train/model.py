@@ -33,6 +33,8 @@ def train_test_split(df, root):
     test_prots = get_prots(os.path.join(root, 'splits', 'search_test_index.txt'))
     test_prots = [x[0] for x in test_prots]
     print(len(train_prots), len(test_prots))
+    print(len(train_prots) + len(test_prots))
+    assert(1 == 2)
     test_dfs = []
     train_dfs = []
     for prot in proteins:
