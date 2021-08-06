@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 physics_score.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge
+$ $SCHRODINGER/run python3 physics_score.py all /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge --index 0
 """
 
 import argparse
@@ -12,7 +12,6 @@ import schrodinger.structure as structure
 import random
 from schrodinger.structutils.transform import get_centroid
 import math
-import time
 import sys
 import numpy as np
 sys.path.insert(1, '../util')
@@ -69,8 +68,10 @@ def main():
             cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 physics_score.py group {} {} ' \
                   '--protein {} --target {} --start {} --index {}"'
             counter += 1
-            os.system(cmd.format(os.path.join(args.run_path, 'score_{}.out'.format(i)), args.run_path, args.raw_root,
-                                 args.protein, args.target, args.start, i))
+            # os.system(cmd.format(os.path.join(args.run_path, 'score_{}.out'.format(i)), args.run_path, args.raw_root,
+            #                      args.protein, args.target, args.start, i))
+
+        print(counter)
 
     elif args.task == 'group':
         pair = '{}-to-{}'.format(args.target, args.start)
