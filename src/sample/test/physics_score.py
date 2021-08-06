@@ -140,6 +140,31 @@ def main():
             os.mkdir(save_path)
         group_df.to_csv(os.path.join(save_path, '{}.csv'.format(args.index)))
 
+    elif args.task == 'combine':
+        pair = '{}-to-{}'.format(args.target, args.start)
+        protein_path = os.path.join(args.raw_root, args.protein)
+        pair_path = os.path.join(protein_path, pair)
+
+        grid_size = get_grid_size(pair_path, args.target, args.start)
+        group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+        pose_path = os.path.join(pair_path, group_name)
+
+        combined_pose_file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
+        df = pd.read_csv(combined_pose_file)
+        names = df['name'].to_list()
+        grouped_names = group_files(args.n, names)
+        dfs = []
+
+        for i in range(len(grouped_names)):
+            save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
+            if not os.path.exists(save_path):
+                os.mkdir(save_path)
+            file = os.path.join(save_path, '{}.csv'.format(args.index))
+            dfs.append(pd.read_csv(file))
+
+        df = pd.concat(dfs)
+        df.to_csv(combined_pose_file)
+
 
 if __name__=="__main__":
     main()
