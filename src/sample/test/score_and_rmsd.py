@@ -2,7 +2,7 @@
 The purpose of this code is to get the physics scores and the rmsds
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 score_and_rmsd.py run /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge  --max_num_concurrent_jobs 1
+$ $SCHRODINGER/run python3 score_and_rmsd.py check /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge  --max_num_concurrent_jobs 1
 """
 
 import argparse
@@ -124,7 +124,7 @@ def run(args):
     dock_set.run_docking_rmsd_delete(docking_config, run_config)
 
 
-def check(raw_root, protein, target, start, group_name):
+def check(args):
     """
     check if scores and rmsds were calculated
     :param docked_prot_file: (string) file listing proteins to process
@@ -206,7 +206,7 @@ def main():
         run(args)
 
     elif args.task == 'check':
-        check(args.raw_root, args.protein, args.target, args.start, args.group_name)
+        check(args)
 
     elif args.task == 'add_data':
         pair = '{}-to-{}'.format(args.target, args.start)
