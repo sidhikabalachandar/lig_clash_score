@@ -58,9 +58,12 @@ def run(args):
     conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
     conformers = list(structure.StructureReader(conformer_file))
 
-    pose_path = os.path.join(pose_path, 'advanced_filtered_poses')
+    grouped_path = os.path.join(pose_path, 'advanced_filtered_poses')
     dock_output_path = os.path.join(pose_path, 'dock_output')
     ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(args.target))
+
+    if not os.path.exists(grouped_path):
+        os.mkdir(grouped_path)
 
     if not os.path.exists(dock_output_path):
         os.mkdir(dock_output_path)
@@ -68,7 +71,7 @@ def run(args):
     docking_config = []
 
     for j in range(len(grouped_indices)):
-        file = os.path.join(pose_path, '{}.mae'.format(j))
+        file = os.path.join(grouped_path, '{}.mae'.format(j))
         with structure.StructureWriter(file) as filtered:
             for i in grouped_indices[j]:
                 name = df.loc[[i]]['name'].iloc[0]
