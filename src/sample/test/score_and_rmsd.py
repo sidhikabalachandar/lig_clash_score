@@ -52,8 +52,8 @@ def run(args):
             dfs.append(filter_df)
 
     df = pd.concat(dfs)
-    indices = [i for i in df.index]
-    grouped_indices = group_files(args.n, indices)
+    names = df['name'].to_list()
+    grouped_names = group_files(args.n, names)
 
     conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
     conformers = list(structure.StructureReader(conformer_file))
@@ -75,61 +75,54 @@ def run(args):
     for j in range(len(grouped_indices)):
         file = os.path.join(grouped_path, '{}.mae'.format(j))
         with structure.StructureWriter(file) as filtered:
-            for i in grouped_indices[j]:
-                name = df.loc[[i]]['name'].iloc[0]
-                if name not in names:
-                    names.append(name)
+            for name in grouped_names[j]:
+                conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
+                c = conformers[conformer_index]
+                old_coords = c.getXYZ(copy=True)
+                grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
+                grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
+                grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
+                translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
+                conformer_center = list(get_centroid(c))
+                coords = c.getXYZ(copy=True)
+                rot_x = df[df['name'] == name]['rot_x'].iloc[0]
+                rot_y = df[df['name'] == name]['rot_y'].iloc[0]
+                rot_z = df[df['name'] == name]['rot_z'].iloc[0]
 
-    for name in df['name'].to_list():
-        if name not in names:
-            print(name)
-    #             conformer_index = df.loc[[i]]['conformer_index'].iloc[0]
-    #             c = conformers[conformer_index]
-    #             old_coords = c.getXYZ(copy=True)
-    #             grid_loc_x = df.loc[[i]]['grid_loc_x'].iloc[0]
-    #             grid_loc_y = df.loc[[i]]['grid_loc_y'].iloc[0]
-    #             grid_loc_z = df.loc[[i]]['grid_loc_z'].iloc[0]
-    #             translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
-    #             conformer_center = list(get_centroid(c))
-    #             coords = c.getXYZ(copy=True)
-    #             rot_x = df.loc[[i]]['rot_x'].iloc[0]
-    #             rot_y = df.loc[[i]]['rot_y'].iloc[0]
-    #             rot_z = df.loc[[i]]['rot_z'].iloc[0]
-    #
-    #             displacement_vector = get_coords_array_from_list(conformer_center)
-    #             to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
-    #             from_origin_matrix = get_translation_matrix(displacement_vector)
-    #             rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
-    #             rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
-    #             rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
-    #             new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
-    #                                           rot_matrix_y, rot_matrix_z)
-    #
-    #             # for clash features dictionary
-    #             c.setXYZ(new_coords)
-    #             c.title = name
-    #             filtered.append(c)
-    #             c.setXYZ(old_coords)
-    #
-    #     if not os.path.exists(os.path.join(dock_output_path, '{}.scor'.format(j))):
-    #         docking_config.append({'folder': dock_output_path,
-    #                                'name': j,
-    #                                'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
-    #                                'prepped_ligand_file': file,
-    #                                'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
-    #                                'ligand_file': ground_truth_file})
-    #     if len(docking_config) == args.max_num_concurrent_jobs:
-    #         break
-    #
-    # print(len(docking_config))
-    #
-    # run_config = {'run_folder': args.run_path,
-    #               'group_size': 1,
-    #               'partition': 'rondror',
-    #               'dry_run': False}
-    #
-    # dock_set = Docking_Set()
-    # dock_set.run_docking_rmsd_delete(docking_config, run_config)
+                displacement_vector = get_coords_array_from_list(conformer_center)
+                to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
+                from_origin_matrix = get_translation_matrix(displacement_vector)
+                rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
+                rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
+                rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
+                new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
+                                              rot_matrix_y, rot_matrix_z)
+
+                # for clash features dictionary
+                c.setXYZ(new_coords)
+                c.title = name
+                filtered.append(c)
+                c.setXYZ(old_coords)
+
+        if not os.path.exists(os.path.join(dock_output_path, '{}.scor'.format(j))):
+            docking_config.append({'folder': dock_output_path,
+                                   'name': j,
+                                   'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
+                                   'prepped_ligand_file': file,
+                                   'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
+                                   'ligand_file': ground_truth_file})
+        if len(docking_config) == args.max_num_concurrent_jobs:
+            break
+
+    print(len(docking_config))
+
+    run_config = {'run_folder': args.run_path,
+                  'group_size': 1,
+                  'partition': 'rondror',
+                  'dry_run': False}
+
+    dock_set = Docking_Set()
+    dock_set.run_docking_rmsd_delete(docking_config, run_config)
 
 
 def check(args):
