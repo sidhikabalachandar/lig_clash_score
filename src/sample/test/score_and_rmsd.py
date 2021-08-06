@@ -2,7 +2,7 @@
 The purpose of this code is to get the physics scores and the rmsds
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 score_and_rmsd.py add_data /home/users/sidhikab/lig_clash_score/src/data/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein O38732 --target 2i0a --start 2q5k  --group_name exhaustive_grid_1_rotation_5
+$ $SCHRODINGER/run python3 score_and_rmsd.py run /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge  --max_num_concurrent_jobs 1
 """
 
 import argparse
@@ -95,7 +95,7 @@ def run(args):
 
                 # for clash features dictionary
                 c.setXYZ(new_coords)
-                c.setTitle(name)
+                c.title = name
                 filtered.append(c)
                 c.setXYZ(old_coords)
 
@@ -189,7 +189,6 @@ def main():
                                                          'group task')
     parser.add_argument('--max_num_concurrent_jobs', type=int, default=200, help='maximum number of concurrent jobs '
                                                                                  'that can be run on slurm at one time')
-    parser.add_argument('--group_name', type=str, default='', help='name of pose group subdir')
     parser.add_argument('--residue_cutoff', type=int, default=1, help='name of pose group subdir')
     args = parser.parse_args()
 
