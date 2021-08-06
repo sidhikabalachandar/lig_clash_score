@@ -9,7 +9,6 @@ import argparse
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 import random
 import sys
 sys.path.insert(1, '../util')
