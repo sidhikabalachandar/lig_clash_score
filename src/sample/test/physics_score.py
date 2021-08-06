@@ -58,47 +58,53 @@ def main():
     conformers = list(structure.StructureReader(conformer_file))
 
     df = pd.read_csv(os.path.join(pose_path, 'poses_after_advanced_filter.csv'))
-
-    name = '10_0,0,0_0,20,0'
-    conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
-    c = conformers[conformer_index]
-    old_coords = c.getXYZ(copy=True)
-    grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
-    grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
-    grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
-    translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
-    conformer_center = list(get_centroid(c))
-    coords = c.getXYZ(copy=True)
-    rot_x = df[df['name'] == name]['rot_x'].iloc[0]
-    rot_y = df[df['name'] == name]['rot_y'].iloc[0]
-    rot_z = df[df['name'] == name]['rot_z'].iloc[0]
-
-    displacement_vector = get_coords_array_from_list(conformer_center)
-    to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
-    from_origin_matrix = get_translation_matrix(displacement_vector)
-    rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
-    rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
-    rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
-    new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
-                                  rot_matrix_y, rot_matrix_z)
-
-    # for clash features dictionary
-    c.setXYZ(new_coords)
-    c.title = name
+    names = df['name'].to_list()
+    scores = []
 
     protein_file = os.path.join(pair_path, '{}_prot.mae'.format(args.start))
     prot_s = list(structure.StructureReader(protein_file))[0]
-
-    ligand_coord = new_coords
-    ligand_charge = np.array([a.partial_charge for a in c.atom])
     target_coord = prot_s.getXYZ(copy=True)
     target_charge = np.array([a.partial_charge for a in prot_s.atom])
-    ligand_atom_type = [a.element for a in c.atom]
     target_atom_type = [a.element for a in prot_s.atom]
 
-    print(physics_score(ligand_coord, ligand_charge, target_coord, target_charge, ligand_atom_type, target_atom_type, vdw_scale=0))
+    for name in names:
+        conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
+        c = conformers[conformer_index]
+        old_coords = c.getXYZ(copy=True)
+        grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
+        grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
+        grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
+        translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
+        conformer_center = list(get_centroid(c))
+        coords = c.getXYZ(copy=True)
+        rot_x = df[df['name'] == name]['rot_x'].iloc[0]
+        rot_y = df[df['name'] == name]['rot_y'].iloc[0]
+        rot_z = df[df['name'] == name]['rot_z'].iloc[0]
 
-    c.setXYZ(old_coords)
+        displacement_vector = get_coords_array_from_list(conformer_center)
+        to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
+        from_origin_matrix = get_translation_matrix(displacement_vector)
+        rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
+        rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
+        rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
+        new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
+                                      rot_matrix_y, rot_matrix_z)
+
+        # for clash features dictionary
+        c.setXYZ(new_coords)
+        c.title = name
+
+        ligand_coord = new_coords
+        ligand_charge = np.array([a.partial_charge for a in c.atom])
+        ligand_atom_type = [a.element for a in c.atom]
+        score = physics_score(ligand_coord, ligand_charge, target_coord, target_charge, ligand_atom_type,
+                              target_atom_type, vdw_scale=0)
+        scores.append(score)
+
+        c.setXYZ(old_coords)
+
+    df['np_score_no_vdw'] = scores
+    df.to_csv(os.path.join(pose_path, 'poses_after_advanced_filter.csv'))
 
 
 if __name__=="__main__":
