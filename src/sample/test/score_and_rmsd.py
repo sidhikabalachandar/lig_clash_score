@@ -149,7 +149,7 @@ def check(args):
 
     for file_name in os.listdir(grouped_path):
         suffix = '.mae'
-        name = file[:-len(suffix)]
+        name = file_name[:-len(suffix)]
         file = os.path.join(grouped_path, file_name)
         docking_config = [{'folder': dock_output_path,
                            'name': name,
