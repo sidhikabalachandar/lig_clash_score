@@ -131,25 +131,29 @@ def check(raw_root, protein, target, start, group_name):
     :param raw_root: (string) directory where raw data will be placed
     :return:
     """
-    pair = '{}-to-{}'.format(target, start)
-    protein_path = os.path.join(raw_root, protein)
+
+    pair = '{}-to-{}'.format(args.target, args.start)
+    protein_path = os.path.join(args.raw_root, args.protein)
     pair_path = os.path.join(protein_path, pair)
+
+    grid_size = get_grid_size(pair_path, args.target, args.start)
+    group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
     pose_path = os.path.join(pair_path, group_name)
-    grouped_pose_path = os.path.join(pose_path, 'grouped_poses')
+
+    grouped_path = os.path.join(pose_path, 'advanced_filtered_poses')
     dock_output_path = os.path.join(pose_path, 'dock_output')
-    ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
+    ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(args.target))
+
     missing = []
     incomplete = []
-    if not os.path.exists(dock_output_path):
-        os.mkdir(dock_output_path)
-    for file in os.listdir(grouped_pose_path):
-        prefix = 'grouped_'
-        suffix = '.maegz'
-        name = file[len(prefix):-len(suffix)]
+
+    for file in os.listdir(grouped_path):
+        suffix = '.mae'
+        name = file[:-len(suffix)]
         docking_config = [{'folder': dock_output_path,
                            'name': name,
                            'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
-                           'prepped_ligand_file': os.path.join(grouped_pose_path, file),
+                           'prepped_ligand_file': file,
                            'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
                            'ligand_file': ground_truth_file}]
         dock_set = Docking_Set()
@@ -169,14 +173,14 @@ def check(raw_root, protein, target, start, group_name):
                 continue
             results = dock_set.get_docking_gscores(docking_config, mode='multi')
             results_by_ligand = results[name]
-            group = list(structure.StructureReader(os.path.join(grouped_pose_path, file)))
+            group = list(structure.StructureReader(file))
             if len(results_by_ligand.keys()) != len(group):
                 print(len(results_by_ligand), len(group))
                 incomplete.append(name)
                 continue
 
-    print('Missing', len(missing), '/', len(os.listdir(grouped_pose_path)))
-    print('Incomplete', len(incomplete), '/', len(os.listdir(grouped_pose_path)) - len(missing))
+    print('Missing', len(missing), '/', len(os.listdir(grouped_path)))
+    print('Incomplete', len(incomplete), '/', len(os.listdir(grouped_path)) - len(missing))
     print(incomplete)
 
 
