@@ -53,7 +53,6 @@ def run(args):
 
     df = pd.concat(dfs)
     indices = [i for i in df.index]
-    print(len(df))
     grouped_indices = group_files(args.n, indices)
 
     conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
@@ -193,7 +192,7 @@ def main():
                                                          'group task')
     parser.add_argument('--max_num_concurrent_jobs', type=int, default=200, help='maximum number of concurrent jobs '
                                                                                  'that can be run on slurm at one time')
-    parser.add_argument('--residue_cutoff', type=int, default=1, help='name of pose group subdir')
+    parser.add_argument('--residue_cutoff', type=int, default=3, help='name of pose group subdir')
     args = parser.parse_args()
 
     if not os.path.exists(args.run_path):
