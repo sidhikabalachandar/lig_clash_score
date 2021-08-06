@@ -110,18 +110,18 @@ def run(args):
                                    'prepped_ligand_file': file,
                                    'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
                                    'ligand_file': ground_truth_file})
-        # if len(docking_config) == args.max_num_concurrent_jobs:
-        #     break
+        if len(docking_config) == args.max_num_concurrent_jobs:
+            break
 
     print(len(docking_config))
 
-    # run_config = {'run_folder': args.run_path,
-    #               'group_size': 1,
-    #               'partition': 'rondror',
-    #               'dry_run': False}
-    #
-    # dock_set = Docking_Set()
-    # dock_set.run_docking_rmsd_delete(docking_config, run_config)
+    run_config = {'run_folder': args.run_path,
+                  'group_size': 1,
+                  'partition': 'rondror',
+                  'dry_run': False}
+
+    dock_set = Docking_Set()
+    dock_set.run_docking_rmsd_delete(docking_config, run_config)
 
 
 def check(raw_root, protein, target, start, group_name):
