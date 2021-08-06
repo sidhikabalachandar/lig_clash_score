@@ -44,6 +44,7 @@ def main():
     parser.add_argument('--target_clash_cutoff', type=int, default=20, help='clash cutoff between target protein and '
                                                                             'ligand pose')
     parser.add_argument('--intolerable_cutoff', type=int, default=0, help='cutoff of max num intolerable residues')
+    parser.add_argument('--num_poses_graphed', type=int, default=600, help='cutoff of max num intolerable residues')
     args = parser.parse_args()
 
     random.seed(0)
@@ -90,9 +91,9 @@ def main():
 
     glide_ls = []
     score_no_vdw_ls = []
-    pose_ls = [i for i in range(1, 100)]
+    pose_ls = [i for i in range(1, args.num_poses_graphed)]
 
-    for i in range(1, 200):
+    for i in range(1, args.num_poses_graphed):
         print(i)
         print("Glide:", min(sorted_glide[:i], key=lambda x: x[1]))
         print("score_no_vdw:", min(sorted_score_no_vdw[:i], key=lambda x: x[1]))
