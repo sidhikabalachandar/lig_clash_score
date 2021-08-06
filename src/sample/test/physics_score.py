@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 physics_score.py all /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge --index 0
+$ $SCHRODINGER/run python3 physics_score.py combine /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge --index 0
 """
 
 import argparse
@@ -159,7 +159,7 @@ def main():
             save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
             if not os.path.exists(save_path):
                 os.mkdir(save_path)
-            file = os.path.join(save_path, '{}.csv'.format(args.index))
+            file = os.path.join(save_path, '{}.csv'.format(i))
             dfs.append(pd.read_csv(file))
 
         df = pd.concat(dfs)
