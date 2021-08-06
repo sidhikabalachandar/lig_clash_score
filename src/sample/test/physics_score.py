@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 cum_freq.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge
+$ $SCHRODINGER/run python3 physics_score.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge
 """
 
 import argparse
@@ -96,7 +96,7 @@ def main():
     ligand_atom_type = [a.element for a in c.atom]
     target_atom_type = [a.element for a in prot_s.atom]
 
-    print(physics_score(ligand_coord, ligand_charge, target_coord, target_charge, ligand_atom_type, target_atom_type))
+    print(physics_score(ligand_coord, ligand_charge, target_coord, target_charge, ligand_atom_type, target_atom_type, vdw_scale=0))
 
     c.setXYZ(old_coords)
 
