@@ -94,6 +94,9 @@ def main():
     pose_ls = [i for i in range(1, 100)]
 
     for i in range(1, 100):
+        print(i)
+        print("Glide:", min(sorted_glide[:i], key=lambda x: x[1]))
+        print("score_no_vdw:", min(sorted_score_no_vdw[:i], key=lambda x: x[1]))
         glide_ls.append(min(sorted_glide[:i], key=lambda x: x[1])[1])
         score_no_vdw_ls.append(min(sorted_score_no_vdw[:i], key=lambda x: x[1])[1])
     bar_graph(glide_ls, score_no_vdw_ls, pose_ls, args)
