@@ -70,9 +70,7 @@ def run(args):
 
     docking_config = []
 
-    names = []
-
-    for j in range(len(grouped_indices)):
+    for j in range(len(grouped_names)):
         file = os.path.join(grouped_path, '{}.mae'.format(j))
         with structure.StructureWriter(file) as filtered:
             for name in grouped_names[j]:
