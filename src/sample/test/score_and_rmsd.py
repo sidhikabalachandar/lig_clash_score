@@ -213,21 +213,36 @@ def main():
         pair = '{}-to-{}'.format(args.target, args.start)
         protein_path = os.path.join(args.raw_root, args.protein)
         pair_path = os.path.join(protein_path, pair)
-        pose_path = os.path.join(pair_path, args.group_name)
-        grouped_pose_path = os.path.join(pose_path, 'grouped_poses')
+
+        grid_size = get_grid_size(pair_path, args.target, args.start)
+        group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+        pose_path = os.path.join(pair_path, group_name)
+
+        grouped_path = os.path.join(pose_path, 'advanced_filtered_poses')
         dock_output_path = os.path.join(pose_path, 'dock_output')
         ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(args.target))
 
-        df = pd.read_csv(os.path.join(pair_path, 'poses_after_pred_filter.csv'))
+        clash_path = os.path.join(pose_path, 'clash_data')
+        dfs = []
+        for file in os.listdir(clash_path):
+            prefix = 'pose_pred_data'
+            if file[:len(prefix)] == prefix:
+                df = pd.read_csv(os.path.join(clash_path, file))
+                filter_df = df[df['pred_num_intolerable'] < args.residue_cutoff]
+                dfs.append(filter_df)
+
+        df = pd.concat(dfs)
+
         in_place_data = {}
 
-        for file in tqdm(os.listdir(dock_output_path), desc='docked files'):
-            if file[-4:] == 'scor':
-                name = file[:-5]
+        suffix = '.scor'
+        for file in os.listdir(dock_output_path):
+            if file[-len(suffix):] == suffix:
+                name = file[:-len(suffix)]
                 docking_config = [{'folder': dock_output_path,
                                    'name': name,
                                    'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
-                                   'prepped_ligand_file': os.path.join(grouped_pose_path, '{}.maegz'.format(name)),
+                                   'prepped_ligand_file': os.path.join(grouped_path, '{}.mae'.format(name)),
                                    'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
                                    'ligand_file': ground_truth_file}]
                 dock_set = Docking_Set()
@@ -252,7 +267,11 @@ def main():
             score_no_vdws.append(in_place_data[name][1])
             modified_score_no_vdws.append(in_place_data[name][2])
 
-        df.to_csv(os.path.join(pair_path, 'poses_after_pred_filter.csv'))
+        df['glide_score'] = glide_scores
+        df['score_no_vdw'] = score_no_vdws
+        df['modified_score_no_vdw'] = modified_score_no_vdws
+
+        df.to_csv(os.path.join(pose_path, 'poses_after_advanced_filter.csv'))
 
 if __name__=="__main__":
     main()
