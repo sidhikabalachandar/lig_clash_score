@@ -2,7 +2,7 @@
 The purpose of this code is to get the physics scores and the rmsds
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 score_and_rmsd.py check /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge  --max_num_concurrent_jobs 1
+$ $SCHRODINGER/run python3 score_and_rmsd.py add_data /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge  --max_num_concurrent_jobs 1
 """
 
 import argparse
@@ -249,6 +249,7 @@ def main():
                 results = dock_set.get_docking_gscores(docking_config, mode='multi')
                 results_by_ligand = results[name]
                 for n in results_by_ligand:
+                    print(n)
                     glide_score = results_by_ligand[n][0]['Score']
                     score = score_no_vdW(results_by_ligand[n][0])
                     modified_score_no_vdw = score
