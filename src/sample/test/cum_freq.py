@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-/home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python cum_freq.py filter_stats /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures --group_name exhaustive_grid_1_rotation_5 --protein O38732 --target 2i0a --start 2q5k
+$ $SCHRODINGER/run python3 cum_freq.py filter_stats /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures --protein P02829 --target 2weq --start 2yge
 """
 
 import argparse
@@ -36,7 +36,6 @@ def main():
     parser.add_argument('--protein', type=str, default='', help='protein name')
     parser.add_argument('--target', type=str, default='', help='target ligand name')
     parser.add_argument('--start', type=str, default='', help='start ligand name')
-    parser.add_argument('--group_name', type=str, default='', help='name of pose group subdir')
     parser.add_argument('--max_poses', type=int, default=100, help='maximum number of glide poses considered')
     parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
     parser.add_argument('--rotation_search_step_size', type=int, default=5, help='step size between each angle '
@@ -94,7 +93,7 @@ def main():
     score_no_vdw_ls = []
     pose_ls = [i for i in range(1, 100)]
 
-    for i in tqdm(range(1, 100), desc='creating graph'):
+    for i in range(1, 100):
         glide_ls.append(min(sorted_glide[:i], key=lambda x: x[1])[1])
         score_no_vdw_ls.append(min(sorted_score_no_vdw[:i], key=lambda x: x[1])[1])
     bar_graph(glide_ls, score_no_vdw_ls, pose_ls, args)
