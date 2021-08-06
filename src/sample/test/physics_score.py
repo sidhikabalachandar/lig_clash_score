@@ -107,8 +107,8 @@ def main():
     c.setXYZ(old_coords)
     print(time.time() - start_time)
 
-    df['np_score_no_vdw'] = scores
-    df.to_csv(os.path.join(pose_path, 'poses_after_advanced_filter.csv'))
+    # df['np_score_no_vdw'] = scores
+    # df.to_csv(os.path.join(pose_path, 'poses_after_advanced_filter.csv'))
 
 
 if __name__=="__main__":
