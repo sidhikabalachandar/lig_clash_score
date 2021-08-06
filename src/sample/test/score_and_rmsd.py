@@ -147,9 +147,10 @@ def check(args):
     missing = []
     incomplete = []
 
-    for file in os.listdir(grouped_path):
+    for file_name in os.listdir(grouped_path):
         suffix = '.mae'
         name = file[:-len(suffix)]
+        file = os.path.join(grouped_path, file_name)
         docking_config = [{'folder': dock_output_path,
                            'name': name,
                            'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
