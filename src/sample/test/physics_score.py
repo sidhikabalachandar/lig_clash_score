@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 physics_score.py combine /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge --index 0
+$ $SCHRODINGER/run python3 physics_score.py graph /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge --index 0
 """
 
 import argparse
@@ -12,6 +12,7 @@ import schrodinger.structure as structure
 import random
 from schrodinger.structutils.transform import get_centroid
 import math
+import matplotlib.pyplot as plt
 import sys
 import numpy as np
 sys.path.insert(1, '../util')
@@ -164,6 +165,27 @@ def main():
 
         df = pd.concat(dfs)
         df.to_csv(combined_pose_file)
+
+    elif args.task == 'graph':
+        pair = '{}-to-{}'.format(args.target, args.start)
+        protein_path = os.path.join(args.raw_root, args.protein)
+        pair_path = os.path.join(protein_path, pair)
+
+        grid_size = get_grid_size(pair_path, args.target, args.start)
+        group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+        pose_path = os.path.join(pair_path, group_name)
+
+        combined_pose_file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
+        df = pd.read_csv(combined_pose_file)
+
+        fig, ax = plt.subplots()
+        plt.scatter(df['modified_score_no_vdw'].to_list(), df['np_score_no_vdw'].to_list())
+
+        ax.legend()
+        ax.set_xlabel('modified_score_no_vdw')
+        ax.set_ylabel('np_score_no_vdw')
+        plt.title('Glide score vs np score comparisson for {}_{}-to-{}'.format(args.protein, args.target, args.start))
+        plt.savefig('score_{}_{}_{}.png'.format(args.protein, args.target, args.start))
 
 
 if __name__=="__main__":
