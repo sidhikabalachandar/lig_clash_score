@@ -15,71 +15,103 @@ from docking.docking_class import Docking_Set
 import schrodinger.structure as structure
 import pandas as pd
 from docking.utilities import score_no_vdW
-
-def get_prots(docked_prot_file):
-    """
-    gets list of all protein, target ligands, and starting ligands in the index file
-    :param docked_prot_file: (string) file listing proteins to process
-    :return: process (list) list of all protein, target ligands, and starting ligands to process
-    """
-    process = []
-    with open(docked_prot_file) as fp:
-        for line in tqdm(fp, desc='protein, target, start groups'):
-            if line[0] == '#': continue
-            protein, target, start = line.strip().split()
-            process.append((protein, target, start))
-    return process
-
-def group_files(n, process):
-    """
-    groups pairs into sublists of size n
-    :param n: (int) sublist size
-    :param process: (list) list of pairs to process
-    :return: grouped_files (list) list of sublists of pairs
-    """
-    grouped_files = []
-
-    for i in range(0, len(process), n):
-        grouped_files += [process[i: i + n]]
-
-    return grouped_files
+import math
+from schrodinger.structutils.transform import get_centroid
+import sys
+sys.path.insert(1, '../util')
+from util import *
+from prot_util import *
+from schrod_replacement_util import *
 
 
-def run(protein, target, start, run_path, raw_root, group_name, max_num_concurrent_jobs):
+X_AXIS = [1.0, 0.0, 0.0]  # x-axis unit vector
+Y_AXIS = [0.0, 1.0, 0.0]  # y-axis unit vector
+Z_AXIS = [0.0, 0.0, 1.0]  # z-axis unit vector
+
+
+def run(args):
     """
     get scores and rmsds
-    :param process: (list) list of all protein, target, start
-    :param run_path: (string) directory where script and output files will be written
-    :param raw_root: (string) directory where raw data will be placed
-    :param n: (int) number of protein, target, start groups processed in group task
-    :return:
     """
-    docking_config = []
-    pair = '{}-to-{}'.format(target, start)
-    protein_path = os.path.join(raw_root, protein)
+
+    pair = '{}-to-{}'.format(args.target, args.start)
+    protein_path = os.path.join(args.raw_root, args.protein)
     pair_path = os.path.join(protein_path, pair)
+
+    grid_size = get_grid_size(pair_path, args.target, args.start)
+    group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
     pose_path = os.path.join(pair_path, group_name)
-    grouped_pose_path = os.path.join(pose_path, 'grouped_poses')
+
+    clash_path = os.path.join(pose_path, 'clash_data')
+    dfs = []
+    for file in os.listdir(clash_path):
+        prefix = 'pose_pred_data'
+        if file[:len(prefix)] == prefix:
+            df = pd.read_csv(os.path.join(clash_path, file))
+            filter_df = df[df['pred_num_intolerable'] < args.residue_cutoff]
+            dfs.append(filter_df)
+
+    df = pd.concat(dfs)
+    indices = [i for i in df.index]
+    grouped_indices = group_files(args.n, indices)
+
+    conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
+    conformers = list(structure.StructureReader(conformer_file))
+
     dock_output_path = os.path.join(pose_path, 'dock_output')
-    ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
+    ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(args.target))
+
     if not os.path.exists(dock_output_path):
         os.mkdir(dock_output_path)
-    for file in os.listdir(grouped_pose_path):
-        prefix = 'grouped_'
-        suffix = '.maegz'
-        name = file[len(prefix):-len(suffix)]
-        if not os.path.exists(os.path.join(dock_output_path, '{}.scor'.format(name))):
+
+    docking_config = []
+
+    for j in range(len(grouped_indices)):
+        file = os.path.join(clash_path, 'grouped_filtered_poses_{}.mae'.format(j))
+        with structure.StructureWriter(file) as filtered:
+            for i in grouped_indices[j]:
+                name = df.loc[[i]]['name'].iloc[0]
+                conformer_index = df.loc[[i]]['conformer_index'].iloc[0]
+                c = conformers[conformer_index]
+                old_coords = c.getXYZ(copy=True)
+                grid_loc_x = df.loc[[i]]['grid_loc_x'].iloc[0]
+                grid_loc_y = df.loc[[i]]['grid_loc_y'].iloc[0]
+                grid_loc_z = df.loc[[i]]['grid_loc_z'].iloc[0]
+                translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
+                conformer_center = list(get_centroid(c))
+                coords = c.getXYZ(copy=True)
+                rot_x = df.loc[[i]]['rot_x'].iloc[0]
+                rot_y = df.loc[[i]]['rot_y'].iloc[0]
+                rot_z = df.loc[[i]]['rot_z'].iloc[0]
+
+                displacement_vector = get_coords_array_from_list(conformer_center)
+                to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
+                from_origin_matrix = get_translation_matrix(displacement_vector)
+                rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
+                rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
+                rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
+                new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
+                                              rot_matrix_y, rot_matrix_z)
+
+                # for clash features dictionary
+                c.setXYZ(new_coords)
+                c.setTitle(name)
+                filtered.append(c)
+                c.setXYZ(old_coords)
+
+        if not os.path.exists(os.path.join(dock_output_path, '{}.scor'.format(j))):
             docking_config.append({'folder': dock_output_path,
-                                   'name': name,
+                                   'name': j,
                                    'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
-                                   'prepped_ligand_file': os.path.join(grouped_pose_path, file),
+                                   'prepped_ligand_file': file,
                                    'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
                                    'ligand_file': ground_truth_file})
-        if len(docking_config) == max_num_concurrent_jobs:
+        if len(docking_config) == args.max_num_concurrent_jobs:
             break
+
     print(len(docking_config))
 
-    run_config = {'run_folder': run_path,
+    run_config = {'run_folder': args.run_path,
                   'group_size': 1,
                   'partition': 'rondror',
                   'dry_run': False}
@@ -158,14 +190,14 @@ def main():
     parser.add_argument('--max_num_concurrent_jobs', type=int, default=200, help='maximum number of concurrent jobs '
                                                                                  'that can be run on slurm at one time')
     parser.add_argument('--group_name', type=str, default='', help='name of pose group subdir')
+    parser.add_argument('--residue_cutoff', type=int, default=1, help='name of pose group subdir')
     args = parser.parse_args()
 
     if not os.path.exists(args.run_path):
         os.mkdir(args.run_path)
 
     if args.task == 'run':
-        run(args.protein, args.target, args.start, args.run_path, args.raw_root, args.group_name,
-            args.max_num_concurrent_jobs)
+        run(args)
 
     elif args.task == 'check':
         check(args.raw_root, args.protein, args.target, args.start, args.group_name)
