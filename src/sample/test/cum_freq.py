@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 cum_freq.py filter_stats /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures --protein P02829 --target 2weq --start 2yge
+$ $SCHRODINGER/run python3 cum_freq.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures --protein P02829 --target 2weq --start 2yge
 """
 
 import argparse
@@ -29,7 +29,6 @@ def bar_graph(glide_ls, score_no_vdw_ls, pose_ls, args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('task', type=str, help='either run, check, or delete_json')
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
     parser.add_argument('out_dir', type=str, help='directory where all graphs will be saved')
@@ -93,7 +92,7 @@ def main():
     score_no_vdw_ls = []
     pose_ls = [i for i in range(1, 100)]
 
-    for i in range(1, 100):
+    for i in range(1, 200):
         print(i)
         print("Glide:", min(sorted_glide[:i], key=lambda x: x[1]))
         print("score_no_vdw:", min(sorted_score_no_vdw[:i], key=lambda x: x[1]))
