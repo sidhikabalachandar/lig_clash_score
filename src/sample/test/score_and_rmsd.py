@@ -53,7 +53,7 @@ def run(args):
 
     df = pd.concat(dfs)
     indices = [i for i in df.index]
-    print(len(indices))
+    print(len(df))
     grouped_indices = group_files(args.n, indices)
 
     conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
