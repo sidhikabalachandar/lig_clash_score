@@ -25,6 +25,7 @@ def bar_graph(glide_ls, score_no_vdw_ls, pose_ls, args):
     ax.legend()
     ax.set_xlabel('Pose Cutoff')
     ax.set_ylabel('Min RMSD')
+    plt.title('Min RMSD Pose for {}_{}-to-{}'.format(args.protein, args.target, args.start))
     plt.savefig(os.path.join(args.out_dir, '{}_{}_{}.png'.format(args.protein, args.target, args.start)))
 
 def main():
