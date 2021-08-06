@@ -58,6 +58,7 @@ def run(args):
     conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
     conformers = list(structure.StructureReader(conformer_file))
 
+    pose_path = os.path.join(pose_path, 'advanced_filtered_poses')
     dock_output_path = os.path.join(pose_path, 'dock_output')
     ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(args.target))
 
@@ -67,7 +68,7 @@ def run(args):
     docking_config = []
 
     for j in range(len(grouped_indices)):
-        file = os.path.join(clash_path, 'grouped_filtered_poses_{}.mae'.format(j))
+        file = os.path.join(pose_path, '{}.mae'.format(j))
         with structure.StructureWriter(file) as filtered:
             for i in grouped_indices[j]:
                 name = df.loc[[i]]['name'].iloc[0]
@@ -106,18 +107,18 @@ def run(args):
                                    'prepped_ligand_file': file,
                                    'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
                                    'ligand_file': ground_truth_file})
-        if len(docking_config) == args.max_num_concurrent_jobs:
-            break
+        # if len(docking_config) == args.max_num_concurrent_jobs:
+        #     break
 
     print(len(docking_config))
 
-    run_config = {'run_folder': args.run_path,
-                  'group_size': 1,
-                  'partition': 'rondror',
-                  'dry_run': False}
-
-    dock_set = Docking_Set()
-    dock_set.run_docking_rmsd_delete(docking_config, run_config)
+    # run_config = {'run_folder': args.run_path,
+    #               'group_size': 1,
+    #               'partition': 'rondror',
+    #               'dry_run': False}
+    #
+    # dock_set = Docking_Set()
+    # dock_set.run_docking_rmsd_delete(docking_config, run_config)
 
 
 def check(raw_root, protein, target, start, group_name):
@@ -184,8 +185,7 @@ def main():
     parser.add_argument('--protein', type=str, default='', help='protein name')
     parser.add_argument('--target', type=str, default='', help='target ligand name')
     parser.add_argument('--start', type=str, default='', help='start ligand name')
-    parser.add_argument('--index', type=int, default=-1, help='for group task, group number')
-    parser.add_argument('--n', type=int, default=3, help='number of protein, target, start groups processed in '
+    parser.add_argument('--n', type=int, default=4, help='number of protein, target, start groups processed in '
                                                          'group task')
     parser.add_argument('--max_num_concurrent_jobs', type=int, default=200, help='maximum number of concurrent jobs '
                                                                                  'that can be run on slurm at one time')
