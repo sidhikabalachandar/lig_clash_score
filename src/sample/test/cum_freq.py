@@ -60,9 +60,9 @@ def main():
     df = pd.read_csv(os.path.join(pose_path, 'poses_after_advanced_filter.csv'))
 
     glide_scores = df['glide_score'].tolist()
-    score_no_vdws = df['modified_score_no_vdw'].tolist()
     rmsds = df['rmsd'].tolist()
     names = df['name'].tolist()
+    score_no_vdws = df['modified_score_no_vdw'].tolist()
 
     glide_df = pd.read_csv(os.path.join(pair_path, '{}.csv'.format(pair)))
     for i in range(1, 100):
