@@ -12,6 +12,7 @@ import schrodinger.structure as structure
 import random
 from schrodinger.structutils.transform import get_centroid
 import math
+import time
 import sys
 import numpy as np
 sys.path.insert(1, '../util')
@@ -67,41 +68,44 @@ def main():
     target_charge = np.array([a.partial_charge for a in prot_s.atom])
     target_atom_type = [a.element for a in prot_s.atom]
 
-    for name in names:
-        conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
-        c = conformers[conformer_index]
-        old_coords = c.getXYZ(copy=True)
-        grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
-        grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
-        grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
-        translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
-        conformer_center = list(get_centroid(c))
-        coords = c.getXYZ(copy=True)
-        rot_x = df[df['name'] == name]['rot_x'].iloc[0]
-        rot_y = df[df['name'] == name]['rot_y'].iloc[0]
-        rot_z = df[df['name'] == name]['rot_z'].iloc[0]
+    # for name in names:
+    name = names[-1]
+    start_time = time.time()
+    conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
+    c = conformers[conformer_index]
+    old_coords = c.getXYZ(copy=True)
+    grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
+    grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
+    grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
+    translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
+    conformer_center = list(get_centroid(c))
+    coords = c.getXYZ(copy=True)
+    rot_x = df[df['name'] == name]['rot_x'].iloc[0]
+    rot_y = df[df['name'] == name]['rot_y'].iloc[0]
+    rot_z = df[df['name'] == name]['rot_z'].iloc[0]
 
-        displacement_vector = get_coords_array_from_list(conformer_center)
-        to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
-        from_origin_matrix = get_translation_matrix(displacement_vector)
-        rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
-        rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
-        rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
-        new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
-                                      rot_matrix_y, rot_matrix_z)
+    displacement_vector = get_coords_array_from_list(conformer_center)
+    to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
+    from_origin_matrix = get_translation_matrix(displacement_vector)
+    rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
+    rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
+    rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
+    new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
+                                  rot_matrix_y, rot_matrix_z)
 
-        # for clash features dictionary
-        c.setXYZ(new_coords)
-        c.title = name
+    # for clash features dictionary
+    c.setXYZ(new_coords)
+    c.title = name
 
-        ligand_coord = new_coords
-        ligand_charge = np.array([a.partial_charge for a in c.atom])
-        ligand_atom_type = [a.element for a in c.atom]
-        score = physics_score(ligand_coord, ligand_charge, target_coord, target_charge, ligand_atom_type,
-                              target_atom_type, vdw_scale=0)
-        scores.append(score)
+    ligand_coord = new_coords
+    ligand_charge = np.array([a.partial_charge for a in c.atom])
+    ligand_atom_type = [a.element for a in c.atom]
+    score = physics_score(ligand_coord, ligand_charge, target_coord, target_charge, ligand_atom_type,
+                          target_atom_type, vdw_scale=0)
+    scores.append(score)
 
-        c.setXYZ(old_coords)
+    c.setXYZ(old_coords)
+    print(time.time() - start_time)
 
     df['np_score_no_vdw'] = scores
     df.to_csv(os.path.join(pose_path, 'poses_after_advanced_filter.csv'))
