@@ -65,6 +65,7 @@ def main():
     score_no_vdws = df['np_score_no_vdw'].tolist()
 
     glide_df = pd.read_csv(os.path.join(pose_path, 'glide_poses.csv'))
+    glide_scores.extend(glide_df['glide_score'].tolist())
     rmsds.extend(glide_df['rmsd'].tolist())
     names.extend(glide_df['target'].tolist())
     score_no_vdws.extend(glide_df['np_score_no_vdw'].tolist())
