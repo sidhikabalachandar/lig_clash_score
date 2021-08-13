@@ -91,14 +91,13 @@ def main():
         glide_score_no_vdws = df['modified_score_no_vdw'].tolist()
         python_score_no_vdws = df['np_score_no_vdw'].tolist()
 
-        glide_df = pd.read_csv(os.path.join(pair_path, '{}.csv'.format(pair)))
+        glide_df = pd.read_csv(os.path.join(pose_path, 'glide_poses.csv'))
         for i in range(1, 100):
             pose_df = glide_df[glide_df['target'] == '{}_lig{}'.format(target, i)]
             if len(pose_df) > 0:
                 names.append(pose_df['target'].iloc[0])
                 rmsds.append(pose_df['rmsd'].iloc[0])
                 glide_scores.append(pose_df['glide_score'].iloc[0])
-                print(pose_df['target'].iloc[0])
                 python_score_no_vdws.append(pose_df['np_score_no_vdw'].iloc[0])
                 score = pose_df['score_no_vdw'].iloc[0]
                 if score > 20:
