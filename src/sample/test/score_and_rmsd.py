@@ -29,16 +29,16 @@ Y_AXIS = [0.0, 1.0, 0.0]  # y-axis unit vector
 Z_AXIS = [0.0, 0.0, 1.0]  # z-axis unit vector
 
 
-def run(args):
+def run(protein, target, start, args):
     """
     get scores and rmsds
     """
 
-    pair = '{}-to-{}'.format(args.target, args.start)
-    protein_path = os.path.join(args.raw_root, args.protein)
+    pair = '{}-to-{}'.format(target, start)
+    protein_path = os.path.join(args.raw_root, protein)
     pair_path = os.path.join(protein_path, pair)
 
-    grid_size = get_grid_size(pair_path, args.target, args.start)
+    grid_size = get_grid_size(pair_path, target, start)
     group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
     pose_path = os.path.join(pair_path, group_name)
 
@@ -60,7 +60,7 @@ def run(args):
 
     grouped_path = os.path.join(pose_path, 'advanced_filtered_poses')
     dock_output_path = os.path.join(pose_path, 'dock_output')
-    ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(args.target))
+    ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
 
     if not os.path.exists(grouped_path):
         os.mkdir(grouped_path)
@@ -69,61 +69,62 @@ def run(args):
         os.mkdir(dock_output_path)
 
     docking_config = []
+    print(len(names))
 
-    for j in range(len(grouped_names)):
-        file = os.path.join(grouped_path, '{}.mae'.format(j))
-        with structure.StructureWriter(file) as filtered:
-            for name in grouped_names[j]:
-                conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
-                c = conformers[conformer_index]
-                old_coords = c.getXYZ(copy=True)
-                grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
-                grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
-                grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
-                translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
-                conformer_center = list(get_centroid(c))
-                coords = c.getXYZ(copy=True)
-                rot_x = df[df['name'] == name]['rot_x'].iloc[0]
-                rot_y = df[df['name'] == name]['rot_y'].iloc[0]
-                rot_z = df[df['name'] == name]['rot_z'].iloc[0]
+    # for j in range(len(grouped_names)):
+    #     file = os.path.join(grouped_path, '{}.mae'.format(j))
+    #     with structure.StructureWriter(file) as filtered:
+    #         for name in grouped_names[j]:
+    #             conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
+    #             c = conformers[conformer_index]
+    #             old_coords = c.getXYZ(copy=True)
+    #             grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
+    #             grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
+    #             grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
+    #             translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
+    #             conformer_center = list(get_centroid(c))
+    #             coords = c.getXYZ(copy=True)
+    #             rot_x = df[df['name'] == name]['rot_x'].iloc[0]
+    #             rot_y = df[df['name'] == name]['rot_y'].iloc[0]
+    #             rot_z = df[df['name'] == name]['rot_z'].iloc[0]
+    #
+    #             displacement_vector = get_coords_array_from_list(conformer_center)
+    #             to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
+    #             from_origin_matrix = get_translation_matrix(displacement_vector)
+    #             rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
+    #             rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
+    #             rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
+    #             new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
+    #                                           rot_matrix_y, rot_matrix_z)
+    #
+    #             # for clash features dictionary
+    #             c.setXYZ(new_coords)
+    #             c.title = name
+    #             filtered.append(c)
+    #             c.setXYZ(old_coords)
+    #
+    #     if not os.path.exists(os.path.join(dock_output_path, '{}.scor'.format(j))):
+    #         docking_config.append({'folder': dock_output_path,
+    #                                'name': j,
+    #                                'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
+    #                                'prepped_ligand_file': file,
+    #                                'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
+    #                                'ligand_file': ground_truth_file})
+    #     if len(docking_config) == args.max_num_concurrent_jobs:
+    #         break
+    #
+    # print(len(docking_config))
+    #
+    # run_config = {'run_folder': args.run_path,
+    #               'group_size': 1,
+    #               'partition': 'rondror',
+    #               'dry_run': False}
+    #
+    # dock_set = Docking_Set()
+    # dock_set.run_docking_rmsd_delete(docking_config, run_config)
 
-                displacement_vector = get_coords_array_from_list(conformer_center)
-                to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
-                from_origin_matrix = get_translation_matrix(displacement_vector)
-                rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
-                rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
-                rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
-                new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
-                                              rot_matrix_y, rot_matrix_z)
 
-                # for clash features dictionary
-                c.setXYZ(new_coords)
-                c.title = name
-                filtered.append(c)
-                c.setXYZ(old_coords)
-
-        if not os.path.exists(os.path.join(dock_output_path, '{}.scor'.format(j))):
-            docking_config.append({'folder': dock_output_path,
-                                   'name': j,
-                                   'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
-                                   'prepped_ligand_file': file,
-                                   'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
-                                   'ligand_file': ground_truth_file})
-        if len(docking_config) == args.max_num_concurrent_jobs:
-            break
-
-    print(len(docking_config))
-
-    run_config = {'run_folder': args.run_path,
-                  'group_size': 1,
-                  'partition': 'rondror',
-                  'dry_run': False}
-
-    dock_set = Docking_Set()
-    dock_set.run_docking_rmsd_delete(docking_config, run_config)
-
-
-def check(args):
+def check(protein, target, start, args):
     """
     check if scores and rmsds were calculated
     :param docked_prot_file: (string) file listing proteins to process
@@ -131,17 +132,17 @@ def check(args):
     :return:
     """
 
-    pair = '{}-to-{}'.format(args.target, args.start)
-    protein_path = os.path.join(args.raw_root, args.protein)
+    pair = '{}-to-{}'.format(target, start)
+    protein_path = os.path.join(args.raw_root, protein)
     pair_path = os.path.join(protein_path, pair)
 
-    grid_size = get_grid_size(pair_path, args.target, args.start)
+    grid_size = get_grid_size(pair_path, target, start)
     group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
     pose_path = os.path.join(pair_path, group_name)
 
     grouped_path = os.path.join(pose_path, 'advanced_filtered_poses')
     dock_output_path = os.path.join(pose_path, 'dock_output')
-    ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(args.target))
+    ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
 
     missing = []
     incomplete = []
@@ -203,7 +204,8 @@ def main():
         os.mkdir(args.run_path)
 
     if args.task == 'run':
-        run(args)
+        for protein, target, start in [('P00797', '3own', '3d91'), ('C8B467', '5ult', '5uov')]:
+            run(protein, target, start, args)
 
     elif args.task == 'check':
         check(args)

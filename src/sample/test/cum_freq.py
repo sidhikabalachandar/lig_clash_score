@@ -33,8 +33,8 @@ def bar_graph(glide_ls, score_no_vdw_ls, random_ls, pose_ls, args):
 def get_random_data(data, args):
     random_datas = []
     for _ in range(100):
-        random_data = random.shuffle(data)
-        random_data = [(i, random_data[i][0], random_data[i][1]) for i in range(len(random_data))]
+        random.shuffle(data)
+        random_data = [(i, data[i][0], data[i][1]) for i in range(len(data))]
         rev_random_data = sorted(random_data, key=lambda x: x[1], reverse=True)
         sorted_random = sorted(rev_random_data, key=lambda x: x[0])
         random_ls = []
