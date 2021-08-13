@@ -54,6 +54,8 @@ def main():
         for i in range(1, 100):
             name = '{}_lig{}'.format(target, i)
             pose_file = os.path.join(pair_path, 'ligand_poses', '{}.mae'.format(name))
+            if not os.path.exists(pose_file):
+                continue
             c = list(structure.StructureReader(pose_file))[0]
             ligand_coord = c.getXYZ(copy=True)
             ligand_charge = np.array([a.partial_charge for a in c.atom])
