@@ -17,7 +17,6 @@ import pandas as pd
 from docking.utilities import score_no_vdW
 import math
 from schrodinger.structutils.transform import get_centroid
-import sys
 sys.path.insert(1, '../util')
 from util import *
 from prot_util import *
