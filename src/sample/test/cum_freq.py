@@ -17,10 +17,11 @@ from util import *
 from prot_util import *
 
 
-def bar_graph(glide_ls, score_no_vdw_ls, random_ls, pose_ls, args):
+def bar_graph(glide_ls, glide_score_no_vdw_ls, python_score_no_vdw_ls, random_ls, pose_ls, args):
     fig, ax = plt.subplots()
     plt.plot(pose_ls, glide_ls, label='Glide')
-    plt.plot(pose_ls, score_no_vdw_ls, label='Score no vdw')
+    plt.plot(pose_ls, glide_score_no_vdw_ls, label='Glide score no vdw')
+    plt.plot(pose_ls, python_score_no_vdw_ls, label='Python score no vdw')
     plt.plot(pose_ls, random_ls, label='Random')
 
     ax.legend()
@@ -85,7 +86,8 @@ def main():
     glide_scores = df['glide_score'].tolist()
     rmsds = df['rmsd'].tolist()
     names = df['name'].tolist()
-    score_no_vdws = df['modified_score_no_vdw'].tolist()
+    glide_score_no_vdws = df['modified_score_no_vdw'].tolist()
+    python_score_no_vdws = df['np_score_no_vdw'].tolist()
 
     glide_df = pd.read_csv(os.path.join(pair_path, '{}.csv'.format(pair)))
     for i in range(1, 100):
@@ -94,39 +96,42 @@ def main():
             names.append(pose_df['target'].iloc[0])
             rmsds.append(pose_df['rmsd'].iloc[0])
             glide_scores.append(pose_df['glide_score'].iloc[0])
+            python_score_no_vdws.append(pose_df['np_score_no_vdw'].iloc[0])
             score = pose_df['score_no_vdw'].iloc[0]
             if score > 20:
-                score_no_vdws.append(20)
+                glide_score_no_vdws.append(20)
             elif score < -20:
-                score_no_vdws.append(-20)
+                glide_score_no_vdws.append(-20)
             else:
-                score_no_vdws.append(score)
+                glide_score_no_vdws.append(score)
 
     glide_data = [(glide_scores[i], rmsds[i], names[i]) for i in range(len(rmsds))]
-    score_no_vdw_data = [(score_no_vdws[i], rmsds[i], names[i]) for i in range(len(rmsds))]
+    glide_score_no_vdw_data = [(glide_score_no_vdws[i], rmsds[i], names[i]) for i in range(len(rmsds))]
+    python_score_no_vdw_data = [(python_score_no_vdws[i], rmsds[i], names[i]) for i in range(len(rmsds))]
     data = [(rmsds[i], names[i]) for i in range(len(rmsds))]
 
     # sort data in reverse rmsd order (make sure that we choose worst in tie breakers)
     rev_glide_data = sorted(glide_data, key=lambda x: x[1], reverse=True)
-    rev_score_no_vdw_data = sorted(score_no_vdw_data, key=lambda x: x[1], reverse=True)
+    rev_glide_score_no_vdw_data = sorted(glide_score_no_vdw_data, key=lambda x: x[1], reverse=True)
+    rev_python_score_no_vdw_data = sorted(python_score_no_vdw_data, key=lambda x: x[1], reverse=True)
 
     sorted_glide = sorted(rev_glide_data, key=lambda x: x[0])
-    sorted_score_no_vdw = sorted(rev_score_no_vdw_data, key=lambda x: x[0])
+    sorted_glide_score_no_vdw = sorted(rev_glide_score_no_vdw_data, key=lambda x: x[0])
+    sorted_python_score_no_vdw = sorted(rev_python_score_no_vdw_data, key=lambda x: x[0])
 
     glide_ls = []
-    score_no_vdw_ls = []
+    glide_score_no_vdw_ls = []
+    python_score_no_vdw_ls = []
     pose_ls = [i for i in range(1, args.num_poses_graphed)]
 
     for i in range(1, args.num_poses_graphed):
-        print(i)
-        print("Glide:", min(sorted_glide[:i], key=lambda x: x[1]))
-        print("score_no_vdw:", min(sorted_score_no_vdw[:i], key=lambda x: x[1]))
         glide_ls.append(min(sorted_glide[:i], key=lambda x: x[1])[1])
-        score_no_vdw_ls.append(min(sorted_score_no_vdw[:i], key=lambda x: x[1])[1])
+        glide_score_no_vdw_ls.append(min(sorted_glide_score_no_vdw[:i], key=lambda x: x[1])[1])
+        python_score_no_vdw_ls.append(min(sorted_python_score_no_vdw[:i], key=lambda x: x[1])[1])
 
     random_ls = get_random_data(data, args)
 
-    bar_graph(glide_ls, score_no_vdw_ls, random_ls, pose_ls, args)
+    bar_graph(glide_ls, glide_score_no_vdw_ls, python_score_no_vdw_ls, random_ls, pose_ls, args)
 
 
 if __name__=="__main__":
