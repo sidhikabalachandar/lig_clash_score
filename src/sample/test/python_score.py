@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 physics_score.py glide /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge --index 0
+$ $SCHRODINGER/run python3 python_score.py glide /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge --index 0
 """
 
 import argparse
@@ -46,31 +46,32 @@ def main():
                                                                             'ligand pose')
     parser.add_argument('--intolerable_cutoff', type=int, default=0, help='cutoff of max num intolerable residues')
     parser.add_argument('--index', type=int, default=-1, help='index of pose file')
-    parser.add_argument('--n', type=int, default=50, help='number of files processed in each job')
+    parser.add_argument('--n', type=int, default=30, help='number of files processed in each job')
     args = parser.parse_args()
 
     random.seed(0)
 
     if args.task == 'all':
         counter = 0
-        pair = '{}-to-{}'.format(args.target, args.start)
-        protein_path = os.path.join(args.raw_root, args.protein)
-        pair_path = os.path.join(protein_path, pair)
+        for protein, target, start in [('P00797', '3own', '3d91'), ('C8B467', '5ult', '5uov')]:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
 
-        grid_size = get_grid_size(pair_path, args.target, args.start)
-        group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
-        pose_path = os.path.join(pair_path, group_name)
+            grid_size = get_grid_size(pair_path, target, start)
+            group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+            pose_path = os.path.join(pair_path, group_name)
 
-        df = pd.read_csv(os.path.join(pose_path, 'poses_after_advanced_filter.csv'))
-        names = df['name'].to_list()
-        grouped_names = group_files(args.n, names)
+            df = pd.read_csv(os.path.join(pose_path, 'poses_after_advanced_filter.csv'))
+            names = df['name'].to_list()
+            grouped_names = group_files(args.n, names)
 
-        for i in range(len(grouped_names)):
-            cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 physics_score.py group {} {} ' \
-                  '--protein {} --target {} --start {} --index {}"'
-            counter += 1
-            # os.system(cmd.format(os.path.join(args.run_path, 'score_{}.out'.format(i)), args.run_path, args.raw_root,
-            #                      args.protein, args.target, args.start, i))
+            for i in range(len(grouped_names)):
+                cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 python_score.py group {} {} ' \
+                      '--protein {} --target {} --start {} --index {}"'
+                counter += 1
+                # os.system(cmd.format(os.path.join(args.run_path, 'score_{}.out'.format(i)), args.run_path, args.raw_root,
+                #                      args.protein, args.target, args.start, i))
 
         print(counter)
 

@@ -2,7 +2,7 @@
 The purpose of this code is to get the physics scores and the rmsds
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 score_and_rmsd.py run /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --max_num_concurrent_jobs 1
+$ $SCHRODINGER/run python3 glide_score.py run /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --max_num_concurrent_jobs 1
 """
 
 import argparse
@@ -207,7 +207,8 @@ def main():
             run(protein, target, start, args)
 
     elif args.task == 'check':
-        check(args)
+        for protein, target, start in [('P00797', '3own', '3d91'), ('C8B467', '5ult', '5uov')]:
+            check(protein, target, start, args)
 
     elif args.task == 'add_data':
         pair = '{}-to-{}'.format(args.target, args.start)
