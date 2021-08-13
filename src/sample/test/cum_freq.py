@@ -98,6 +98,7 @@ def main():
                 names.append(pose_df['target'].iloc[0])
                 rmsds.append(pose_df['rmsd'].iloc[0])
                 glide_scores.append(pose_df['glide_score'].iloc[0])
+                print(pose_df['target'].iloc[0])
                 python_score_no_vdws.append(pose_df['np_score_no_vdw'].iloc[0])
                 score = pose_df['score_no_vdw'].iloc[0]
                 if score > 20:
