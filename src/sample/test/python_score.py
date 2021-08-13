@@ -232,23 +232,24 @@ def main():
         print(missing)
 
     elif args.task == 'combine':
-        pair = '{}-to-{}'.format(args.target, args.start)
-        protein_path = os.path.join(args.raw_root, args.protein)
-        pair_path = os.path.join(protein_path, pair)
+        for protein, target, start in [('P00797', '3own', '3d91'), ('C8B467', '5ult', '5uov')]:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
 
-        grid_size = get_grid_size(pair_path, args.target, args.start)
-        group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
-        pose_path = os.path.join(pair_path, group_name)
-        save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
+            grid_size = get_grid_size(pair_path, target, start)
+            group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+            pose_path = os.path.join(pair_path, group_name)
+            save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
 
-        dfs = []
-        for f in os.listdir(save_path):
-            file = os.path.join(save_path, f)
-            dfs.append(pd.read_csv(file))
+            dfs = []
+            for f in os.listdir(save_path):
+                file = os.path.join(save_path, f)
+                dfs.append(pd.read_csv(file))
 
-        combined_pose_file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
-        df = pd.concat(dfs)
-        df.to_csv(combined_pose_file)
+            combined_pose_file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
+            df = pd.concat(dfs)
+            df.to_csv(combined_pose_file)
 
     elif args.task == 'glide':
         pair = '{}-to-{}'.format(args.target, args.start)
