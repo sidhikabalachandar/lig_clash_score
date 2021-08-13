@@ -17,7 +17,8 @@ from util import *
 from prot_util import *
 
 
-def bar_graph(glide_ls, glide_score_no_vdw_ls, python_score_no_vdw_ls, random_ls, pose_ls, args):
+def bar_graph(glide_ls, glide_score_no_vdw_ls, python_score_no_vdw_ls, random_ls, pose_ls, protein, target, start,
+              args):
     fig, ax = plt.subplots()
     plt.plot(pose_ls, glide_ls, label='Glide')
     plt.plot(pose_ls, glide_score_no_vdw_ls, label='Glide score no vdw')
@@ -27,8 +28,8 @@ def bar_graph(glide_ls, glide_score_no_vdw_ls, python_score_no_vdw_ls, random_ls
     ax.legend()
     ax.set_xlabel('Pose Cutoff')
     ax.set_ylabel('Min RMSD')
-    plt.title('Min RMSD Pose for {}_{}-to-{}'.format(args.protein, args.target, args.start))
-    plt.savefig(os.path.join(args.out_dir, '{}_{}_{}.png'.format(args.protein, args.target, args.start)))
+    plt.title('Min RMSD Pose for {}_{}-to-{}'.format(protein, target, start))
+    plt.savefig(os.path.join(args.out_dir, '{}_{}_{}.png'.format(protein, target, start)))
 
 
 def get_random_data(data, args):
@@ -133,7 +134,8 @@ def main():
 
         random_ls = get_random_data(data, args)
 
-        bar_graph(glide_ls, glide_score_no_vdw_ls, python_score_no_vdw_ls, random_ls, pose_ls, args)
+        bar_graph(glide_ls, glide_score_no_vdw_ls, python_score_no_vdw_ls, random_ls, pose_ls, protein, target, start,
+                  args)
 
 
 if __name__=="__main__":
