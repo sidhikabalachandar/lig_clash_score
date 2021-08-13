@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 python_score.py all /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P00797 --target 3own --start 3d91 --index 0
+$ $SCHRODINGER/run python3 python_score.py combine /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P00797 --target 3own --start 3d91 --index 0
 """
 
 import argparse
@@ -12,7 +12,6 @@ import schrodinger.structure as structure
 import random
 from schrodinger.structutils.transform import get_centroid
 import math
-import matplotlib.pyplot as plt
 import sys
 import numpy as np
 sys.path.insert(1, '../util')
