@@ -10,8 +10,6 @@ import os
 import pandas as pd
 import schrodinger.structure as structure
 import random
-from schrodinger.structutils.transform import get_centroid
-import math
 import sys
 import numpy as np
 sys.path.insert(1, '../util')
@@ -20,9 +18,6 @@ from prot_util import *
 from schrod_replacement_util import *
 sys.path.insert(1, '../../../../physics_scoring')
 from score_np import *
-sys.path.append('/home/users/sidhikab/docking')
-from docking.docking_class import Docking_Set
-from docking.utilities import score_no_vdW
 
 
 X_AXIS = [1.0, 0.0, 0.0]  # x-axis unit vector
