@@ -50,6 +50,7 @@ def main():
     parser.add_argument('--intolerable_cutoff', type=int, default=0, help='cutoff of max num intolerable residues')
     parser.add_argument('--index', type=int, default=-1, help='index of pose file')
     parser.add_argument('--n', type=int, default=30, help='number of files processed in each job')
+    parser.add_argument('--residue_cutoff', type=int, default=3, help='name of pose group subdir')
     args = parser.parse_args()
 
     random.seed(0)
