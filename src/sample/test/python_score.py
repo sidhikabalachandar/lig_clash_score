@@ -196,6 +196,41 @@ def main():
             os.mkdir(save_path)
         group_df.to_csv(os.path.join(save_path, '{}.csv'.format(args.index)))
 
+    elif args.task == 'check':
+        missing = []
+        counter = 0
+        for protein, target, start in [('P00797', '3own', '3d91'), ('C8B467', '5ult', '5uov')]:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+
+            grid_size = get_grid_size(pair_path, target, start)
+            group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+            pose_path = os.path.join(pair_path, group_name)
+
+            clash_path = os.path.join(pose_path, 'clash_data')
+            dfs = []
+            for file in os.listdir(clash_path):
+                prefix = 'pose_pred_data'
+                if file[:len(prefix)] == prefix:
+                    df = pd.read_csv(os.path.join(clash_path, file))
+                    filter_df = df[df['pred_num_intolerable'] < args.residue_cutoff]
+                    dfs.append(filter_df)
+
+            df = pd.concat(dfs)
+            names = df['name'].to_list()
+            grouped_names = group_files(args.n, names)
+
+            for i in range(len(grouped_names)):
+                counter += 1
+                save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
+                file = os.path.join(save_path, '{}.csv'.format(i))
+                if not os.path.exists(file):
+                    missing.append((protein, target, start, i))
+
+        print('Missing: {}/{}'.format(len(missing), counter))
+        print(missing)
+
     elif args.task == 'combine':
         pair = '{}-to-{}'.format(args.target, args.start)
         protein_path = os.path.join(args.raw_root, args.protein)
@@ -204,43 +239,16 @@ def main():
         grid_size = get_grid_size(pair_path, args.target, args.start)
         group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
         pose_path = os.path.join(pair_path, group_name)
+        save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
 
-        combined_pose_file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
-        df = pd.read_csv(combined_pose_file)
-        names = df['name'].to_list()
-        grouped_names = group_files(args.n, names)
         dfs = []
-
-        for i in range(len(grouped_names)):
-            save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
-            if not os.path.exists(save_path):
-                os.mkdir(save_path)
-            file = os.path.join(save_path, '{}.csv'.format(i))
+        for f in os.listdir(save_path):
+            file = os.path.join(save_path, f)
             dfs.append(pd.read_csv(file))
 
+        combined_pose_file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
         df = pd.concat(dfs)
         df.to_csv(combined_pose_file)
-
-    elif args.task == 'graph':
-        pair = '{}-to-{}'.format(args.target, args.start)
-        protein_path = os.path.join(args.raw_root, args.protein)
-        pair_path = os.path.join(protein_path, pair)
-
-        grid_size = get_grid_size(pair_path, args.target, args.start)
-        group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
-        pose_path = os.path.join(pair_path, group_name)
-
-        combined_pose_file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
-        df = pd.read_csv(combined_pose_file)
-
-        fig, ax = plt.subplots()
-        plt.scatter(df['modified_score_no_vdw'].to_list(), df['np_score_no_vdw'].to_list())
-
-        ax.legend()
-        ax.set_xlabel('modified_score_no_vdw')
-        ax.set_ylabel('np_score_no_vdw')
-        plt.title('Glide score vs np score comparisson for {}_{}-to-{}'.format(args.protein, args.target, args.start))
-        plt.savefig('score_{}_{}_{}.png'.format(args.protein, args.target, args.start))
 
     elif args.task == 'glide':
         pair = '{}-to-{}'.format(args.target, args.start)
