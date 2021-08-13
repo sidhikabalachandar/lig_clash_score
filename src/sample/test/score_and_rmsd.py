@@ -2,7 +2,7 @@
 The purpose of this code is to get the physics scores and the rmsds
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 score_and_rmsd.py add_data /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge  --max_num_concurrent_jobs 1
+$ $SCHRODINGER/run python3 score_and_rmsd.py run /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --max_num_concurrent_jobs 1
 """
 
 import argparse
@@ -69,7 +69,7 @@ def run(protein, target, start, args):
         os.mkdir(dock_output_path)
 
     docking_config = []
-    print(len(names))
+    print(len(grouped_names))
 
     # for j in range(len(grouped_names)):
     #     file = os.path.join(grouped_path, '{}.mae'.format(j))
@@ -193,7 +193,7 @@ def main():
     parser.add_argument('--protein', type=str, default='', help='protein name')
     parser.add_argument('--target', type=str, default='', help='target ligand name')
     parser.add_argument('--start', type=str, default='', help='start ligand name')
-    parser.add_argument('--n', type=int, default=4, help='number of protein, target, start groups processed in '
+    parser.add_argument('--n', type=int, default=30, help='number of protein, target, start groups processed in '
                                                          'group task')
     parser.add_argument('--max_num_concurrent_jobs', type=int, default=200, help='maximum number of concurrent jobs '
                                                                                  'that can be run on slurm at one time')
