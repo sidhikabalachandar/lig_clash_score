@@ -21,7 +21,7 @@ from prot_util import *
 from schrod_replacement_util import *
 sys.path.insert(1, '../../../../physics_scoring')
 from score_np import *
-from utils import *
+from read_vdw_params import *
 
 
 X_AXIS = [1.0, 0.0, 0.0]  # x-axis unit vector
