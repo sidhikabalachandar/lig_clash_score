@@ -189,7 +189,7 @@ def main():
     parser.add_argument('--protein', type=str, default='', help='protein name')
     parser.add_argument('--target', type=str, default='', help='target ligand name')
     parser.add_argument('--start', type=str, default='', help='start ligand name')
-    parser.add_argument('--n', type=int, default=30, help='number of protein, target, start groups processed in '
+    parser.add_argument('--n', type=int, default=35, help='number of protein, target, start groups processed in '
                                                          'group task')
     parser.add_argument('--max_num_concurrent_jobs', type=int, default=200, help='maximum number of concurrent jobs '
                                                                                  'that can be run on slurm at one time')
