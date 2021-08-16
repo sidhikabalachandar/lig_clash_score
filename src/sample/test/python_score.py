@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 python_score.py all /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P00797 --target 3own --start 3d91 --index 0
+$ $SCHRODINGER/run python3 python_score.py check /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P00797 --target 3own --start 3d91 --index 0
 """
 
 import argparse
@@ -84,11 +84,11 @@ def main():
             grouped_names = group_files(args.n, names)
 
             for i in range(len(grouped_names)):
-                cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 python_score.py group {} {} ' \
-                      '--protein {} --target {} --start {} --index {}"'
+                cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 python_score.py group {} ' \
+                      '{} {} --protein {} --target {} --start {} --index {}"'
                 counter += 1
-                os.system(cmd.format(os.path.join(args.run_path, 'score_{}.out'.format(i)), args.run_path, args.raw_root,
-                                     protein, target, start, i))
+                os.system(cmd.format(os.path.join(args.run_path, 'score_{}.out'.format(i)), args.run_path,
+                                     args.raw_root, args.vdw_param_file, protein, target, start, i))
 
         print(counter)
 
