@@ -176,7 +176,7 @@ def main():
             ligand_charge = np.array([a.partial_charge for a in no_clash_c.atom])
             ligand_atom_type = [a.element for a in no_clash_c.atom]
             python_score = physics_score(ligand_coord, ligand_charge, target_coord, target_charge,
-                                                ligand_atom_type, target_atom_type, vdw_params=vdw_params)
+                                         np.array(ligand_atom_type), np.array(target_atom_type), vdw_params=vdw_params)
 
             c.setXYZ(old_coords)
 
