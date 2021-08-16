@@ -22,6 +22,8 @@ from schrod_replacement_util import *
 sys.path.insert(1, '../../../../physics_scoring')
 from score_np import *
 from read_vdw_params import *
+sys.path.append('/home/users/sidhikab/docking')
+from docking.docking_class import Docking_Set
 
 
 X_AXIS = [1.0, 0.0, 0.0]  # x-axis unit vector
