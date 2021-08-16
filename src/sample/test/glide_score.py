@@ -202,12 +202,27 @@ def main():
         os.mkdir(args.run_path)
 
     if args.task == 'run':
-        for protein, target, start in [('P00797', '3own', '3d91'), ('C8B467', '5ult', '5uov')]:
+        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
+                                       ('C8B467', '5ult', '5uov')]:
             run(protein, target, start, args)
 
     elif args.task == 'check':
-        for protein, target, start in [('P00797', '3own', '3d91'), ('C8B467', '5ult', '5uov')]:
+        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
+                                       ('C8B467', '5ult', '5uov')]:
             check(protein, target, start, args)
+
+    elif args.task == 'remove':
+        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
+                                       ('C8B467', '5ult', '5uov')]:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+
+            grid_size = get_grid_size(pair_path, target, start)
+            group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+            pose_path = os.path.join(pair_path, group_name)
+            save_path = os.path.join(pose_path, 'dock_output_path')
+            os.system('rm -rf {}'.format(save_path))
 
 if __name__=="__main__":
     main()
