@@ -12,8 +12,10 @@ import schrodinger.structure as structure
 import random
 from schrodinger.structutils.transform import get_centroid
 import math
-import sys
 import numpy as np
+import matplotlib.pyplot as plt
+
+import sys
 sys.path.insert(1, '../util')
 from util import *
 from prot_util import *
@@ -205,7 +207,8 @@ def main():
     elif args.task == 'check':
         missing = []
         counter = 0
-        for protein, target, start in [('P00797', '3own', '3d91'), ('C8B467', '5ult', '5uov')]:
+        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
+                                       ('C8B467', '5ult', '5uov')]:
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(args.raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
@@ -238,7 +241,8 @@ def main():
         print(missing)
 
     elif args.task == 'combine':
-        for protein, target, start in [('P00797', '3own', '3d91'), ('C8B467', '5ult', '5uov')]:
+        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
+                                       ('C8B467', '5ult', '5uov')]:
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(args.raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
@@ -271,6 +275,31 @@ def main():
             os.system('rm -rf {}'.format(save_path))
             combined_pose_file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
             os.system('rm -rf {}'.format(combined_pose_file))
+
+    elif args.task == 'graph':
+        glide_scores = []
+        python_scores = []
+        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
+                                       ('C8B467', '5ult', '5uov')]:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+
+            grid_size = get_grid_size(pair_path, target, start)
+            group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+            pose_path = os.path.join(pair_path, group_name)
+            combined_pose_file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
+            df = pd.read_csv(combined_pose_file)
+            glide_scores.extend(df['modified_score_no_vdw'].to_list())
+            python_scores.extend(df['python_score'].to_list())
+
+        fig, ax = plt.subplots()
+        plt.scatter(glide_scores, python_scores)
+        plt.title('Glide score vs python score')
+        plt.xlabel('Modified Glide Score No VDW')
+        plt.ylabel('Python Score for Non-Clashing Ligand Atoms')
+        ax.legend()
+        fig.savefig('glide_vs_python.png')
 
 
 if __name__=="__main__":
