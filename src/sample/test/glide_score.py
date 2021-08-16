@@ -111,13 +111,13 @@ def run(protein, target, start, args):
 
     print(len(docking_config))
 
-    run_config = {'run_folder': args.run_path,
-                  'group_size': 1,
-                  'partition': 'rondror',
-                  'dry_run': False}
-
-    dock_set = Docking_Set()
-    dock_set.run_docking_rmsd_delete(docking_config, run_config)
+    # run_config = {'run_folder': args.run_path,
+    #               'group_size': 1,
+    #               'partition': 'rondror',
+    #               'dry_run': False}
+    #
+    # dock_set = Docking_Set()
+    # dock_set.run_docking_rmsd_delete(docking_config, run_config)
 
 
 def check(protein, target, start, args):
