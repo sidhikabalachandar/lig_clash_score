@@ -22,6 +22,7 @@ from prot_util import *
 from schrod_replacement_util import *
 sys.path.insert(1, '../../../../physics_scoring')
 from score_np import *
+from read_vdw_params import *
 sys.path.append('/home/users/sidhikab/docking')
 from docking.docking_class import Docking_Set
 from docking.utilities import score_no_vdW
