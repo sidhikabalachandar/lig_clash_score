@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 python_score.py check /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P00797 --target 3own --start 3d91 --index 0
+$ $SCHRODINGER/run python3 python_score.py remove /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P00797 --target 3own --start 3d91 --index 0
 """
 
 import argparse
@@ -14,6 +14,7 @@ from schrodinger.structutils.transform import get_centroid
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import schrodinger.structutils.interactions.steric_clash as steric_clash
 
 import sys
 sys.path.insert(1, '../util')
@@ -187,8 +188,20 @@ def main():
             ligand_atom_type = [a.element for a in c.atom]
             python_score_no_vdw = physics_score(ligand_coord, ligand_charge, target_coord, target_charge,
                                                 ligand_atom_type, target_atom_type, vdw_scale=0)
-            python_score = physics_score(ligand_coord, ligand_charge, target_coord, target_charge,
-                                         np.array(ligand_atom_type), np.array(target_atom_type), vdw_params=vdw_params)
+
+            no_clash_atom_indices = []
+            for i in c.getAtomIndices():
+                clash = steric_clash.clash_volume(prot_s, struc2=c, atoms2=[i])
+                if clash == 0:
+                    no_clash_atom_indices.append(i)
+
+            no_clash_c = c.extract(no_clash_atom_indices)
+            no_clash_ligand_coord = no_clash_c.getXYZ(copy=True)
+            no_clash_ligand_charge = np.array([a.partial_charge for a in no_clash_c.atom])
+            no_clash_ligand_atom_type = [a.element for a in no_clash_c.atom]
+            python_score = physics_score(no_clash_ligand_coord, no_clash_ligand_charge, target_coord, target_charge,
+                                         np.array(no_clash_ligand_atom_type), np.array(target_atom_type),
+                                         vdw_params=vdw_params)
 
             c.setXYZ(old_coords)
 
