@@ -28,54 +28,70 @@ Z_AXIS = [0.0, 0.0, 1.0]  # z-axis unit vector
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('task', type=str, help='either align or search')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
     parser.add_argument('vdw_param_file', type=str, help='directory where raw data will be placed')
     args = parser.parse_args()
 
     random.seed(0)
 
-    for protein, target, start in [('P00797', '3own', '3d91'), ('C8B467', '5ult', '5uov')]:
-        pair = '{}-to-{}'.format(target, start)
-        protein_path = os.path.join(args.raw_root, protein)
-        pair_path = os.path.join(protein_path, pair)
+    if args.task == 'run':
+        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
+                                       ('C8B467', '5ult', '5uov')]:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
 
-        grid_size = get_grid_size(pair_path, target, start)
-        group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
-        pose_path = os.path.join(pair_path, group_name)
+            grid_size = get_grid_size(pair_path, target, start)
+            group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+            pose_path = os.path.join(pair_path, group_name)
 
-        glide_df = pd.read_csv(os.path.join(pair_path, '{}.csv'.format(pair)))
-        names = []
-        score_no_vdws = []
-        scores = []
+            glide_df = pd.read_csv(os.path.join(pair_path, '{}.csv'.format(pair)))
+            names = []
+            score_no_vdws = []
+            scores = []
 
-        protein_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
-        prot_s = list(structure.StructureReader(protein_file))[0]
-        target_coord = prot_s.getXYZ(copy=True)
-        target_charge = np.array([a.partial_charge for a in prot_s.atom])
-        target_atom_type = [a.element for a in prot_s.atom]
-        vdw_params = read_vdw_params(args.vdw_param_file)
+            protein_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
+            prot_s = list(structure.StructureReader(protein_file))[0]
+            target_coord = prot_s.getXYZ(copy=True)
+            target_charge = np.array([a.partial_charge for a in prot_s.atom])
+            target_atom_type = [a.element for a in prot_s.atom]
+            vdw_params = read_vdw_params(args.vdw_param_file)
 
-        for i in range(1, 100):
-            name = '{}_lig{}'.format(target, i)
-            pose_file = os.path.join(pair_path, 'ligand_poses', '{}.mae'.format(name))
-            if not os.path.exists(pose_file):
-                continue
-            c = list(structure.StructureReader(pose_file))[0]
-            ligand_coord = c.getXYZ(copy=True)
-            ligand_charge = np.array([a.partial_charge for a in c.atom])
-            ligand_atom_type = [a.element for a in c.atom]
-            score_no_vdw = physics_score(ligand_coord, ligand_charge, target_coord, target_charge, ligand_atom_type,
-                                  target_atom_type, vdw_scale=0)
-            score = physics_score(ligand_coord, ligand_charge, target_coord, target_charge, np.array(ligand_atom_type),
-                                  np.array(target_atom_type), vdw_params=vdw_params)
-            names.append(name)
-            score_no_vdws.append(score_no_vdw)
-            scores.append(score)
+            for i in range(1, 100):
+                name = '{}_lig{}'.format(target, i)
+                pose_file = os.path.join(pair_path, 'ligand_poses', '{}.mae'.format(name))
+                if not os.path.exists(pose_file):
+                    continue
+                c = list(structure.StructureReader(pose_file))[0]
+                ligand_coord = c.getXYZ(copy=True)
+                ligand_charge = np.array([a.partial_charge for a in c.atom])
+                ligand_atom_type = [a.element for a in c.atom]
+                score_no_vdw = physics_score(ligand_coord, ligand_charge, target_coord, target_charge, ligand_atom_type,
+                                      target_atom_type, vdw_scale=0)
+                score = physics_score(ligand_coord, ligand_charge, target_coord, target_charge, np.array(ligand_atom_type),
+                                      np.array(target_atom_type), vdw_params=vdw_params)
+                names.append(name)
+                score_no_vdws.append(score_no_vdw)
+                scores.append(score)
 
-        glide_df = glide_df.loc[glide_df['target'].isin(names)]
-        glide_df['python_score'] = scores
-        glide_df['python_score_no_vdw'] = score_no_vdws
-        glide_df.to_csv(os.path.join(pose_path, 'glide_poses.csv'))
+            glide_df = glide_df.loc[glide_df['target'].isin(names)]
+            glide_df['python_score'] = scores
+            glide_df['python_score_no_vdw'] = score_no_vdws
+            glide_df.to_csv(os.path.join(pose_path, 'glide_poses.csv'))
+
+    elif args.task == 'remove':
+        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
+                                       ('C8B467', '5ult', '5uov')]:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+
+            grid_size = get_grid_size(pair_path, target, start)
+            group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+            pose_path = os.path.join(pair_path, group_name)
+            combined_pose_file = os.path.join(pose_path, 'glide_poses.csv')
+            os.system('rm -rf {}'.format(combined_pose_file))
 
 
 if __name__=="__main__":
