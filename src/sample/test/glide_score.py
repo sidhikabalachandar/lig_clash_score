@@ -2,19 +2,17 @@
 The purpose of this code is to get the physics scores and the rmsds
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 glide_score.py check /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --max_num_concurrent_jobs 1
+$ $SCHRODINGER/run python3 glide_score.py remove /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --max_num_concurrent_jobs 1
 """
 
 import argparse
 import os
-from tqdm import tqdm
 
 import sys
 sys.path.append('/home/users/sidhikab/docking')
 from docking.docking_class import Docking_Set
 import schrodinger.structure as structure
 import pandas as pd
-from docking.utilities import score_no_vdW
 import math
 from schrodinger.structutils.transform import get_centroid
 sys.path.insert(1, '../util')
@@ -221,7 +219,7 @@ def main():
             grid_size = get_grid_size(pair_path, target, start)
             group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
             pose_path = os.path.join(pair_path, group_name)
-            save_path = os.path.join(pose_path, 'dock_output_path')
+            save_path = os.path.join(pose_path, 'dock_output')
             os.system('rm -rf {}'.format(save_path))
 
 if __name__=="__main__":
