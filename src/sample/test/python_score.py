@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 python_score.py all /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P00797 --target 3own --start 3d91 --index 0
+$ $SCHRODINGER/run python3 python_score.py group /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P00797 --target 3own --start 3d91 --index 0
 """
 
 import argparse
@@ -37,6 +37,7 @@ def main():
     parser.add_argument('task', type=str, help='either align or search')
     parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
+    parser.add_argument('vdw_param_file', type=str, help='directory where raw data will be placed')
     parser.add_argument('--protein', type=str, default='', help='protein name')
     parser.add_argument('--target', type=str, default='', help='target ligand name')
     parser.add_argument('--start', type=str, default='', help='start ligand name')
