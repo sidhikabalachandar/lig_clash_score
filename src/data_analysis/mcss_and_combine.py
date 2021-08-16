@@ -309,7 +309,7 @@ def main():
             os.mkdir(args.run_path)
 
         for i, group in enumerate(grouped_files):
-            cmd = 'sbatch -p owners -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 score_and_rmsd.py group_name_check ' \
+            cmd = 'sbatch -p owners -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 glide_score.py group_name_check ' \
                   '{} {} {} --index {}"'
             os.system(cmd.format(os.path.join(args.run_path, 'name{}.out'.format(i)), args.docked_prot_file,
                                  args.run_path, args.raw_root, i))
