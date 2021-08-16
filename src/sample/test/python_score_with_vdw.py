@@ -170,7 +170,7 @@ def main():
                 if clash == 0:
                     no_clash_atom_indices.append(i)
 
-            no_clash_c = c.extractStructure(no_clash_atom_indices)
+            no_clash_c = c.extract(no_clash_atom_indices)
 
             ligand_coord = no_clash_c.getXYZ(copy=True)
             ligand_charge = np.array([a.partial_charge for a in no_clash_c.atom])
