@@ -88,7 +88,7 @@ def main():
             grouped_names = group_files(args.n, names)
 
             for i in range(len(grouped_names)):
-                cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 python_score.py group {} ' \
+                cmd = 'sbatch -p rondror -t 0:30:00 -o {} --wrap="$SCHRODINGER/run python3 python_score.py group {} ' \
                       '{} {} --protein {} --target {} --start {} --index {}"'
                 counter += 1
                 os.system(cmd.format(os.path.join(args.run_path, 'score_{}.out'.format(i)), args.run_path,
