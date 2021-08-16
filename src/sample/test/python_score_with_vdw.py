@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 python_score.py combine /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P00797 --target 3own --start 3d91 --index 0
+$ $SCHRODINGER/run python3 python_score_with_vdw.py group /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P00797 --target 3own --start 3d91 --index 0
 """
 
 import argparse
@@ -21,9 +21,7 @@ from prot_util import *
 from schrod_replacement_util import *
 sys.path.insert(1, '../../../../physics_scoring')
 from score_np import *
-sys.path.append('/home/users/sidhikab/docking')
-from docking.docking_class import Docking_Set
-from docking.utilities import score_no_vdW
+from utils import *
 
 
 X_AXIS = [1.0, 0.0, 0.0]  # x-axis unit vector
