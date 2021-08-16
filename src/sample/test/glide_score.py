@@ -2,7 +2,7 @@
 The purpose of this code is to get the physics scores and the rmsds
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 glide_score.py remove /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --max_num_concurrent_jobs 1
+$ $SCHRODINGER/run python3 glide_score.py run /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --max_num_concurrent_jobs 1
 """
 
 import argparse
@@ -111,13 +111,13 @@ def run(protein, target, start, args):
 
     print(len(docking_config))
 
-    # run_config = {'run_folder': args.run_path,
-    #               'group_size': 1,
-    #               'partition': 'rondror',
-    #               'dry_run': False}
-    #
-    # dock_set = Docking_Set()
-    # dock_set.run_docking_rmsd_delete(docking_config, run_config)
+    run_config = {'run_folder': args.run_path,
+                  'group_size': 1,
+                  'partition': 'rondror',
+                  'dry_run': False}
+
+    dock_set = Docking_Set()
+    dock_set.run_docking_rmsd_delete(docking_config, run_config)
 
 
 def check(protein, target, start, args):
@@ -220,6 +220,8 @@ def main():
             group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
             pose_path = os.path.join(pair_path, group_name)
             save_path = os.path.join(pose_path, 'dock_output')
+            os.system('rm -rf {}'.format(save_path))
+            save_path = os.path.join(pose_path, 'advanced_filtered_poses')
             os.system('rm -rf {}'.format(save_path))
 
 if __name__=="__main__":
