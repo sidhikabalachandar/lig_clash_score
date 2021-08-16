@@ -56,7 +56,8 @@ def main():
 
     if args.task == 'all':
         counter = 0
-        for protein, target, start in [('P00797', '3own', '3d91'), ('C8B467', '5ult', '5uov')]:
+        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
+                                       ('C8B467', '5ult', '5uov')]:
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(args.raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
@@ -119,6 +120,7 @@ def main():
         target_coord = prot_s.getXYZ(copy=True)
         target_charge = np.array([a.partial_charge for a in prot_s.atom])
         target_atom_type = [a.element for a in prot_s.atom]
+        vdw_params = read_vdw_params(args.vdw_param_file)
 
         name = args.index
         docking_config = [{'folder': dock_output_path,
@@ -136,6 +138,7 @@ def main():
         glide_score_no_vdws = []
         modified_score_no_vdws = []
         python_score_no_vdws = []
+        python_scores = []
 
         for n in group_df['name'].to_list():
             glide_score = results_by_ligand[n][0]['Score']
@@ -177,6 +180,8 @@ def main():
             ligand_atom_type = [a.element for a in c.atom]
             python_score_no_vdw = physics_score(ligand_coord, ligand_charge, target_coord, target_charge,
                                                 ligand_atom_type, target_atom_type, vdw_scale=0)
+            python_score = physics_score(ligand_coord, ligand_charge, target_coord, target_charge,
+                                         np.array(ligand_atom_type), np.array(target_atom_type), vdw_params=vdw_params)
 
             c.setXYZ(old_coords)
 
@@ -184,11 +189,13 @@ def main():
             glide_score_no_vdws.append(glide_score_no_vdw)
             modified_score_no_vdws.append(modified_score_no_vdw)
             python_score_no_vdws.append(python_score_no_vdw)
+            python_scores.append(python_score)
 
         group_df['glide_score'] = glide_scores
         group_df['score_no_vdw'] = glide_score_no_vdws
         group_df['modified_score_no_vdw'] = modified_score_no_vdws
-        group_df['np_score_no_vdw'] = python_score_no_vdws
+        group_df['python_score'] = python_scores
+        group_df['python_score_no_vdw'] = python_score_no_vdws
 
         save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
         if not os.path.exists(save_path):
@@ -249,6 +256,21 @@ def main():
             combined_pose_file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
             df = pd.concat(dfs)
             df.to_csv(combined_pose_file)
+
+    elif args.task == 'remove':
+        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
+                                       ('C8B467', '5ult', '5uov')]:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+
+            grid_size = get_grid_size(pair_path, target, start)
+            group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+            pose_path = os.path.join(pair_path, group_name)
+            save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
+            os.system('rm -rf {}'.format(save_path))
+            combined_pose_file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
+            os.system('rm -rf {}'.format(combined_pose_file))
 
 
 if __name__=="__main__":
