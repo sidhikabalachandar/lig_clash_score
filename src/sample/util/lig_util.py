@@ -1,4 +1,4 @@
-from schrodinger.structutils.transform import get_centroid
+# from schrodinger.structutils.transform import get_centroid
 import math
 import sys
 sys.path.insert(1, '../util')
@@ -25,3 +25,18 @@ def create_pose(c, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z):
                                   rot_matrix_y, rot_matrix_z)
 
     return new_coords
+
+
+def parse_name(name):
+    conformer_index, grid_loc, rot = name.split('_')
+    conformer_index = int(conformer_index)
+    grid_loc_x, grid_loc_y, grid_loc_z = grid_loc.split(',')
+    grid_loc_x = int(grid_loc_x)
+    grid_loc_y = int(grid_loc_y)
+    grid_loc_z = int(grid_loc_z)
+    rot_x, rot_y, rot_z = rot.split(',')
+    rot_x = int(rot_x)
+    rot_y = int(rot_y)
+    rot_z = int(rot_z)
+
+    return conformer_index, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z

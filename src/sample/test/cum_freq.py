@@ -17,7 +17,7 @@ import sys
 sys.path.insert(1, '../util')
 from util import *
 # from prot_util import *
-# from lig_util import *
+from lig_util import *
 
 
 def bar_graph(glide_ls, glide_score_no_vdw_ls, python_score_no_vdw_ls, python_score_ls, random_ls, pose_ls, protein,
@@ -158,16 +158,7 @@ def main():
         last_python = min(sorted_python_vdw[:args.num_poses_graphed - 1], key=lambda x: x[1])
         print('python:', last_python)
         file_name = '{}.mae'.format(last_python[2])
-        conformer_index, grid_loc, rot = last_python[2].split('_')
-        conformer_index = int(conformer_index)
-        grid_loc_x, grid_loc_y, grid_loc_z = grid_loc.split(',')
-        grid_loc_x = int(grid_loc_x)
-        grid_loc_y = int(grid_loc_y)
-        grid_loc_z = int(grid_loc_z)
-        rot_x, rot_y, rot_z = rot.split(',')
-        rot_x = int(rot_x)
-        rot_y = int(rot_y)
-        rot_z = int(rot_z)
+        conformer_index, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z = parse_name(name)
         print(conformer_index, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
         # conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
         # conformers = list(structure.StructureReader(conformer_file))
