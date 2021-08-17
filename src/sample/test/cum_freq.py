@@ -11,10 +11,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import random
 import numpy as np
+# import schrodinger.structure as structure
+
 import sys
 sys.path.insert(1, '../util')
 from util import *
 # from prot_util import *
+# from lig_util import *
 
 
 def bar_graph(glide_ls, glide_score_no_vdw_ls, python_score_no_vdw_ls, python_score_ls, random_ls, pose_ls, protein,
@@ -147,8 +150,25 @@ def main():
             python_score_ls.append(min(sorted_python_vdw[:i], key=lambda x: x[1])[1])
 
         print(protein, target, start)
-        print('glide:', min(sorted_glide[:i], key=lambda x: x[1]))
-        print('python:', min(sorted_python_vdw[:i], key=lambda x: x[1]))
+        last_glide = min(sorted_glide[:i], key=lambda x: x[1])
+        print('glide:', last_glide)
+        file_name = '{}.mae'.format(last_glide[0])
+        os.system('cp {} .'.format(os.path.join(pair_path, 'ligand_poses', file_name)))
+
+        last_python = min(sorted_python_vdw[:i], key=lambda x: x[1])
+        print('python:', last_python)
+        file_name = '{}.mae'.format(last_python[0])
+        conformer_index, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z = last_python[0].split('_')
+        print(conformer_index, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
+        # conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
+        # conformers = list(structure.StructureReader(conformer_file))
+        # c = conformers[conformer_index]
+        # old_coords = c.getXYZ(copy=True)
+        # new_coords = create_pose(c, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
+        # c.setXYZ(new_coords)
+        # with structure.StructureWriter(file_name) as pose:
+        #     pose.append(c)
+        # c.setXYZ(old_coords)
 
         random_ls = get_random_data(data, args)
 
