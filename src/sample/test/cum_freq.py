@@ -75,7 +75,7 @@ def main():
 
     random.seed(0)
 
-    for protein, target, start in [('P00797', '3own', '3d91'), ('C8B467', '5ult', '5uov')]:
+    for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'), ('C8B467', '5ult', '5uov')]:
 
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(args.raw_root, protein)
