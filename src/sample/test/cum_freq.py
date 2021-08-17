@@ -158,7 +158,7 @@ def main():
         last_python = min(sorted_python_vdw[:args.num_poses_graphed - 1], key=lambda x: x[1])
         print('python:', last_python)
         file_name = '{}.mae'.format(last_python[2])
-        conformer_index, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z = parse_name(name)
+        conformer_index, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z = parse_name(last_python[2])
         print(conformer_index, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
         # conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
         # conformers = list(structure.StructureReader(conformer_file))
