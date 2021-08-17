@@ -1,4 +1,4 @@
-# from schrodinger.structutils.transform import get_centroid
+from schrodinger.structutils.transform import get_centroid
 import math
 import sys
 sys.path.insert(1, '../util')

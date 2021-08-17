@@ -11,7 +11,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import random
 import numpy as np
-# import schrodinger.structure as structure
+import schrodinger.structure as structure
 
 import sys
 sys.path.insert(1, '../util')
@@ -160,15 +160,15 @@ def main():
         file_name = '{}.mae'.format(last_python[2])
         conformer_index, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z = parse_name(last_python[2])
         print(conformer_index, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
-        # conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
-        # conformers = list(structure.StructureReader(conformer_file))
-        # c = conformers[conformer_index]
-        # old_coords = c.getXYZ(copy=True)
-        # new_coords = create_pose(c, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
-        # c.setXYZ(new_coords)
-        # with structure.StructureWriter(file_name) as pose:
-        #     pose.append(c)
-        # c.setXYZ(old_coords)
+        conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
+        conformers = list(structure.StructureReader(conformer_file))
+        c = conformers[conformer_index]
+        old_coords = c.getXYZ(copy=True)
+        new_coords = create_pose(c, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
+        c.setXYZ(new_coords)
+        with structure.StructureWriter(file_name) as pose:
+            pose.append(c)
+        c.setXYZ(old_coords)
 
         random_ls = get_random_data(data, args)
 
