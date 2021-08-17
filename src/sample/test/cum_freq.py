@@ -140,6 +140,10 @@ def main():
             python_score_no_vdw_ls.append(min(sorted_python_score_no_vdw[:i], key=lambda x: x[1])[1])
             python_score_ls.append(min(sorted_python_vdw[:i], key=lambda x: x[1])[1])
 
+        print(protein, target, start)
+        print('glide:', min(sorted_glide[:i], key=lambda x: x[1]))
+        print('python:', min(sorted_python_vdw[:i], key=lambda x: x[1]))
+
         random_ls = get_random_data(data, args)
 
         bar_graph(glide_ls, glide_score_no_vdw_ls, python_score_no_vdw_ls, python_score_ls, random_ls, pose_ls, protein,
