@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 cum_freq.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures --protein P02829 --target 2weq --start 2yge
+$ /home/groups/rondror/software/sidhikab/miniconda/envs/test_env/bin/python cum_freq.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures --protein P02829 --target 2weq --start 2yge
 """
 
 import argparse
@@ -14,7 +14,7 @@ import numpy as np
 import sys
 sys.path.insert(1, '../util')
 from util import *
-from prot_util import *
+# from prot_util import *
 
 
 def bar_graph(glide_ls, glide_score_no_vdw_ls, python_score_no_vdw_ls, python_score_ls, random_ls, pose_ls, protein,
@@ -81,7 +81,13 @@ def main():
         protein_path = os.path.join(args.raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
 
-        grid_size = get_grid_size(pair_path, target, start)
+        # grid_size = get_grid_size(pair_path, target, start)
+        if protein == 'P02829':
+            grid_size = 2
+        elif protein == 'P00797':
+            grid_size = 4
+        elif protein == 'C8B467':
+            grid_size =  2
         group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
         pose_path = os.path.join(pair_path, group_name)
 
