@@ -8,20 +8,17 @@ $ $SCHRODINGER/run python3 test_search.py /oak/stanford/groups/rondror/projects/
 import argparse
 import os
 import schrodinger.structure as structure
-from schrodinger.structutils.transform import get_centroid
 import schrodinger.structutils.rmsd as rmsd
 import random
-import math
 import pandas as pd
 import sys
 sys.path.insert(1, '../util')
 from util import *
 from prot_util import *
 from schrod_replacement_util import *
+from lig_util import *
 
-X_AXIS = [1.0, 0.0, 0.0]  # x-axis unit vector
-Y_AXIS = [0.0, 1.0, 0.0]  # y-axis unit vector
-Z_AXIS = [0.0, 0.0, 1.0]  # z-axis unit vector
+
 EPS = 1e-6
 
 
@@ -104,21 +101,11 @@ def main():
         grid_loc_x = df.loc[[pose_index]]['grid_loc_x'].iloc[0]
         grid_loc_y = df.loc[[pose_index]]['grid_loc_y'].iloc[0]
         grid_loc_z = df.loc[[pose_index]]['grid_loc_z'].iloc[0]
-        translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
-        conformer_center = list(get_centroid(c))
-        coords = c.getXYZ(copy=True)
         rot_x = df.loc[[pose_index]]['rot_x'].iloc[0]
         rot_y = df.loc[[pose_index]]['rot_y'].iloc[0]
         rot_z = df.loc[[pose_index]]['rot_z'].iloc[0]
 
-        displacement_vector = get_coords_array_from_list(conformer_center)
-        to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
-        from_origin_matrix = get_translation_matrix(displacement_vector)
-        rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
-        rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
-        rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
-        new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
-                                      rot_matrix_y, rot_matrix_z)
+        new_coords = create_pose(c, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
 
         # for clash features dictionary
         c.setXYZ(new_coords)

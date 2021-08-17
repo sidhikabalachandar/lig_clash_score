@@ -7,18 +7,17 @@ $ $SCHRODINGER/run python3 glide_score.py check /home/users/sidhikab/lig_clash_s
 
 import argparse
 import os
+import schrodinger.structure as structure
+import pandas as pd
 
 import sys
 sys.path.append('/home/users/sidhikab/docking')
 from docking.docking_class import Docking_Set
-import schrodinger.structure as structure
-import pandas as pd
-import math
-from schrodinger.structutils.transform import get_centroid
 sys.path.insert(1, '../util')
 from util import *
 from prot_util import *
 from schrod_replacement_util import *
+from lig_util import *
 
 
 X_AXIS = [1.0, 0.0, 0.0]  # x-axis unit vector
@@ -71,27 +70,17 @@ def run(protein, target, start, args):
         file = os.path.join(grouped_path, '{}.mae'.format(j))
         with structure.StructureWriter(file) as filtered:
             for name in grouped_names[j]:
-                conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
+                conformer_index = df.loc[[pose_index]]['conformer_index'].iloc[0]
                 c = conformers[conformer_index]
                 old_coords = c.getXYZ(copy=True)
-                grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
-                grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
-                grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
-                translate_structure(c, grid_loc_x, grid_loc_y, grid_loc_z)
-                conformer_center = list(get_centroid(c))
-                coords = c.getXYZ(copy=True)
-                rot_x = df[df['name'] == name]['rot_x'].iloc[0]
-                rot_y = df[df['name'] == name]['rot_y'].iloc[0]
-                rot_z = df[df['name'] == name]['rot_z'].iloc[0]
+                grid_loc_x = df.loc[[pose_index]]['grid_loc_x'].iloc[0]
+                grid_loc_y = df.loc[[pose_index]]['grid_loc_y'].iloc[0]
+                grid_loc_z = df.loc[[pose_index]]['grid_loc_z'].iloc[0]
+                rot_x = df.loc[[pose_index]]['rot_x'].iloc[0]
+                rot_y = df.loc[[pose_index]]['rot_y'].iloc[0]
+                rot_z = df.loc[[pose_index]]['rot_z'].iloc[0]
 
-                displacement_vector = get_coords_array_from_list(conformer_center)
-                to_origin_matrix = get_translation_matrix(-1 * displacement_vector)
-                from_origin_matrix = get_translation_matrix(displacement_vector)
-                rot_matrix_x = get_rotation_matrix(X_AXIS, math.radians(rot_x))
-                rot_matrix_y = get_rotation_matrix(Y_AXIS, math.radians(rot_y))
-                rot_matrix_z = get_rotation_matrix(Z_AXIS, math.radians(rot_z))
-                new_coords = rotate_structure(coords, from_origin_matrix, to_origin_matrix, rot_matrix_x,
-                                              rot_matrix_y, rot_matrix_z)
+                new_coords = create_pose(c, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
 
                 # for clash features dictionary
                 c.setXYZ(new_coords)
