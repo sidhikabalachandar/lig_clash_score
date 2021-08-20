@@ -151,15 +151,15 @@ def main():
             elif glide_score_no_vdw < -20:
                 modified_score_no_vdw = -20
 
-            conformer_index = df.loc[[pose_index]]['conformer_index'].iloc[0]
+            conformer_index = df[df['name'] == n]['conformer_index'].iloc[0]
             c = conformers[conformer_index]
             old_coords = c.getXYZ(copy=True)
-            grid_loc_x = df.loc[[pose_index]]['grid_loc_x'].iloc[0]
-            grid_loc_y = df.loc[[pose_index]]['grid_loc_y'].iloc[0]
-            grid_loc_z = df.loc[[pose_index]]['grid_loc_z'].iloc[0]
-            rot_x = df.loc[[pose_index]]['rot_x'].iloc[0]
-            rot_y = df.loc[[pose_index]]['rot_y'].iloc[0]
-            rot_z = df.loc[[pose_index]]['rot_z'].iloc[0]
+            grid_loc_x = df[df['name'] == n]['grid_loc_x'].iloc[0]
+            grid_loc_y = df[df['name'] == n]['grid_loc_y'].iloc[0]
+            grid_loc_z = df[df['name'] == n]['grid_loc_z'].iloc[0]
+            rot_x = df[df['name'] == n]['rot_x'].iloc[0]
+            rot_y = df[df['name'] == n]['rot_y'].iloc[0]
+            rot_z = df[df['name'] == n]['rot_z'].iloc[0]
 
             new_coords = create_pose(c, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
 
