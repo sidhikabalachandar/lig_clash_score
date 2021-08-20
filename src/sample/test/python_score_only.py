@@ -119,7 +119,7 @@ def main():
         df = pd.concat(dfs)
         correct_df = df[df['rmsd'] < args.rmsd_cutoff]
         correct_names = correct_df['name'].to_list()
-        incorrect_df = df[df['rmsd'] <= args.rmsd_cutoff]
+        incorrect_df = df[df['rmsd'] >= args.rmsd_cutoff]
         incorrect_names = incorrect_df['name'].to_list()
         random.shuffle(incorrect_names)
         incorrect_names = incorrect_names[:args.max_num_poses_considered - len(correct_names)]
