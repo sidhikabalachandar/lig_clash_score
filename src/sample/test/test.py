@@ -141,15 +141,15 @@ def main():
             for i in subset_df.index:
                 name = df.loc[[i]]['name'].iloc[0]
 
-                conformer_index = df.loc[[pose_index]]['conformer_index'].iloc[0]
+                conformer_index = df.loc[[i]]['conformer_index'].iloc[0]
                 c = conformers[conformer_index]
                 old_coords = c.getXYZ(copy=True)
-                grid_loc_x = df.loc[[pose_index]]['grid_loc_x'].iloc[0]
-                grid_loc_y = df.loc[[pose_index]]['grid_loc_y'].iloc[0]
-                grid_loc_z = df.loc[[pose_index]]['grid_loc_z'].iloc[0]
-                rot_x = df.loc[[pose_index]]['rot_x'].iloc[0]
-                rot_y = df.loc[[pose_index]]['rot_y'].iloc[0]
-                rot_z = df.loc[[pose_index]]['rot_z'].iloc[0]
+                grid_loc_x = df.loc[[i]]['grid_loc_x'].iloc[0]
+                grid_loc_y = df.loc[[i]]['grid_loc_y'].iloc[0]
+                grid_loc_z = df.loc[[i]]['grid_loc_z'].iloc[0]
+                rot_x = df.loc[[i]]['rot_x'].iloc[0]
+                rot_y = df.loc[[i]]['rot_y'].iloc[0]
+                rot_z = df.loc[[i]]['rot_z'].iloc[0]
 
                 new_coords = create_pose(c, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
                 # for clash features dictionary
