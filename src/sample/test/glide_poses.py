@@ -43,7 +43,7 @@ def main():
         for protein, target, start in [('P03368', '1gno', '1zp8'), ('P02829', '2fxs', '2weq'),
                                        ('P11838', '3wz6', '1gvx'), ('P00523', '4ybk', '2oiq'),
                                        ('P00519', '4twp', '5hu9'), ('P0DOX7', '6msy', '6mub')]:
-            cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 glide_poses.py group {} {} {}' \
+            cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 glide_poses.py group {} {} {} ' \
                   '--protein {} --target {} --start {}"'
             os.system(cmd.format(os.path.join(args.run_path, 'glide_{}_{}_{}.out'.format(protein, target, start)),
                                  args.run_path, args.raw_root, args.vdw_param_file, protein, target, start))
