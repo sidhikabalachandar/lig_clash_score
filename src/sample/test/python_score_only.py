@@ -56,45 +56,44 @@ def main():
 
     if args.task == 'all':
         counter = 0
-        # for protein, target, start in [('P03368', '1gno', '1zp8'), ('P02829', '2fxs', '2weq'),
-        #                                ('P11838', '3wz6', '1gvx'), ('P00523', '4ybk', '2oiq'),
-        #                                ('P00519', '4twp', '5hu9'), ('P0DOX7', '6msy', '6mub')]:
+        for protein, target, start in [('P03368', '1gno', '1zp8'), ('P02829', '2fxs', '2weq'),
+                                       ('P11838', '3wz6', '1gvx'), ('P00523', '4ybk', '2oiq'),
+                                       ('P00519', '4twp', '5hu9'), ('P0DOX7', '6msy', '6mub')]:
 
-        for protein, target, start, i in [('P11838', '3wz6', '1gvx', 7), ('P00519', '4twp', '5hu9', 1), ('P0DOX7', '6msy', '6mub', 16)]:
-            # pair = '{}-to-{}'.format(target, start)
-            # protein_path = os.path.join(args.raw_root, protein)
-            # pair_path = os.path.join(protein_path, pair)
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
 
-            # grid_size = get_grid_size(pair_path, target, start)
-            # group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
-            # pose_path = os.path.join(pair_path, group_name)
+            grid_size = get_grid_size(pair_path, target, start)
+            group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+            pose_path = os.path.join(pair_path, group_name)
 
-            # clash_path = os.path.join(pose_path, 'clash_data')
-            # dfs = []
-            # for file in os.listdir(clash_path):
-            #     prefix = 'pose_pred_data'
-            #     if file[:len(prefix)] == prefix:
-            #         df = pd.read_csv(os.path.join(clash_path, file))
-            #         filter_df = df[df['pred_num_intolerable'] < args.residue_cutoff]
-            #         dfs.append(filter_df)
-            #
-            # df = pd.concat(dfs)
-            # correct_df = df[df['rmsd'] < args.rmsd_cutoff]
-            # correct_names = correct_df['name'].to_list()
-            # incorrect_df = df[df['rmsd'] <= args.rmsd_cutoff]
-            # incorrect_names = incorrect_df['name'].to_list()
-            # random.shuffle(incorrect_names)
-            # incorrect_names = incorrect_names[:args.max_num_poses_considered - len(correct_names)]
-            # names = correct_names + incorrect_names
-            # grouped_names = group_files(args.n, names)
+            clash_path = os.path.join(pose_path, 'clash_data')
+            dfs = []
+            for file in os.listdir(clash_path):
+                prefix = 'pose_pred_data'
+                if file[:len(prefix)] == prefix:
+                    df = pd.read_csv(os.path.join(clash_path, file))
+                    filter_df = df[df['pred_num_intolerable'] < args.residue_cutoff]
+                    dfs.append(filter_df)
 
-            # for i in range(len(grouped_names)):
-            cmd = 'sbatch -p rondror -t 0:30:00 -o {} --wrap="$SCHRODINGER/run python3 python_score_only.py ' \
-                  'group {} {} {} --protein {} --target {} --start {} --index {}"'
-            counter += 1
-            os.system(cmd.format(os.path.join(args.run_path,
-                                              'score_{}_{}_{}_{}.out'.format(protein, target, start, i)),
-                                 args.run_path, args.raw_root, args.vdw_param_file, protein, target, start, i))
+            df = pd.concat(dfs)
+            correct_df = df[df['rmsd'] < args.rmsd_cutoff]
+            correct_names = correct_df['name'].to_list()
+            incorrect_df = df[df['rmsd'] <= args.rmsd_cutoff]
+            incorrect_names = incorrect_df['name'].to_list()
+            random.shuffle(incorrect_names)
+            incorrect_names = incorrect_names[:args.max_num_poses_considered - len(correct_names)]
+            names = correct_names + incorrect_names
+            grouped_names = group_files(args.n, names)
+
+            for i in range(len(grouped_names)):
+                cmd = 'sbatch -p rondror -t 0:30:00 -o {} --wrap="$SCHRODINGER/run python3 python_score_only.py ' \
+                      'group {} {} {} --protein {} --target {} --start {} --index {}"'
+                counter += 1
+                # os.system(cmd.format(os.path.join(args.run_path,
+                #                                   'score_{}_{}_{}_{}.out'.format(protein, target, start, i)),
+                #                      args.run_path, args.raw_root, args.vdw_param_file, protein, target, start, i))
 
         print(counter)
 
@@ -137,23 +136,6 @@ def main():
         vdw_params = read_vdw_params(args.vdw_param_file)
 
         group_df = df[df['name'].isin(grouped_names[args.index])]
-        print(len(group_df))
-        print(len(grouped_names[args.index]))
-        print(len(group_df['name'].to_list()))
-
-        counter = 0
-        for name in grouped_names[args.index]:
-            counter += 1
-            if name not in group_df['name'].to_list():
-                print(name)
-                if name in correct_names:
-                    print('correct')
-                elif name in incorrect_names:
-                    print('incorrect')
-
-        print(counter)
-
-        return
 
         python_scores = []
 
