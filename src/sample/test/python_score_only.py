@@ -149,6 +149,14 @@ def main():
         print(len(group_df['name'].unique()))
         print(len(group_df['name'].to_list()))
 
+        for name in group_df['name'].unique():
+            if len(group_df[group_df['name'] == name]) > 1:
+                print(group_df[group_df['name'] == name])
+                if name in correct_names:
+                    print('correct')
+                elif name in incorrect_names:
+                    print('incorrect')
+
         return
 
         python_scores = []
