@@ -139,6 +139,16 @@ def main():
         group_df = df[df['name'].isin(grouped_names[args.index])]
         print(len(group_df))
         print(len(grouped_names[args.index]))
+        print(len(group_df['name'].to_list()))
+
+        for name in grouped_names[args.index]:
+            if name not in group_df['name'].to_list():
+                print(name)
+                if name in correct_names:
+                    print('correct')
+                elif name in incorrect_names:
+                    print('incorrect')
+
         python_scores = []
 
         for name in grouped_names[args.index]:
