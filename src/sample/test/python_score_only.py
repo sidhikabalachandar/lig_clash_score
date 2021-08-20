@@ -116,6 +116,8 @@ def main():
             prefix = 'pose_pred_data'
             if file[:len(prefix)] == prefix:
                 df = pd.read_csv(os.path.join(clash_path, file))
+                if '296_-2,6,4_100,340,100' in df['name'].to_list():
+                    print(file)
                 filter_df = df[df['pred_num_intolerable'] < args.residue_cutoff]
                 dfs.append(filter_df)
 
