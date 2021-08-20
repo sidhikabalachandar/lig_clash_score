@@ -149,6 +149,8 @@ def main():
                 elif name in incorrect_names:
                     print('incorrect')
 
+        return 
+
         python_scores = []
 
         for name in grouped_names[args.index]:
