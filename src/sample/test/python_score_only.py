@@ -34,7 +34,8 @@ def main():
     parser.add_argument('--protein', type=str, default='', help='protein name')
     parser.add_argument('--target', type=str, default='', help='target ligand name')
     parser.add_argument('--start', type=str, default='', help='start ligand name')
-    parser.add_argument('--max_num_poses_considered', type=int, default=4000, help='maximum number of poses considered')
+    parser.add_argument('--max_num_correct', type=int, default=390, help='maximum number of poses considered')
+    parser.add_argument('--max_num_poses_considered', type=int, default=3900, help='maximum number of poses considered')
     parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
     parser.add_argument('--rotation_search_step_size', type=int, default=5, help='step size between each angle '
                                                                                  'checked, in degrees')
@@ -80,6 +81,8 @@ def main():
             df = pd.concat(dfs)
             correct_df = df[df['rmsd'] < args.rmsd_cutoff]
             correct_names = correct_df['name'].to_list()
+            random.shuffle(correct_names)
+            correct_names = correct_names[:]
             incorrect_df = df[df['rmsd'] >= args.rmsd_cutoff]
             incorrect_names = incorrect_df['name'].to_list()
             random.shuffle(incorrect_names)
