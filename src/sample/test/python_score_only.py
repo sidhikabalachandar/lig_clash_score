@@ -182,8 +182,10 @@ def main():
     elif args.task == 'check':
         missing = []
         counter = 0
-        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
-                                       ('C8B467', '5ult', '5uov')]:
+
+        for protein, target, start in [('P03368', '1gno', '1zp8'), ('P02829', '2fxs', '2weq'),
+                                       ('P11838', '3wz6', '1gvx'), ('P00523', '4ybk', '2oiq'),
+                                       ('P00519', '4twp', '5hu9'), ('P0DOX7', '6msy', '6mub')]:
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(args.raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
@@ -202,7 +204,13 @@ def main():
                     dfs.append(filter_df)
 
             df = pd.concat(dfs)
-            names = df['name'].to_list()
+            correct_df = df[df['rmsd'] < args.rmsd_cutoff]
+            correct_names = correct_df['name'].to_list()
+            incorrect_df = df[df['rmsd'] <= args.rmsd_cutoff]
+            incorrect_names = incorrect_df['name'].to_list()
+            random.shuffle(incorrect_names)
+            incorrect_names = incorrect_names[:args.max_num_poses_considered - len(correct_names)]
+            names = correct_names + incorrect_names
             grouped_names = group_files(args.n, names)
 
             for i in range(len(grouped_names)):
@@ -216,8 +224,9 @@ def main():
         print(missing)
 
     elif args.task == 'combine':
-        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
-                                       ('C8B467', '5ult', '5uov')]:
+        for protein, target, start in [('P03368', '1gno', '1zp8'), ('P02829', '2fxs', '2weq'),
+                                       ('P11838', '3wz6', '1gvx'), ('P00523', '4ybk', '2oiq'),
+                                       ('P00519', '4twp', '5hu9'), ('P0DOX7', '6msy', '6mub')]:
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(args.raw_root, protein)
             pair_path = os.path.join(protein_path, pair)

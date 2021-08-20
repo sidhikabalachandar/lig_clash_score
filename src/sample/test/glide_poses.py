@@ -40,12 +40,13 @@ def main():
     random.seed(0)
 
     if args.task == 'all':
-        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
-                                       ('C8B467', '5ult', '5uov')]:
+        for protein, target, start in [('P03368', '1gno', '1zp8'), ('P02829', '2fxs', '2weq'),
+                                       ('P11838', '3wz6', '1gvx'), ('P00523', '4ybk', '2oiq'),
+                                       ('P00519', '4twp', '5hu9'), ('P0DOX7', '6msy', '6mub')]:
             cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 glide_poses.py group {} {} {}' \
                   '--protein {} --target {} --start {}"'
-            os.system(cmd.format(os.path.join(args.run_path, 'score_{}.out'.format(i)), args.run_path,
-                                 args.raw_root, args.vdw_param_file, protein, target, start))
+            os.system(cmd.format(os.path.join(args.run_path, 'glide_{}_{}_{}.out'.format(protein, target, start)),
+                                 args.run_path, args.raw_root, args.vdw_param_file, protein, target, start))
 
     elif args.task == 'group':
         pair = '{}-to-{}'.format(args.target, args.start)
