@@ -142,6 +142,7 @@ def main():
         print(len(group_df['name'].to_list()))
 
         for name in grouped_names[args.index]:
+            print('checking', name)
             if name not in group_df['name'].to_list():
                 print(name)
                 if name in correct_names:
@@ -149,7 +150,7 @@ def main():
                 elif name in incorrect_names:
                     print('incorrect')
 
-        return 
+        return
 
         python_scores = []
 
