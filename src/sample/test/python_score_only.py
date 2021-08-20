@@ -141,14 +141,17 @@ def main():
         print(len(grouped_names[args.index]))
         print(len(group_df['name'].to_list()))
 
+        counter = 0
         for name in grouped_names[args.index]:
-            print('checking', name)
+            counter += 1
             if name not in group_df['name'].to_list():
                 print(name)
                 if name in correct_names:
                     print('correct')
                 elif name in incorrect_names:
                     print('incorrect')
+
+        print(counter)
 
         return
 
