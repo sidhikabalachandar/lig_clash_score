@@ -149,6 +149,11 @@ def main():
         print(len(group_df['name'].unique()))
         print(len(group_df['name'].to_list()))
 
+        pd.set_option('display.max_rows', None)
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', None)
+        pd.set_option('display.max_colwidth', -1)
+
         for name in group_df['name'].unique():
             if len(group_df[group_df['name'] == name]) > 1:
                 print(group_df[group_df['name'] == name])
