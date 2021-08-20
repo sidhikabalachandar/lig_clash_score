@@ -253,7 +253,8 @@ def main():
             dfs = []
             for f in os.listdir(save_path):
                 file = os.path.join(save_path, f)
-                dfs.append(pd.read_csv(file))
+                if os.path.exists(file):
+                    dfs.append(pd.read_csv(file))
 
             combined_pose_file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
             df = pd.concat(dfs)
