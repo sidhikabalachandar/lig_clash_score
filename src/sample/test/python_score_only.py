@@ -145,6 +145,7 @@ def main():
         vdw_params = read_vdw_params(args.vdw_param_file)
 
         group_df = df[df['name'].isin(grouped_names[args.index])]
+        group_df.drop_duplicates('title', inplace=True)
 
         print(len(group_df))
         print(len(grouped_names[args.index]))
