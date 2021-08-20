@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 python_score_only.py all /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P03368 --target 1gno --start 1zp8 --index 0 --n 5
+$ $SCHRODINGER/run python3 python_score_only.py group /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P11838 --target 3wz6 --start 1gvx --index 7 --n 5
 """
 
 import argparse
@@ -137,6 +137,8 @@ def main():
         vdw_params = read_vdw_params(args.vdw_param_file)
 
         group_df = df[df['name'].isin(grouped_names[args.index])]
+        print(len(group_df))
+        print(len(grouped_names[args.index]))
         python_scores = []
 
         for name in grouped_names[args.index]:
