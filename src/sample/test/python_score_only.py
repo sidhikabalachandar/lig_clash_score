@@ -120,7 +120,7 @@ def main():
         target_atom_type = [a.element for a in prot_s.atom]
         vdw_params = read_vdw_params(args.vdw_param_file)
 
-        group_df = df[grouped_names[args.index]]
+        group_df = df[df['name'].isin(grouped_names[args.index])]
         python_score_no_vdws = []
         python_scores = []
 
