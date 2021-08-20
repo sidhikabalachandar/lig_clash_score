@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 python_score_only.py all /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P00797 --target 3own --start 3d91 --index 0 --n 1
+$ $SCHRODINGER/run python3 python_score_only.py group /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P03368 --target 1gno --start 1zp8 --index 0 --n 5
 """
 
 import argparse
@@ -45,7 +45,7 @@ def main():
                                                                             'ligand pose')
     parser.add_argument('--intolerable_cutoff', type=int, default=0, help='cutoff of max num intolerable residues')
     parser.add_argument('--index', type=int, default=-1, help='index of pose file')
-    parser.add_argument('--n', type=int, default=120, help='number of files processed in each job')
+    parser.add_argument('--n', type=int, default=90, help='number of files processed in each job')
     parser.add_argument('--residue_cutoff', type=int, default=3, help='name of pose group subdir')
     parser.add_argument('--rmsd_cutoff', type=float, default=2.5, help='name of pose group subdir')
     args = parser.parse_args()
@@ -115,7 +115,13 @@ def main():
                 dfs.append(filter_df)
 
         df = pd.concat(dfs)
-        names = df['name'].to_list()
+        correct_df = df[df['rmsd'] < args.rmsd_cutoff]
+        correct_names = correct_df['name'].to_list()
+        incorrect_df = df[df['rmsd'] <= args.rmsd_cutoff]
+        incorrect_names = incorrect_df['name'].to_list()
+        random.shuffle(incorrect_names)
+        incorrect_names = incorrect_names[:args.max_num_poses_considered - len(correct_names)]
+        names = correct_names + incorrect_names
         grouped_names = group_files(args.n, names)
 
         conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
@@ -129,7 +135,6 @@ def main():
         vdw_params = read_vdw_params(args.vdw_param_file)
 
         group_df = df[df['name'].isin(grouped_names[args.index])]
-        # python_score_no_vdws = []
         python_scores = []
 
         for name in grouped_names[args.index]:
@@ -150,12 +155,6 @@ def main():
             c.setXYZ(new_coords)
             c.title = name
 
-            # ligand_coord = new_coords
-            # ligand_charge = np.array([a.partial_charge for a in c.atom])
-            # ligand_atom_type = [a.element for a in c.atom]
-            # python_score_no_vdw = physics_score(ligand_coord, ligand_charge, target_coord, target_charge,
-            #                                     ligand_atom_type, target_atom_type, vdw_scale=0)
-
             no_clash_atom_indices = []
             for i in c.getAtomIndices():
                 clash = steric_clash.clash_volume(prot_s, struc2=c, atoms2=[i])
@@ -172,17 +171,15 @@ def main():
 
             c.setXYZ(old_coords)
 
-            # python_score_no_vdws.append(python_score_no_vdw)
             python_scores.append(python_score)
             print(time.time() - start_time)
 
         group_df['python_score'] = python_scores
-        # group_df['python_score_no_vdw'] = python_score_no_vdws
 
-        # save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
-        # if not os.path.exists(save_path):
-        #     os.mkdir(save_path)
-        # group_df.to_csv(os.path.join(save_path, '{}.csv'.format(args.index)))
+        save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+        group_df.to_csv(os.path.join(save_path, '{}.csv'.format(args.index)))
 
     elif args.task == 'check':
         missing = []
