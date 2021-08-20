@@ -57,46 +57,47 @@ def main():
 
     if args.task == 'all':
         counter = 0
-        for protein, target, start in [('P03368', '1gno', '1zp8'), ('P02829', '2fxs', '2weq'),
-                                       ('P11838', '3wz6', '1gvx'), ('P00523', '4ybk', '2oiq'),
-                                       ('P00519', '4twp', '5hu9'), ('P0DOX7', '6msy', '6mub')]:
+        # for protein, target, start in [('P03368', '1gno', '1zp8'), ('P02829', '2fxs', '2weq'),
+        #                                ('P11838', '3wz6', '1gvx'), ('P00523', '4ybk', '2oiq'),
+        #                                ('P00519', '4twp', '5hu9'), ('P0DOX7', '6msy', '6mub')]:
 
-            pair = '{}-to-{}'.format(target, start)
-            protein_path = os.path.join(args.raw_root, protein)
-            pair_path = os.path.join(protein_path, pair)
-
-            grid_size = get_grid_size(pair_path, target, start)
-            group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
-            pose_path = os.path.join(pair_path, group_name)
-
-            clash_path = os.path.join(pose_path, 'clash_data')
-            dfs = []
-            for file in os.listdir(clash_path):
-                prefix = 'pose_pred_data'
-                if file[:len(prefix)] == prefix:
-                    df = pd.read_csv(os.path.join(clash_path, file))
-                    filter_df = df[df['pred_num_intolerable'] < args.residue_cutoff]
-                    dfs.append(filter_df)
-
-            df = pd.concat(dfs)
-            correct_df = df[df['rmsd'] < args.rmsd_cutoff]
-            correct_names = correct_df['name'].to_list()
-            random.shuffle(correct_names)
-            correct_names = correct_names[:args.max_num_correct]
-            incorrect_df = df[df['rmsd'] >= args.rmsd_cutoff]
-            incorrect_names = incorrect_df['name'].to_list()
-            random.shuffle(incorrect_names)
-            incorrect_names = incorrect_names[:args.max_num_poses_considered - len(correct_names)]
-            names = correct_names + incorrect_names
-            grouped_names = group_files(args.n, names)
-
-            for i in range(len(grouped_names)):
-                cmd = 'sbatch -p rondror -t 0:30:00 -o {} --wrap="$SCHRODINGER/run python3 python_score_only.py ' \
-                      'group {} {} {} --protein {} --target {} --start {} --index {}"'
-                counter += 1
-                os.system(cmd.format(os.path.join(args.run_path,
-                                                  'score_{}_{}_{}_{}.out'.format(protein, target, start, i)),
-                                     args.run_path, args.raw_root, args.vdw_param_file, protein, target, start, i))
+        for protein, target, start, i in [('P03368', '1gno', '1zp8', 1), ('P03368', '1gno', '1zp8', 7), ('P03368', '1gno', '1zp8', 9), ('P03368', '1gno', '1zp8', 15), ('P03368', '1gno', '1zp8', 16), ('P03368', '1gno', '1zp8', 17), ('P03368', '1gno', '1zp8', 18), ('P03368', '1gno', '1zp8', 19), ('P03368', '1gno', '1zp8', 20), ('P03368', '1gno', '1zp8', 21), ('P03368', '1gno', '1zp8', 23), ('P03368', '1gno', '1zp8', 24), ('P00523', '4ybk', '2oiq', 3), ('P00523', '4ybk', '2oiq', 4), ('P00523', '4ybk', '2oiq', 6), ('P00523', '4ybk', '2oiq', 7), ('P00523', '4ybk', '2oiq', 9), ('P00523', '4ybk', '2oiq', 10), ('P00523', '4ybk', '2oiq', 11), ('P00523', '4ybk', '2oiq', 12), ('P00523', '4ybk', '2oiq', 13), ('P00523', '4ybk', '2oiq', 14), ('P00523', '4ybk', '2oiq', 15), ('P00523', '4ybk', '2oiq', 16), ('P00523', '4ybk', '2oiq', 17), ('P00523', '4ybk', '2oiq', 18), ('P00523', '4ybk', '2oiq', 19), ('P00523', '4ybk', '2oiq', 22), ('P00523', '4ybk', '2oiq', 24), ('P00523', '4ybk', '2oiq', 25), ('P00523', '4ybk', '2oiq', 26), ('P00523', '4ybk', '2oiq', 27), ('P00523', '4ybk', '2oiq', 28), ('P00523', '4ybk', '2oiq', 29), ('P00523', '4ybk', '2oiq', 32), ('P00523', '4ybk', '2oiq', 33), ('P00523', '4ybk', '2oiq', 34), ('P00523', '4ybk', '2oiq', 35), ('P00523', '4ybk', '2oiq', 36), ('P00523', '4ybk', '2oiq', 37), ('P00523', '4ybk', '2oiq', 38), ('P00523', '4ybk', '2oiq', 39), ('P00523', '4ybk', '2oiq', 40), ('P00523', '4ybk', '2oiq', 42), ('P00523', '4ybk', '2oiq', 43), ('P00519', '4twp', '5hu9', 1), ('P00519', '4twp', '5hu9', 2), ('P00519', '4twp', '5hu9', 3), ('P00519', '4twp', '5hu9', 4), ('P00519', '4twp', '5hu9', 5), ('P00519', '4twp', '5hu9', 6), ('P00519', '4twp', '5hu9', 7), ('P00519', '4twp', '5hu9', 8), ('P00519', '4twp', '5hu9', 9), ('P00519', '4twp', '5hu9', 10), ('P00519', '4twp', '5hu9', 11), ('P00519', '4twp', '5hu9', 12), ('P00519', '4twp', '5hu9', 13), ('P00519', '4twp', '5hu9', 14), ('P00519', '4twp', '5hu9', 15), ('P00519', '4twp', '5hu9', 16), ('P00519', '4twp', '5hu9', 17), ('P00519', '4twp', '5hu9', 18), ('P00519', '4twp', '5hu9', 19), ('P00519', '4twp', '5hu9', 20), ('P00519', '4twp', '5hu9', 21), ('P00519', '4twp', '5hu9', 22), ('P00519', '4twp', '5hu9', 23), ('P00519', '4twp', '5hu9', 24), ('P00519', '4twp', '5hu9', 25), ('P00519', '4twp', '5hu9', 26), ('P00519', '4twp', '5hu9', 27), ('P00519', '4twp', '5hu9', 28), ('P00519', '4twp', '5hu9', 29), ('P00519', '4twp', '5hu9', 30), ('P00519', '4twp', '5hu9', 31), ('P00519', '4twp', '5hu9', 32), ('P00519', '4twp', '5hu9', 33), ('P00519', '4twp', '5hu9', 34), ('P00519', '4twp', '5hu9', 35), ('P00519', '4twp', '5hu9', 36), ('P00519', '4twp', '5hu9', 37), ('P00519', '4twp', '5hu9', 38), ('P00519', '4twp', '5hu9', 39), ('P00519', '4twp', '5hu9', 40), ('P00519', '4twp', '5hu9', 41), ('P00519', '4twp', '5hu9', 42)]:
+            # pair = '{}-to-{}'.format(target, start)
+            # protein_path = os.path.join(args.raw_root, protein)
+            # pair_path = os.path.join(protein_path, pair)
+            #
+            # grid_size = get_grid_size(pair_path, target, start)
+            # group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+            # pose_path = os.path.join(pair_path, group_name)
+            #
+            # clash_path = os.path.join(pose_path, 'clash_data')
+            # dfs = []
+            # for file in os.listdir(clash_path):
+            #     prefix = 'pose_pred_data'
+            #     if file[:len(prefix)] == prefix:
+            #         df = pd.read_csv(os.path.join(clash_path, file))
+            #         filter_df = df[df['pred_num_intolerable'] < args.residue_cutoff]
+            #         dfs.append(filter_df)
+            #
+            # df = pd.concat(dfs)
+            # correct_df = df[df['rmsd'] < args.rmsd_cutoff]
+            # correct_names = correct_df['name'].to_list()
+            # random.shuffle(correct_names)
+            # correct_names = correct_names[:args.max_num_correct]
+            # incorrect_df = df[df['rmsd'] >= args.rmsd_cutoff]
+            # incorrect_names = incorrect_df['name'].to_list()
+            # random.shuffle(incorrect_names)
+            # incorrect_names = incorrect_names[:args.max_num_poses_considered - len(correct_names)]
+            # names = correct_names + incorrect_names
+            # grouped_names = group_files(args.n, names)
+            # 
+            # for i in range(len(grouped_names)):
+            cmd = 'sbatch -p rondror -t 0:30:00 -o {} --wrap="$SCHRODINGER/run python3 python_score_only.py ' \
+                  'group {} {} {} --protein {} --target {} --start {} --index {}"'
+            counter += 1
+            os.system(cmd.format(os.path.join(args.run_path,
+                                              'score_{}_{}_{}_{}.out'.format(protein, target, start, i)),
+                                 args.run_path, args.raw_root, args.vdw_param_file, protein, target, start, i))
 
         print(counter)
 
