@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 python_score_only.py group /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P00523 --target 4ybk --start 2oiq --index 11 --n 5
+$ $SCHRODINGER/run python3 python_score_only.py group /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P00523 --target 4ybk --start 2oiq --index 10 --n 5
 """
 
 import argparse
@@ -116,9 +116,6 @@ def main():
             prefix = 'pose_pred_data'
             if file[:len(prefix)] == prefix:
                 df = pd.read_csv(os.path.join(clash_path, file))
-                if '296_-2,6,4_100,340,100' in df['name'].to_list():
-                    print(file)
-                    print(len(df[df['name'] == '296_-2,6,4_100,340,100']))
                 filter_df = df[df['pred_num_intolerable'] < args.residue_cutoff]
                 dfs.append(filter_df)
 
@@ -144,10 +141,8 @@ def main():
         target_atom_type = [a.element for a in prot_s.atom]
         vdw_params = read_vdw_params(args.vdw_param_file)
 
-        group_df = df[df['name'].isin(grouped_names[args.index])]
-        group_df.drop_duplicates('name', inplace=True)
-
         python_scores = []
+        names = []
 
         for name in grouped_names[args.index]:
             conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
@@ -172,8 +167,8 @@ def main():
                 if clash == 0:
                     no_clash_atom_indices.append(i)
 
-            print(name)
-            print(no_clash_atom_indices)
+            if len(no_clash_atom_indices) == 0:
+                continue
             no_clash_c = c.extract(no_clash_atom_indices)
             no_clash_ligand_coord = no_clash_c.getXYZ(copy=True)
             no_clash_ligand_charge = np.array([a.partial_charge for a in no_clash_c.atom])
@@ -183,8 +178,11 @@ def main():
                                          vdw_params=vdw_params)
 
             c.setXYZ(old_coords)
-
+            names.append(name)
             python_scores.append(python_score)
+
+        group_df = df[df['name'].isin(names)]
+        group_df.drop_duplicates('name', inplace=True)
 
         group_df['python_score'] = python_scores
 
