@@ -147,27 +147,6 @@ def main():
         group_df = df[df['name'].isin(grouped_names[args.index])]
         group_df.drop_duplicates('name', inplace=True)
 
-        print(len(group_df))
-        print(len(grouped_names[args.index]))
-
-        print(len(group_df['name'].unique()))
-        print(len(group_df['name'].to_list()))
-
-        pd.set_option('display.max_rows', None)
-        pd.set_option('display.max_columns', None)
-        pd.set_option('display.width', None)
-        pd.set_option('display.max_colwidth', -1)
-
-        for name in group_df['name'].unique():
-            if len(group_df[group_df['name'] == name]) > 1:
-                print(group_df[group_df['name'] == name])
-                if name in correct_names:
-                    print('correct')
-                elif name in incorrect_names:
-                    print('incorrect')
-
-        return
-
         python_scores = []
 
         for name in grouped_names[args.index]:
