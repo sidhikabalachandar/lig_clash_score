@@ -82,12 +82,13 @@ def main():
             correct_df = df[df['rmsd'] < args.rmsd_cutoff]
             correct_names = correct_df['name'].to_list()
             random.shuffle(correct_names)
-            correct_names = correct_names[:]
+            correct_names = correct_names[:args.max_num_correct]
             incorrect_df = df[df['rmsd'] >= args.rmsd_cutoff]
             incorrect_names = incorrect_df['name'].to_list()
             random.shuffle(incorrect_names)
             incorrect_names = incorrect_names[:args.max_num_poses_considered - len(correct_names)]
             names = correct_names + incorrect_names
+            print(len(names))
             grouped_names = group_files(args.n, names)
 
             for i in range(len(grouped_names)):
