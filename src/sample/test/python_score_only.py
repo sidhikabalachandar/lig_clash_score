@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 python_score_only.py group /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P00797 --target 3own --start 3d91 --index 0 --n 1
+$ $SCHRODINGER/run python3 python_score_only.py all /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P00797 --target 3own --start 3d91 --index 0 --n 1
 """
 
 import argparse
@@ -57,8 +57,9 @@ def main():
 
     if args.task == 'all':
         counter = 0
-        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
-                                       ('C8B467', '5ult', '5uov')]:
+        for protein, target, start in [('P03368', '1gno', '1zp8'), ('P02829', '2fxs', '2weq'),
+                                       ('P11838', '3wz6', '1gvx'), ('P00523', '4ybk', '2oiq'),
+                                       ('P00519', '4twp', '5hu9'), ('P0DOX7', '6msy', '6mub')]:
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(args.raw_root, protein)
             pair_path = os.path.join(protein_path, pair)
