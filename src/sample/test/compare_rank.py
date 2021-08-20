@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 cum_freq.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures --protein P02829 --target 2weq --start 2yge
+$ $SCHRODINGER/run python3 compare_rank.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures --protein P02829 --target 2weq --start 2yge
 """
 
 import argparse
@@ -11,29 +11,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import random
 import numpy as np
-import schrodinger.structure as structure
 
 import sys
 sys.path.insert(1, '../util')
 from util import *
 from prot_util import *
 from lig_util import *
-
-
-def bar_graph(glide_ls, glide_score_no_vdw_ls, python_score_no_vdw_ls, python_score_ls, random_ls, pose_ls, protein,
-              target, start, args):
-    fig, ax = plt.subplots()
-    plt.plot(pose_ls, glide_ls, label='Glide score')
-    plt.plot(pose_ls, glide_score_no_vdw_ls, label='Glide score no vdw')
-    plt.plot(pose_ls, python_score_no_vdw_ls, label='Python score no vdw')
-    plt.plot(pose_ls, python_score_ls, label='Python score')
-    plt.plot(pose_ls, random_ls, label='Random')
-
-    ax.legend()
-    ax.set_xlabel('Pose Cutoff')
-    ax.set_ylabel('Min RMSD')
-    plt.title('Min RMSD Pose for {}_{}-to-{}'.format(protein, target, start))
-    plt.savefig(os.path.join(args.out_dir, '{}_{}_{}.png'.format(protein, target, start)))
 
 
 def get_random_data(data, args):
@@ -52,7 +35,6 @@ def get_random_data(data, args):
 
     random_datas_np = np.array(random_datas)
     random_datas_np = np.mean(random_datas_np, axis=0)
-    print(random_datas_np.shape)
     return random_datas_np
 
 
