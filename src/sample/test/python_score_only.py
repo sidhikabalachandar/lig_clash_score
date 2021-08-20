@@ -121,7 +121,7 @@ def main():
         vdw_params = read_vdw_params(args.vdw_param_file)
 
         group_df = df[df['name'].isin(grouped_names[args.index])]
-        python_score_no_vdws = []
+        # python_score_no_vdws = []
         python_scores = []
 
         for name in grouped_names[args.index]:
@@ -142,11 +142,11 @@ def main():
             c.setXYZ(new_coords)
             c.title = name
 
-            ligand_coord = new_coords
-            ligand_charge = np.array([a.partial_charge for a in c.atom])
-            ligand_atom_type = [a.element for a in c.atom]
-            python_score_no_vdw = physics_score(ligand_coord, ligand_charge, target_coord, target_charge,
-                                                ligand_atom_type, target_atom_type, vdw_scale=0)
+            # ligand_coord = new_coords
+            # ligand_charge = np.array([a.partial_charge for a in c.atom])
+            # ligand_atom_type = [a.element for a in c.atom]
+            # python_score_no_vdw = physics_score(ligand_coord, ligand_charge, target_coord, target_charge,
+            #                                     ligand_atom_type, target_atom_type, vdw_scale=0)
 
             no_clash_atom_indices = []
             for i in c.getAtomIndices():
@@ -164,12 +164,12 @@ def main():
 
             c.setXYZ(old_coords)
 
-            python_score_no_vdws.append(python_score_no_vdw)
+            # python_score_no_vdws.append(python_score_no_vdw)
             python_scores.append(python_score)
             print(time.time() - start_time)
 
         group_df['python_score'] = python_scores
-        group_df['python_score_no_vdw'] = python_score_no_vdws
+        # group_df['python_score_no_vdw'] = python_score_no_vdws
 
         # save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
         # if not os.path.exists(save_path):
