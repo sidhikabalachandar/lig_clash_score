@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 python_score_only.py all /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P11838 --target 3wz6 --start 1gvx --index 7 --n 5
+$ $SCHRODINGER/run python3 python_score_only.py remove /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/vdw_AMBER_parm99.defn --protein P11838 --target 3wz6 --start 1gvx --index 7 --n 5
 """
 
 import argparse
@@ -94,9 +94,9 @@ def main():
                 cmd = 'sbatch -p rondror -t 0:30:00 -o {} --wrap="$SCHRODINGER/run python3 python_score_only.py ' \
                       'group {} {} {} --protein {} --target {} --start {} --index {}"'
                 counter += 1
-                # os.system(cmd.format(os.path.join(args.run_path,
-                #                                   'score_{}_{}_{}_{}.out'.format(protein, target, start, i)),
-                #                      args.run_path, args.raw_root, args.vdw_param_file, protein, target, start, i))
+                os.system(cmd.format(os.path.join(args.run_path,
+                                                  'score_{}_{}_{}_{}.out'.format(protein, target, start, i)),
+                                     args.run_path, args.raw_root, args.vdw_param_file, protein, target, start, i))
 
         print(counter)
 
@@ -121,6 +121,8 @@ def main():
         df = pd.concat(dfs)
         correct_df = df[df['rmsd'] < args.rmsd_cutoff]
         correct_names = correct_df['name'].to_list()
+        random.shuffle(correct_names)
+        correct_names = correct_names[:args.max_num_correct]
         incorrect_df = df[df['rmsd'] >= args.rmsd_cutoff]
         incorrect_names = incorrect_df['name'].to_list()
         random.shuffle(incorrect_names)
