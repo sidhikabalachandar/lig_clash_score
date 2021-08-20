@@ -13,7 +13,6 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 import schrodinger.structutils.interactions.steric_clash as steric_clash
-import time
 
 import sys
 sys.path.insert(1, '../util')
@@ -91,8 +90,8 @@ def main():
                 cmd = 'sbatch -p rondror -t 0:30:00 -o {} --wrap="$SCHRODINGER/run python3 python_score.py group {} ' \
                       '{} {} --protein {} --target {} --start {} --index {}"'
                 counter += 1
-                # os.system(cmd.format(os.path.join(args.run_path, 'score_{}.out'.format(i)), args.run_path,
-                #                      args.raw_root, args.vdw_param_file, protein, target, start, i))
+                os.system(cmd.format(os.path.join(args.run_path, 'score_{}.out'.format(i)), args.run_path,
+                                     args.raw_root, args.vdw_param_file, protein, target, start, i))
 
         print(counter)
 
@@ -138,7 +137,6 @@ def main():
         python_scores = []
 
         for name in grouped_names[args.index]:
-            start_time = time.time()
             conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
             c = conformers[conformer_index]
             old_coords = c.getXYZ(copy=True)
@@ -172,7 +170,6 @@ def main():
             c.setXYZ(old_coords)
 
             python_scores.append(python_score)
-            print(time.time() - start_time)
 
         group_df['python_score'] = python_scores
 
