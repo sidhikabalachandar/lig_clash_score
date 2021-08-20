@@ -35,7 +35,7 @@ def main():
     parser.add_argument('--protein', type=str, default='', help='protein name')
     parser.add_argument('--target', type=str, default='', help='target ligand name')
     parser.add_argument('--start', type=str, default='', help='start ligand name')
-    parser.add_argument('--max_poses', type=int, default=100, help='maximum number of glide poses considered')
+    parser.add_argument('--max_num_poses_considered', type=int, default=3900, help='maximum number of poses considered')
     parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
     parser.add_argument('--rotation_search_step_size', type=int, default=5, help='step size between each angle '
                                                                                  'checked, in degrees')
@@ -45,8 +45,9 @@ def main():
                                                                             'ligand pose')
     parser.add_argument('--intolerable_cutoff', type=int, default=0, help='cutoff of max num intolerable residues')
     parser.add_argument('--index', type=int, default=-1, help='index of pose file')
-    parser.add_argument('--n', type=int, default=35, help='number of files processed in each job')
+    parser.add_argument('--n', type=int, default=120, help='number of files processed in each job')
     parser.add_argument('--residue_cutoff', type=int, default=3, help='name of pose group subdir')
+    parser.add_argument('--rmsd_cutoff', type=float, default=2.5, help='name of pose group subdir')
     args = parser.parse_args()
 
     random.seed(0)
@@ -76,15 +77,21 @@ def main():
                     dfs.append(filter_df)
 
             df = pd.concat(dfs)
-            names = df['name'].to_list()
+            correct_df = df[df['rmsd'] < args.rmsd_cutoff]
+            correct_names = correct_df['name'].to_list()
+            incorrect_df = df[df['rmsd'] <= args.rmsd_cutoff]
+            incorrect_names = incorrect_df['name'].to_list()
+            random.shuffle(incorrect_names)
+            incorrect_names = incorrect_names[:args.max_num_poses_considered - len(correct_names)]
+            names = correct_names + incorrect_names
             grouped_names = group_files(args.n, names)
 
             for i in range(len(grouped_names)):
                 cmd = 'sbatch -p rondror -t 0:30:00 -o {} --wrap="$SCHRODINGER/run python3 python_score.py group {} ' \
                       '{} {} --protein {} --target {} --start {} --index {}"'
                 counter += 1
-                os.system(cmd.format(os.path.join(args.run_path, 'score_{}.out'.format(i)), args.run_path,
-                                     args.raw_root, args.vdw_param_file, protein, target, start, i))
+                # os.system(cmd.format(os.path.join(args.run_path, 'score_{}.out'.format(i)), args.run_path,
+                #                      args.raw_root, args.vdw_param_file, protein, target, start, i))
 
         print(counter)
 
