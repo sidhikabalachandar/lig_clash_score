@@ -13,7 +13,7 @@ import pandas as pd
 import sys
 sys.path.append('/home/users/sidhikab/docking')
 from docking.docking_class import Docking_Set
-sys.path.insert(1, '../util')
+sys.path.insert(1, '../sample/util')
 from util import *
 from prot_util import *
 from schrod_replacement_util import *
