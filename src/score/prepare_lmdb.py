@@ -2,6 +2,9 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
+
+sbatch -p rondror -t 2:00:00 -o /home/users/sidhikab/lig_clash_score/src/score/run/lmdb.out --wrap="$SCHRODINGER/run python3 prepare_lmdb.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/ml_score --split"
+
 $ $SCHRODINGER/run python3 prepare_lmdb.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/ml_score --make_lmdb  --split
 """
 
@@ -233,11 +236,11 @@ def write_split_indices(split_ids, lmdb_ds, output_txt):
 
 def split_lmdb_dataset(id_file_path, lmdb_path, output_folder):
     split_dir = output_folder
-    logger.info(f'Splitting indices, load data from {lmdb_path:}...')
+    # logger.info(f'Splitting indices, load data from {lmdb_path:}...')
     lmdb_ds = da.load_dataset(lmdb_path, 'lmdb')
     split_ids = make_splits(id_file_path)
 
-    logger.info(f'Write results to {split_dir:}...')
+    # logger.info(f'Write results to {split_dir:}...')
     os.makedirs(os.path.join(split_dir, 'indices'), exist_ok=True)
     os.makedirs(os.path.join(split_dir, 'data'), exist_ok=True)
 
