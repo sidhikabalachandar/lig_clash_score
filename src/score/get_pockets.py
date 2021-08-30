@@ -19,7 +19,7 @@ from util import *
 from prot_util import *
 from schrod_replacement_util import *
 from lig_util import *
-
+from prepare_pockets import *
 
 X_AXIS = [1.0, 0.0, 0.0]  # x-axis unit vector
 Y_AXIS = [0.0, 1.0, 0.0]  # y-axis unit vector
@@ -210,76 +210,40 @@ def main():
             file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
             df = pd.read_csv(file)
             print(protein, target, start, len(df))
-        #
-        # clash_path = os.path.join(pose_path, 'clash_data')
-        # dfs = []
-        # for file in os.listdir(clash_path):
-        #     prefix = 'pose_pred_data'
-        #     if file[:len(prefix)] == prefix:
-        #         df = pd.read_csv(os.path.join(clash_path, file))
-        #         filter_df = df[df['pred_num_intolerable'] < args.residue_cutoff]
-        #         dfs.append(filter_df)
-        #
-        # df = pd.concat(dfs)
-        # names = df['name'].to_list()
-        # grouped_names = group_files(args.n, names)
-        #
-        # conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
-        # conformers = list(structure.StructureReader(conformer_file))
-        #
-        # grouped_path = os.path.join(pose_path, 'advanced_filtered_poses')
-        # dock_output_path = os.path.join(pose_path, 'dock_output')
-        # ground_truth_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
-        #
-        # if not os.path.exists(grouped_path):
-        #     os.mkdir(grouped_path)
-        #
-        # if not os.path.exists(dock_output_path):
-        #     os.mkdir(dock_output_path)
-        #
-        # docking_config = []
-        #
-        # for j in range(len(grouped_names)):
-        #     file = os.path.join(grouped_path, '{}.mae'.format(j))
-        #     with structure.StructureWriter(file) as filtered:
-        #         for name in grouped_names[j]:
-        #             conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
-        #             c = conformers[conformer_index]
-        #             old_coords = c.getXYZ(copy=True)
-        #             grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
-        #             grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
-        #             grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
-        #             rot_x = df[df['name'] == name]['rot_x'].iloc[0]
-        #             rot_y = df[df['name'] == name]['rot_y'].iloc[0]
-        #             rot_z = df[df['name'] == name]['rot_z'].iloc[0]
-        #
-        #             new_coords = create_pose(c, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
-        #
-        #             # for clash features dictionary
-        #             c.setXYZ(new_coords)
-        #             c.title = name
-        #             filtered.append(c)
-        #             c.setXYZ(old_coords)
-        #
-        #     if not os.path.exists(os.path.join(dock_output_path, '{}.scor'.format(j))):
-        #         docking_config.append({'folder': dock_output_path,
-        #                                'name': j,
-        #                                'grid_file': os.path.join(pair_path, '{}.zip'.format(pair)),
-        #                                'prepped_ligand_file': file,
-        #                                'glide_settings': {'num_poses': 1, 'docking_method': 'inplace'},
-        #                                'ligand_file': ground_truth_file})
-        #     if len(docking_config) == args.max_num_concurrent_jobs:
-        #         break
-        #
-        # print(len(docking_config))
-        #
-        # run_config = {'run_folder': args.run_path,
-        #               'group_size': 1,
-        #               'partition': 'rondror',
-        #               'dry_run': False}
-        #
-        # dock_set = Docking_Set()
-        # dock_set.run_docking_rmsd_delete(docking_config, run_config)
+
+            names = df['name'].to_list()
+            name = names[0]
+            conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
+            c = conformers[conformer_index]
+            old_coords = c.getXYZ(copy=True)
+            grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
+            grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
+            grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
+            rot_x = df[df['name'] == name]['rot_x'].iloc[0]
+            rot_y = df[df['name'] == name]['rot_y'].iloc[0]
+            rot_z = df[df['name'] == name]['rot_z'].iloc[0]
+
+            new_coords = create_pose(c, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
+
+            # for clash features dictionary
+            c.setXYZ(new_coords)
+            c.title = name
+            save_path = os.path.join(pose_path, 'ml_score')
+            if not os.path.exists(save_path):
+                os.mkdir(save_path)
+            save_path = os.path.join(save_path, 'data')
+            if not os.path.exists(save_path):
+                os.mkdir(save_path)
+            ligand_file = os.path.join(save_path, '{}.mae'.format(name))
+            with structure.StructureWriter(ligand_file) as filtered:
+                filtered.append(c)
+            c.setXYZ(old_coords)
+
+            protein_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
+
+            process_pocket_files([protein_file], [ligand_file], [name], save_path, cutoff=12)
+
+
 
     elif args.task == 'check':
         for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
