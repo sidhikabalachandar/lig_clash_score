@@ -237,7 +237,7 @@ def main():
             save_path = os.path.join(save_path, 'data')
             if not os.path.exists(save_path):
                 os.mkdir(save_path)
-            ligand_file = os.path.join(save_path, '{}.mae'.format(name))
+            ligand_file = os.path.join(save_path, '{}_lig.mae'.format(name))
             with structure.StructureWriter(ligand_file) as filtered:
                 filtered.append(c)
             c.setXYZ(old_coords)
