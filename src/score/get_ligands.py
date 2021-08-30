@@ -9,6 +9,7 @@ import argparse
 import os
 import schrodinger.structure as structure
 import pandas as pd
+import time
 
 import sys
 sys.path.insert(1, '../sample/util')
@@ -63,37 +64,34 @@ def main():
             conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
             conformers = list(structure.StructureReader(conformer_file))
 
-            name = names[0]
-            conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
-            c = conformers[conformer_index]
-            old_coords = c.getXYZ(copy=True)
-            grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
-            grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
-            grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
-            rot_x = df[df['name'] == name]['rot_x'].iloc[0]
-            rot_y = df[df['name'] == name]['rot_y'].iloc[0]
-            rot_z = df[df['name'] == name]['rot_z'].iloc[0]
+            for name in names:
+                start_time = time.time()
+                conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
+                c = conformers[conformer_index]
+                old_coords = c.getXYZ(copy=True)
+                grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
+                grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
+                grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
+                rot_x = df[df['name'] == name]['rot_x'].iloc[0]
+                rot_y = df[df['name'] == name]['rot_y'].iloc[0]
+                rot_z = df[df['name'] == name]['rot_z'].iloc[0]
 
-            new_coords = create_pose(c, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
+                new_coords = create_pose(c, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
 
-            # for clash features dictionary
-            c.setXYZ(new_coords)
-            c.title = name
-            save_path = os.path.join(pose_path, 'ml_score')
-            if not os.path.exists(save_path):
-                os.mkdir(save_path)
-            save_path = os.path.join(save_path, 'data')
-            if not os.path.exists(save_path):
-                os.mkdir(save_path)
-            ligand_file = os.path.join(save_path, '{}_lig.mae'.format(name))
-            with structure.StructureWriter(ligand_file) as filtered:
-                filtered.append(c)
-            c.setXYZ(old_coords)
-
-            protein_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
-
-            process_pocket_files([protein_file], [ligand_file], ['{}_{}'.format(protein, pair)], save_path, cutoff=12)
-            os.system('rm -rf {}'.format(ligand_file))
+                # for clash features dictionary
+                c.setXYZ(new_coords)
+                c.title = name
+                save_path = os.path.join(pose_path, 'ml_score')
+                if not os.path.exists(save_path):
+                    os.mkdir(save_path)
+                save_path = os.path.join(save_path, 'data')
+                if not os.path.exists(save_path):
+                    os.mkdir(save_path)
+                ligand_file = os.path.join(save_path, '{}_lig.mae'.format(name))
+                with structure.StructureWriter(ligand_file) as filtered:
+                    filtered.append(c)
+                c.setXYZ(old_coords)
+                print(time.time() - start_time)
 
 
 if __name__=="__main__":
