@@ -92,8 +92,8 @@ def main():
 
             protein_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
 
-            process_pocket_files([protein_file], [ligand_file], ['{}_{}'.format(protein, pair)], save_path, cutoff=12)
-            os.system('rm -rf {}'.format(ligand_file))
+            # process_pocket_files([protein_file], [ligand_file], ['{}_{}'.format(protein, pair)], save_path, cutoff=12)
+            os.system('rm -rf {}'.format(save_path))
 
 
 if __name__=="__main__":
