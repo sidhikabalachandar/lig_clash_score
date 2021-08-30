@@ -211,6 +211,10 @@ def main():
             df = pd.read_csv(file)
 
             names = df['name'].to_list()
+
+            conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
+            conformers = list(structure.StructureReader(conformer_file))
+
             name = names[0]
             conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
             c = conformers[conformer_index]
@@ -241,7 +245,7 @@ def main():
             protein_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
 
             process_pocket_files([protein_file], [ligand_file], [name], save_path, cutoff=12)
-            return 
+            return
 
 
 
