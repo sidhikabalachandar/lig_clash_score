@@ -185,12 +185,14 @@ def main():
                                                                                  'that can be run on slurm at one time')
     parser.add_argument('--residue_cutoff', type=int, default=3, help='name of pose group subdir')
     args = parser.parse_args()
+    random.seed(0)
 
     if not os.path.exists(args.run_path):
         os.mkdir(args.run_path)
 
     if args.task == 'run':
         pairs = get_prots(args.docked_prot_file)
+        random.shuffle(pairs)
         for protein, target, start in pairs[:10]:
             pair = '{}-to-{}'.format(target, start)
             protein_path = os.path.join(args.raw_root, protein)
@@ -199,7 +201,8 @@ def main():
             grid_size = get_grid_size(pair_path, target, start)
             group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
             pose_path = os.path.join(pair_path, group_name)
-            file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
+            file = os.path.join(pose_path, 'poses_after_advanced_filter.csv'
+                                            poses_after_advanced_filter.csv)
             df = pd.read_csv(file)
             print(protein, target, start, len(df))
         #
