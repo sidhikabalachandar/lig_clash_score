@@ -65,7 +65,7 @@ def main():
             else:
                 label = 1
             data['name'].append(pose_name)
-            data['label'].append(rmsd)
+            data['label'].append(label)
             data['pocket_file'].append('{}_{}_pocket.mae'.format(protein, pair))
             data['file'].append('{}_{}_ligs.mae'.format(protein, pair))
 
