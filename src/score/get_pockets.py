@@ -9,6 +9,7 @@ import argparse
 import os
 import schrodinger.structure as structure
 import pandas as pd
+import random
 
 import sys
 sys.path.append('/home/users/sidhikab/docking')
