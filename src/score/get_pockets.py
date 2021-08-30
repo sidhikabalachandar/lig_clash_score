@@ -209,7 +209,6 @@ def main():
             pose_path = os.path.join(pair_path, group_name)
             file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
             df = pd.read_csv(file)
-            print(protein, target, start, len(df))
 
             names = df['name'].to_list()
             name = names[0]
@@ -242,6 +241,7 @@ def main():
             protein_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
 
             process_pocket_files([protein_file], [ligand_file], [name], save_path, cutoff=12)
+            return 
 
 
 
