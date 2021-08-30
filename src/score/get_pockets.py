@@ -50,7 +50,7 @@ def main():
 
     protein_files = []
     ligand_files = []
-    names = []
+    pocket_names = []
 
     for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
                                    ('C8B467', '5ult', '5uov'),
@@ -98,9 +98,9 @@ def main():
 
         protein_files.append(protein_file)
         ligand_files.append(ligand_file)
-        names.append('{}_{}'.format(protein, pair))
+        pocket_names.append('{}_{}'.format(protein, pair))
 
-    process_pocket_files(protein_files, ligand_files, names, save_directory, cutoff=12)
+    process_pocket_files(protein_files, ligand_files, pocket_names, save_directory, cutoff=12)
 
     for ligand_file in ligand_files:
         os.system('rm -rf {}'.format(ligand_file))
