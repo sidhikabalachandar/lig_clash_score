@@ -2,7 +2,7 @@
 The purpose of this code is to get the physics scores and the rmsds
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 get_ligands.py group /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein P02829 --target 2weq --start 2yge
+$ $SCHRODINGER/run python3 get_ligands.py all /home/users/sidhikab/lig_clash_score/src/score/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --protein P02829 --target 2weq --start 2yge
 """
 
 import argparse
@@ -56,8 +56,8 @@ def main():
                                        ('P11838', '3wz6', '1gvx'),
                                        ('P00523', '4ybk', '2oiq'), ('P00519', '4twp', '5hu9'),
                                        ('P0DOX7', '6msy', '6mub')]:
-            cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap=$SCHRODINGER/run python3 get_ligands.py group {} {} ' \
-                  '--protein {} --target {} --start {}'
+            cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 get_ligands.py group {} {} ' \
+                  '--protein {} --target {} --start {}"'
             os.system(
                 cmd.format(os.path.join(args.run_path, 'ligands_{}_{}_{}.out'.format(protein, target, start)),
                            args.run_path, args.root, protein, target, start))
