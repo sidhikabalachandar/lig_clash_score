@@ -56,7 +56,7 @@ def main():
                                        ('P11838', '3wz6', '1gvx'),
                                        ('P00523', '4ybk', '2oiq'), ('P00519', '4twp', '5hu9'),
                                        ('P0DOX7', '6msy', '6mub')]:
-            cmd = 'sbatch -p owners -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 get_ligands.py group {} {} ' \
+            cmd = 'sbatch -p rondror -t 1:00:00 -o {} --wrap="$SCHRODINGER/run python3 get_ligands.py group {} {} ' \
                   '--protein {} --target {} --start {}"'
             os.system(
                 cmd.format(os.path.join(args.run_path, 'ligands_{}_{}_{}.out'.format(protein, target, start)),
