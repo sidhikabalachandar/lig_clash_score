@@ -2,7 +2,7 @@
 The purpose of this code is to get the physics scores and the rmsds
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 glide_score.py check /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --max_num_concurrent_jobs 1
+$ $SCHRODINGER/run python3 get_pockets.py run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --max_num_concurrent_jobs 1
 """
 
 import argparse
@@ -172,8 +172,8 @@ def check(protein, target, start, args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('task', type=str, help='either run, check, or delete_json')
+    parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
     parser.add_argument('--protein', type=str, default='', help='protein name')
