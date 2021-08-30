@@ -36,6 +36,8 @@ def main():
     if not os.path.exists(save_directory):
         os.mkdir(save_directory)
 
+    data = {'name': [], 'label': [], 'pocket_file': [], 'file': []}
+
     for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
                                    ('C8B467', '5ult', '5uov'),
                                    ('P03368', '1gno', '1zp8'), ('P02829', '2fxs', '2weq'),
@@ -54,8 +56,6 @@ def main():
 
         names = df['name'].to_list()
 
-        data = {'name': [], 'label': [], 'pocket_file': [], 'file': []}
-
         for name in names:
             pose_name = '{}_{}_{}'.format(protein, pair, name)
             rmsd = df[df['name'] == name]['rmsd'].iloc[0]
@@ -64,8 +64,8 @@ def main():
             data['pocket_file'].append('{}_{}_pocket.mae'.format(protein, pair))
             data['file'].append('{}_{}_ligs.mae'.format(protein, pair))
 
-        df = pd.DataFrame.from_dict(data)
-        df.to_csv(os.path.join(save_directory, 'names.csv'), index=False)
+    df = pd.DataFrame.from_dict(data)
+    df.to_csv(os.path.join(save_directory, 'names.csv'), index=False)
 
 
 
