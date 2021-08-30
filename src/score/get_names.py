@@ -57,15 +57,12 @@ def main():
         data = {'name': [], 'label': [], 'pocket_file': [], 'file': []}
 
         for name in names:
-            start_time = time.time()
             pose_name = '{}_{}_{}'.format(protein, pair, name)
             rmsd = df[df['name'] == name]['rmsd'].iloc[0]
             data['name'].append(pose_name)
             data['label'].append(rmsd)
             data['pocket_file'].append('{}_{}_pocket.mae'.format(protein, pair))
             data['file'].append('{}_{}_ligs.mae'.format(protein, pair))
-            print(time.time() - start_time)
-            return
 
         df = pd.DataFrame.from_dict(data)
         df.to_csv(os.path.join(save_directory, 'names.csv'), index=False)
