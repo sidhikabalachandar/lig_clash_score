@@ -201,8 +201,7 @@ def main():
             grid_size = get_grid_size(pair_path, target, start)
             group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
             pose_path = os.path.join(pair_path, group_name)
-            file = os.path.join(pose_path, 'poses_after_advanced_filter.csv'
-                                            poses_after_advanced_filter.csv)
+            file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
             df = pd.read_csv(file)
             print(protein, target, start, len(df))
         #
