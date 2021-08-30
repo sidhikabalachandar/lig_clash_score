@@ -100,6 +100,9 @@ def main():
         ligand_files.append(ligand_file)
         pocket_names.append('{}_{}'.format(protein, pair))
 
+        old_dir = os.path.join(pose_path, 'ml_score')
+        os.system('rm -rf {}'.format(old_dir))
+
     process_pocket_files(protein_files, ligand_files, pocket_names, save_directory, cutoff=12)
 
     for ligand_file in ligand_files:
