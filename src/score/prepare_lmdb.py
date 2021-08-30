@@ -1,3 +1,10 @@
+"""
+The purpose of this code is to create conformers
+
+It can be run on sherlock using
+$ $SCHRODINGER/run python3 prepare_lmdb.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/ml_score --make_lmdb  --split
+"""
+
 #class Dataset(Dataset)
 import sys
 sys.path.insert(0,'/oak/stanford/groups/rondror/projects/ligand-docking/fragment_building/software/anaconda3/envs/e3nn/lib/python3.8/site-packages')
