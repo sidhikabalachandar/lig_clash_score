@@ -182,14 +182,21 @@ def main():
             python_scores.append(python_score)
 
         group_df = df[df['name'].isin(names)]
+        len_before = len(group_df)
         group_df.drop_duplicates('name', inplace=True)
+        len_after = len(group_df)
 
-        group_df['python_score'] = python_scores
+        if len_before != len_after:
+            print('mismatch')
+        else:
+            print('no mismatch')
 
-        save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
-        if not os.path.exists(save_path):
-            os.mkdir(save_path)
-        group_df.to_csv(os.path.join(save_path, '{}.csv'.format(args.index)))
+        # group_df['python_score'] = python_scores
+        #
+        # save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
+        # if not os.path.exists(save_path):
+        #     os.mkdir(save_path)
+        # group_df.to_csv(os.path.join(save_path, '{}.csv'.format(args.index)))
 
     elif args.task == 'check':
         missing = []

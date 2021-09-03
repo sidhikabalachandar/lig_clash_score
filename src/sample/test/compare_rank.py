@@ -2,13 +2,12 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 compare_rank.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw /home/users/sidhikab/lig_clash_score/reports/figures --protein P02829 --target 2weq --start 2yge
+$ $SCHRODINGER/run python3 compare_rank.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P02829 --target 2weq --start 2yge
 """
 
 import argparse
 import os
 import pandas as pd
-import matplotlib.pyplot as plt
 import random
 import numpy as np
 
@@ -42,7 +41,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
-    parser.add_argument('out_dir', type=str, help='directory where all graphs will be saved')
     parser.add_argument('--protein', type=str, default='', help='protein name')
     parser.add_argument('--target', type=str, default='', help='target ligand name')
     parser.add_argument('--start', type=str, default='', help='start ligand name')
