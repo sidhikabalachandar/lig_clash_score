@@ -170,7 +170,6 @@ def search(args):
         counter = 0
 
         for grid_loc in grid:
-            print(counter, grid_loc)
             counter += 1
             # apply grid_loc translation
             translate_structure(c, grid_loc[0], grid_loc[1], grid_loc[2])
@@ -189,6 +188,8 @@ def search(args):
                             saved_dict, pair_path)
 
             translate_structure(c, -grid_loc[0], -grid_loc[1], -grid_loc[2])
+
+        print(len(saved_dict))
 
         # with open(os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(
         #         args.grid_index, args.conformer_index)), 'a') as f:
