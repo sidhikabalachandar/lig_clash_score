@@ -58,11 +58,14 @@ def main():
     group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
     pose_path = os.path.join(pair_path, group_name)
 
+    prefix = 'exhaustive_search_poses'
+
     for file in os.listdir(pose_path):
-        path = os.path.join(pose_path, file)
-        df = pd.read_csv(path)
-        if len(df[df['name'] == '292_-2,-6,-6_200,340,220']) != 0:
-            print(file, len(df[df['name'] == '292_-2,-6,-6_200,340,220']))
+        if file[:len(prefix)] == prefix:
+            path = os.path.join(pose_path, file)
+            df = pd.read_csv(path)
+            if len(df[df['name'] == '292_-2,-6,-6_200,340,220']) != 0:
+                print(file, len(df[df['name'] == '292_-2,-6,-6_200,340,220']))
 
 
 if __name__=="__main__":
