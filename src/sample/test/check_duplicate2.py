@@ -80,6 +80,8 @@ def main():
 
     print(len(incorrect_df[incorrect_df['name'] == '292_-2,-6,-6_200,340,220']))
 
+    print(len(df[df['name'] == '292_-2,-6,-6_200,340,220']))
+
 
 if __name__=="__main__":
     main()
