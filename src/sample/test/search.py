@@ -167,7 +167,7 @@ def search(args):
 
     for i in conformer_group_indices:
         if counter == 2:
-            return 
+            return
         counter += 1
         c = conformers[i]
         saved_dict = {'name': [], 'conformer_index': [], 'grid_loc_x': [], 'grid_loc_y': [], 'grid_loc_z': [],
