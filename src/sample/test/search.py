@@ -2,9 +2,9 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 search.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P00523 --target 4ybk --start 2oiq --grid_index 4 --conformer_index 29 --grid_n 1 --conformer_n 1
+$ $SCHRODINGER/run python3 search.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P00523 --target 4ybk --start 2oiq --grid_index 4 --conformer_index 20 --grid_n 1 --conformer_n 1
 
-sbatch -p rondror -t 1:00:00 -o run/test.out --wrap="$SCHRODINGER/run python3 search.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --grid_index 4 --conformer_index 20 --protein P00523 --target 4ybk --start 2oiq"
+sbatch -p rondror -t 1:00:00 -o run/test.out --wrap="$SCHRODINGER/run python3 search.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --grid_index 4 --conformer_index 29 --protein P00523 --target 4ybk --start 2oiq"
 
 """
 
@@ -167,8 +167,11 @@ def search(args):
         # get non hydrogen atom indices for rmsd
         c_indices = [a.index for a in c.atom if a.element != 'H']
 
+        counter = 0
+
         for grid_loc in grid:
-            print(grid_loc)
+            print(counter, grid_loc)
+            counter += 1
             # apply grid_loc translation
             translate_structure(c, grid_loc[0], grid_loc[1], grid_loc[2])
             conformer_center = list(get_centroid(c))
