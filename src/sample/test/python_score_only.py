@@ -144,6 +144,10 @@ def main():
         python_scores = []
         names = []
 
+        print(len(grouped_names[args.index]))
+        print(len(set(grouped_names[args.index])))
+        return
+
         for name in grouped_names[args.index]:
             print(name)
             conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
@@ -183,15 +187,7 @@ def main():
             python_scores.append(python_score)
 
         group_df = df[df['name'].isin(names)]
-        len_before = len(group_df)
         group_df.drop_duplicates('name', inplace=True)
-        len_after = len(group_df)
-
-        if len_before != len_after:
-            print('mismatch')
-        else:
-            print('no mismatch')
-
         # group_df['python_score'] = python_scores
         #
         # save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
