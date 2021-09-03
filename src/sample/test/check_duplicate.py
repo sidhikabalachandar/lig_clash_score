@@ -88,6 +88,15 @@ def main():
             incorrect_names = incorrect_names[:args.max_num_poses_considered - len(correct_names)]
             names = correct_names + incorrect_names
 
+            print(protein, target, start)
+            distinct = []
+
+            for name in names:
+                if name not in distinct:
+                    distinct.append(name)
+
+            assert(len(names) != len(distinct))
+
 
 
 if __name__=="__main__":
