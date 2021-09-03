@@ -65,9 +65,7 @@ def main():
             path = os.path.join(pose_path, file)
             df = pd.read_csv(path)
             if len(df[df['name'] == '207_-2,6,-4_220,300,320']) != 0:
-                print(file, len(df[df['name'] == '292_-2,-6,-6_200,340,220']))
-
-
+                print(file, len(df[df['name'] == '207_-2,6,-4_220,300,320']))
 
 
 if __name__=="__main__":
