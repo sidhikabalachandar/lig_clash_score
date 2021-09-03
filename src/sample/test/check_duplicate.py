@@ -89,6 +89,8 @@ def main():
             else:
                 print(name)
 
+        print(len(names), len(distinct))
+
         assert(len(names) != len(distinct))
 
 
