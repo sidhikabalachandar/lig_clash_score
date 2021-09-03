@@ -45,6 +45,8 @@ def main():
     parser.add_argument('--n', type=int, default=90, help='number of files processed in each job')
     parser.add_argument('--residue_cutoff', type=int, default=3, help='name of pose group subdir')
     parser.add_argument('--rmsd_cutoff', type=float, default=2.5, help='name of pose group subdir')
+    parser.add_argument('--start_clash_cutoff', type=int, default=1, help='clash cutoff between start protein and '
+                                                                          'ligand pose')
     args = parser.parse_args()
 
     random.seed(0)
