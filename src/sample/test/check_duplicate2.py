@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 check_duplicate2.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 check_duplicate.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 """
 
 import argparse
@@ -45,42 +45,54 @@ def main():
     parser.add_argument('--n', type=int, default=90, help='number of files processed in each job')
     parser.add_argument('--residue_cutoff', type=int, default=3, help='name of pose group subdir')
     parser.add_argument('--rmsd_cutoff', type=float, default=2.5, help='name of pose group subdir')
-    parser.add_argument('--start_clash_cutoff', type=int, default=1, help='clash cutoff between start protein and '
-                                                                          'ligand pose')
     args = parser.parse_args()
 
     random.seed(0)
 
-    protein, target, start = ('P00523', '4ybk', '2oiq')
-    pair = '{}-to-{}'.format(target, start)
-    protein_path = os.path.join(args.raw_root, protein)
-    pair_path = os.path.join(protein_path, pair)
-    grid_size = get_grid_size(pair_path, target, start)
-    pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
+    for protein, target, start in [('P03368', '1gno', '1zp8'), ('P02829', '2fxs', '2weq'),
+                                   ('P11838', '3wz6', '1gvx'), ('P00523', '4ybk', '2oiq'),
+                                   ('P00519', '4twp', '5hu9'), ('P0DOX7', '6msy', '6mub')]:
+        pair = '{}-to-{}'.format(target, start)
+        protein_path = os.path.join(args.raw_root, protein)
+        pair_path = os.path.join(protein_path, pair)
 
-    clash_path = os.path.join(pose_path, 'clash_data')
-    if not os.path.exists(clash_path):
-        os.mkdir(clash_path)
+        grid_size = get_grid_size(pair_path, target, start)
+        group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+        pose_path = os.path.join(pair_path, group_name)
 
-    file = 'exhaustive_search_poses_4_29.csv'
-    # get indices
-    all_df = pd.read_csv(os.path.join(pose_path, file))
-    df = all_df[all_df['start_clash'] < args.start_clash_cutoff]
-    correct_df = df[df['rmsd'] <= args.rmsd_cutoff]
+        clash_path = os.path.join(pose_path, 'clash_data')
+        dfs = []
+        for file in os.listdir(clash_path):
+            prefix = 'pose_pred_data'
+            if file[:len(prefix)] == prefix:
+                df = pd.read_csv(os.path.join(clash_path, file))
+                filter_df = df[df['pred_num_intolerable'] < args.residue_cutoff]
+                dfs.append(filter_df)
 
-    incorrect_df = df[df['rmsd'] > args.rmsd_cutoff]
-    incorrect_names = incorrect_df['name'].to_list()
-    random.shuffle(incorrect_names)
-    incorrect_names = incorrect_names[:300]
-    subset_incorrect_df = incorrect_df.loc[incorrect_df['name'].isin(incorrect_names)]
+        df = pd.concat(dfs)
+        correct_df = df[df['rmsd'] < args.rmsd_cutoff]
+        correct_names = correct_df['name'].to_list()
+        random.shuffle(correct_names)
+        correct_names = correct_names[:args.max_num_correct]
+        incorrect_df = df[df['rmsd'] >= args.rmsd_cutoff]
+        incorrect_names = incorrect_df['name'].to_list()
+        random.shuffle(incorrect_names)
+        incorrect_names = incorrect_names[:args.max_num_poses_considered - len(correct_names)]
+        names = correct_names + incorrect_names
 
-    subset_df = pd.concat([correct_df, subset_incorrect_df])
+        print(protein, target, start)
+        distinct = []
 
-    print(len(correct_df[correct_df['name'] == '292_-2,-6,-6_200,340,220']))
+        for name in names:
+            if name not in distinct:
+                distinct.append(name)
+            else:
+                print(name)
 
-    print(len(incorrect_df[incorrect_df['name'] == '292_-2,-6,-6_200,340,220']))
+        print(len(names), len(distinct))
 
-    print(len(df[df['name'] == '292_-2,-6,-6_200,340,220']))
+        assert(len(names) == len(distinct))
+
 
 
 if __name__=="__main__":

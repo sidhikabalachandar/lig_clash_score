@@ -49,6 +49,7 @@ def check_pose(num_poses_searched, i, grid_loc, start_prot_grid, start_origin, c
         # save info for pose
         target_clash = get_clash(c, target_prot_grid, target_origin)
         name = '{}_{},{},{}_{},{},{}'.format(i, grid_loc[0], grid_loc[1], grid_loc[2], x, y, z)
+        print(name)
         saved_dict['name'].append(name)
         saved_dict['conformer_index'].append(i)
         saved_dict['grid_loc_x'].append(grid_loc[0])
