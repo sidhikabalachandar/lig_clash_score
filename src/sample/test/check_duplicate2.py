@@ -45,6 +45,9 @@ def main():
     parser.add_argument('--n', type=int, default=90, help='number of files processed in each job')
     parser.add_argument('--residue_cutoff', type=int, default=3, help='name of pose group subdir')
     parser.add_argument('--rmsd_cutoff', type=float, default=2.5, help='name of pose group subdir')
+    parser.add_argument('--grid_n', type=int, default=75, help='number of grid_points processed in each job')
+    parser.add_argument('--grid_search_step_size', type=int, default=2, help='step size between each grid point, in '
+                                                                             'angstroms')
     args = parser.parse_args()
 
     random.seed(0)
@@ -55,10 +58,12 @@ def main():
     protein_path = os.path.join(args.raw_root, protein)
     pair_path = os.path.join(protein_path, pair)
 
+    grid_index = 4
+
     # get grid
-    grid_size = get_grid_size(pair_path, args.target, args.start)
+    grid_size = get_grid_size(pair_path, target, start)
     grouped_files = group_grid(args.grid_n, grid_size, args.grid_search_step_size)
-    grid = grouped_files[args.grid_index]
+    grid = grouped_files[grid_index]
 
     distinct = []
     for grid_loc in grid:
