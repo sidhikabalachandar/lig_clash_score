@@ -53,19 +53,28 @@ def main():
     pair = '{}-to-{}'.format(target, start)
     protein_path = os.path.join(args.raw_root, protein)
     pair_path = os.path.join(protein_path, pair)
-
     grid_size = get_grid_size(pair_path, target, start)
-    group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
-    pose_path = os.path.join(pair_path, group_name)
+    pose_path = os.path.join(pair_path, 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size))
 
-    prefix = 'exhaustive_search_poses'
+    clash_path = os.path.join(pose_path, 'clash_data')
+    if not os.path.exists(clash_path):
+        os.mkdir(clash_path)
 
-    for file in os.listdir(pose_path):
-        if file[:len(prefix)] == prefix:
-            path = os.path.join(pose_path, file)
-            df = pd.read_csv(path)
-            if len(df[df['name'] == '292_-2,-6,-6_200,340,220']) != 0:
-                print(file, len(df[df['name'] == '292_-2,-6,-6_200,340,220']))
+    file = 'exhaustive_search_poses_4_29.csv'
+    # get indices
+    all_df = pd.read_csv(os.path.join(pose_path, file))
+    df = all_df[all_df['start_clash'] < args.start_clash_cutoff]
+    correct_df = df[df['rmsd'] <= args.rmsd_cutoff]
+
+    incorrect_df = df[df['rmsd'] > args.rmsd_cutoff]
+    incorrect_names = incorrect_df['name'].to_list()
+    random.shuffle(incorrect_names)
+    incorrect_names = incorrect_names[:300]
+    subset_incorrect_df = incorrect_df.loc[incorrect_df['name'].isin(incorrect_names)]
+
+    subset_df = pd.concat([correct_df, subset_incorrect_df])
+
+    print(len(subset_df[subset_df['name'] == '292_-2,-6,-6_200,340,220']))
 
 
 if __name__=="__main__":
