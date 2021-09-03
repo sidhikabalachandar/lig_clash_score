@@ -76,7 +76,9 @@ def main():
 
     subset_df = pd.concat([correct_df, subset_incorrect_df])
 
-    print(len(subset_df[subset_df['name'] == '292_-2,-6,-6_200,340,220']))
+    print(len(correct_df[correct_df['name'] == '292_-2,-6,-6_200,340,220']))
+
+    print(len(incorrect_df[incorrect_df['name'] == '292_-2,-6,-6_200,340,220']))
 
 
 if __name__=="__main__":
