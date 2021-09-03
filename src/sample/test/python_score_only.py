@@ -144,14 +144,6 @@ def main():
         python_scores = []
         names = []
 
-        print(len(grouped_names[args.index]))
-        distinct = []
-        for name in grouped_names[args.index]:
-            if name not in distinct:
-                distinct.append(name)
-        print(len(distinct))
-        return
-
         for name in grouped_names[args.index]:
             print(name)
             conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
@@ -192,12 +184,12 @@ def main():
 
         group_df = df[df['name'].isin(names)]
         group_df.drop_duplicates('name', inplace=True)
-        # group_df['python_score'] = python_scores
-        #
-        # save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
-        # if not os.path.exists(save_path):
-        #     os.mkdir(save_path)
-        # group_df.to_csv(os.path.join(save_path, '{}.csv'.format(args.index)))
+        group_df['python_score'] = python_scores
+
+        save_path = os.path.join(pose_path, 'poses_after_advanced_filter')
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+        group_df.to_csv(os.path.join(save_path, '{}.csv'.format(args.index)))
 
     elif args.task == 'check':
         missing = []
