@@ -91,7 +91,7 @@ def main():
 
         print(len(names), len(distinct))
 
-        assert(len(names) != len(distinct))
+        assert(len(names) == len(distinct))
 
 
 
