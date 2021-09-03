@@ -86,6 +86,8 @@ def main():
         for name in names:
             if name not in distinct:
                 distinct.append(name)
+            else:
+                print(name)
 
         assert(len(names) != len(distinct))
 
