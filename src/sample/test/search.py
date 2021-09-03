@@ -168,6 +168,7 @@ def search(args):
         c_indices = [a.index for a in c.atom if a.element != 'H']
 
         for grid_loc in grid:
+            print(grid_loc)
             # apply grid_loc translation
             translate_structure(c, grid_loc[0], grid_loc[1], grid_loc[2])
             conformer_center = list(get_centroid(c))
