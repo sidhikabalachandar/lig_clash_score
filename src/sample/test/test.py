@@ -138,6 +138,9 @@ def main():
 
             subset_df = pd.concat([correct_df, subset_incorrect_df])
 
+            print(len(subset_df[subset_df['name'] == '292_-2,-6,-6_200,340,220']))
+            return 
+
             for i in subset_df.index:
                 name = df.loc[[i]]['name'].iloc[0]
 
