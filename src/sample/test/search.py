@@ -2,7 +2,10 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 search.py check /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P03368 --target 1gno --start 1zp8 --grid_index 0 --conformer_index 0 --grid_n 1 --conformer_n 1
+$ $SCHRODINGER/run python3 search.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein P00523 --target 4ybk --start 2oiq --grid_index 4 --conformer_index 29 --grid_n 1 --conformer_n 1
+
+sbatch -p rondror -t 1:00:00 -o run/test.out --wrap="$SCHRODINGER/run python3 search.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --grid_index 4 --conformer_index 29 --protein P00523 --target 4ybk --start 2oiq"
+
 """
 
 import argparse
@@ -49,7 +52,6 @@ def check_pose(num_poses_searched, i, grid_loc, start_prot_grid, start_origin, c
         # save info for pose
         target_clash = get_clash(c, target_prot_grid, target_origin)
         name = '{}_{},{},{}_{},{},{}'.format(i, grid_loc[0], grid_loc[1], grid_loc[2], x, y, z)
-        print(name)
         saved_dict['name'].append(name)
         saved_dict['conformer_index'].append(i)
         saved_dict['grid_loc_x'].append(grid_loc[0])
@@ -149,11 +151,11 @@ def search(args):
     saved_dict = {'name': [], 'conformer_index': [], 'grid_loc_x': [], 'grid_loc_y': [], 'grid_loc_z': [],
                   'rot_x': [], 'rot_y': [], 'rot_z': [], 'start_clash': [], 'target_clash': [], 'rmsd': []}
 
-    # with open(
-    #         os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(args.grid_index, args.conformer_index)),
-    #         'w') as f:
-    #     df = pd.DataFrame.from_dict(saved_dict)
-    #     df.to_csv(f)
+    with open(
+            os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(args.grid_index, args.conformer_index)),
+            'w') as f:
+        df = pd.DataFrame.from_dict(saved_dict)
+        df.to_csv(f)
 
     decoy_start_time = time.time()
 
@@ -184,10 +186,10 @@ def search(args):
 
             translate_structure(c, -grid_loc[0], -grid_loc[1], -grid_loc[2])
 
-        # with open(os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(
-        #         args.grid_index, args.conformer_index)), 'a') as f:
-        #     df = pd.DataFrame.from_dict(saved_dict)
-        #     df.to_csv(f, header=False)
+        with open(os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(
+                args.grid_index, args.conformer_index)), 'a') as f:
+            df = pd.DataFrame.from_dict(saved_dict)
+            df.to_csv(f, header=False)
 
     # save info for grid_loc
     decoy_end_time = time.time()
@@ -202,8 +204,8 @@ def search(args):
     data_dict['num_correct_after_simple_filter'].append(num_correct_after_simple_filter)
     data_dict['time_elapsed'].append(decoy_end_time - decoy_start_time)
 
-    # df = pd.DataFrame.from_dict(data_dict)
-    # df.to_csv(os.path.join(pose_path, 'exhaustive_search_info_{}_{}.csv'.format(args.grid_index, args.conformer_index)))
+    df = pd.DataFrame.from_dict(data_dict)
+    df.to_csv(os.path.join(pose_path, 'exhaustive_search_info_{}_{}.csv'.format(args.grid_index, args.conformer_index)))
 
 
 def check_search(pairs, raw_root):
