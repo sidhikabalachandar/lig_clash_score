@@ -50,22 +50,22 @@ def main():
     random.seed(0)
 
     protein, target, start = ('P00523', '4ybk', '2oiq')
+    # important dirs
     pair = '{}-to-{}'.format(target, start)
     protein_path = os.path.join(args.raw_root, protein)
     pair_path = os.path.join(protein_path, pair)
 
-    grid_size = get_grid_size(pair_path, target, start)
-    group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
-    pose_path = os.path.join(pair_path, group_name)
+    # get grid
+    grid_size = get_grid_size(pair_path, args.target, args.start)
+    grouped_files = group_grid(args.grid_n, grid_size, args.grid_search_step_size)
+    grid = grouped_files[args.grid_index]
 
-    prefix = 'exhaustive_search_poses'
+    distinct = []
+    for grid_loc in grid:
+        if grid_loc not in distinct:
+            distinct.append(grid_loc)
 
-    for file in os.listdir(pose_path):
-        if file[:len(prefix)] == prefix:
-            path = os.path.join(pose_path, file)
-            df = pd.read_csv(path)
-            if len(df[df['name'] == '207_-2,6,-4_220,300,320']) != 0:
-                print(file, len(df[df['name'] == '207_-2,6,-4_220,300,320']))
+    print(len(grid), len(distinct))
 
 
 if __name__=="__main__":
