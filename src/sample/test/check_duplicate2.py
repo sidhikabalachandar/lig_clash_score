@@ -52,25 +52,36 @@ def main():
 
     random.seed(0)
 
-    protein, target, start = ('P00523', '4ybk', '2oiq')
-    # important dirs
-    pair = '{}-to-{}'.format(target, start)
-    protein_path = os.path.join(args.raw_root, protein)
-    pair_path = os.path.join(protein_path, pair)
+    for protein, target, start in [('P03368', '1gno', '1zp8'), ('P02829', '2fxs', '2weq'),
+                                   ('P11838', '3wz6', '1gvx'), ('P00523', '4ybk', '2oiq'),
+                                   ('P00519', '4twp', '5hu9'), ('P0DOX7', '6msy', '6mub')]:
+        pair = '{}-to-{}'.format(target, start)
+        protein_path = os.path.join(args.raw_root, protein)
+        pair_path = os.path.join(protein_path, pair)
 
-    grid_index = 4
+        grid_size = get_grid_size(pair_path, target, start)
+        group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+        pose_path = os.path.join(pair_path, group_name)
 
-    # get grid
-    grid_size = get_grid_size(pair_path, target, start)
-    grouped_files = group_grid(args.grid_n, grid_size, args.grid_search_step_size)
-    grid = grouped_files[grid_index]
+        prefix = 'exhaustive_search_poses_'
+        suffix = 'csv'
 
-    distinct = []
-    for grid_loc in grid:
-        if grid_loc not in distinct:
-            distinct.append(grid_loc)
+        incorrect = []
 
-    print(len(grid), len(distinct))
+        for file in os.listdir(pose_path):
+            if file[:len(prefix)] == prefix:
+                df = pd.read_csv(os.path.join(pose_path, file))
+                if len(df) != len(df.name.unique()):
+                    stripped = file[len(prefix):-len(suffix)]
+                    vals = stripped.split('_')
+                    grid_index = int(vals[0])
+                    conformer_index = int(vals[1])
+                    combined = (protein, target, start, grid_index, conformer_index)
+                    if combined not in incorrect:
+                        incorrect.append(combined)
+
+        print(len(incorrect))
+        print(incorrect)
 
 
 if __name__=="__main__":
