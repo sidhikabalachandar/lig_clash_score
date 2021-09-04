@@ -2,14 +2,13 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 check_duplicate2.py group /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0
+$ $SCHRODINGER/run python3 check_duplicate2.py all /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0
 """
 
 import argparse
 import os
 import pandas as pd
 import random
-import time
 
 import sys
 sys.path.insert(1, '../util')
@@ -78,7 +77,7 @@ def main():
         print(counter)
 
     elif args.task == 'group':
-        protein, target, start = ('P0DOX7', '6msy', '6mub')
+        protein, target, start = ('P00523', '4ybk', '2oiq')
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(args.raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
@@ -92,9 +91,8 @@ def main():
 
         incorrect = []
         files = os.listdir(pose_path)
-        grouped_files = group_files(args.n, files)
 
-        for file in grouped_files[args.index]:
+        for file in files:
             if file[:len(prefix)] == prefix:
                 df = pd.read_csv(os.path.join(pose_path, file))
                 if len(df) != len(df.name.unique()):
