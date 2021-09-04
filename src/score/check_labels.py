@@ -1,10 +1,3 @@
-"""
-The purpose of this code is to get the physics scores and the rmsds
-
-It can be run on sherlock using
-$ $SCHRODINGER/run python3 check_labels.py
-"""
-
 import pandas as pd
 
 
