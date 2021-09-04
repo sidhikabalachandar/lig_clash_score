@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 check_duplicate2.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0
+$ $SCHRODINGER/run python3 check_duplicate2.py group /home/users/sidhikab/lig_clash_score/src/sample/test/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0
 """
 
 import argparse
@@ -50,6 +50,9 @@ def main():
     args = parser.parse_args()
 
     random.seed(0)
+
+    if not os.path.exists(args.run_path):
+        os.mkdir(args.run_path)
 
     if args.task == 'all':
         protein, target, start = ('P0DOX7', '6msy', '6mub')
