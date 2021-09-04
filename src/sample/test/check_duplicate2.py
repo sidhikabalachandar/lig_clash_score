@@ -72,7 +72,6 @@ def main():
                 df = pd.read_csv(os.path.join(pose_path, file))
                 if len(df) != len(df.name.unique()):
                     stripped = file[len(prefix):-len(suffix)]
-                    print(stripped)
                     vals = stripped.split('_')
                     grid_index = int(vals[0])
                     conformer_index = int(vals[1])
