@@ -2,7 +2,7 @@
 The purpose of this code is to create the cumulative frequency and bar graphs
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 check_duplicate2.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 check_duplicate2.py group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --index 0
 """
 
 import argparse
@@ -25,6 +25,7 @@ from read_vdw_params import *
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('task', type=str, help='directory where raw data will be placed')
+    parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
     parser.add_argument('--protein', type=str, default='', help='protein name')
     parser.add_argument('--target', type=str, default='', help='target ligand name')
@@ -67,9 +68,9 @@ def main():
         for i in range(len(grouped_files)):
             counter += 1
             cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 check_duplicate2.py group {} ' \
-                  '--index {}"'
+                  '{} --index {}"'
             out_file_name = 'check_dup_{}.out'.format(i)
-            os.system(cmd.format(os.path.join(args.run_path, out_file_name), args.raw_root, i))
+            os.system(cmd.format(os.path.join(args.run_path, out_file_name), args.run_path, args.raw_root, i))
 
         print(counter)
 
