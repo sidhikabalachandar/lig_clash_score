@@ -63,7 +63,7 @@ def main():
         pose_path = os.path.join(pair_path, group_name)
 
         prefix = 'exhaustive_search_poses_'
-        suffix = 'csv'
+        suffix = '.csv'
 
         incorrect = []
 
