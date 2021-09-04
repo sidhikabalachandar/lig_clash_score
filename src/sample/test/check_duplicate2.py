@@ -8,11 +8,8 @@ $ $SCHRODINGER/run python3 check_duplicate2.py /oak/stanford/groups/rondror/proj
 import argparse
 import os
 import pandas as pd
-import schrodinger.structure as structure
 import random
-import numpy as np
-import matplotlib.pyplot as plt
-import schrodinger.structutils.interactions.steric_clash as steric_clash
+import time
 
 import sys
 sys.path.insert(1, '../util')
@@ -65,10 +62,13 @@ def main():
         suffix = '.csv'
 
         incorrect = []
+        files = os.listdir(pose_path)
 
-        for file in os.listdir(pose_path):
+        for i in range(len(files) - 1, -1, -1):
+            file = files[i]
             print(file)
             if file[:len(prefix)] == prefix:
+                start_time = time.time()
                 df = pd.read_csv(os.path.join(pose_path, file))
                 if len(df) != len(df.name.unique()):
                     stripped = file[len(prefix):-len(suffix)]
@@ -78,6 +78,8 @@ def main():
                     combined = (protein, target, start, grid_index, conformer_index)
                     if combined not in incorrect:
                         incorrect.append(combined)
+                print(time.time() - start_time)
+                return 
 
         print(len(incorrect))
         print(incorrect)
