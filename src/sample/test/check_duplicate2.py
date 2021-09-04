@@ -52,8 +52,7 @@ def main():
 
     random.seed(0)
 
-    for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'), ('C8B467', '5ult', '5uov'),
-                                   ('P0DOX7', '6msy', '6mub')]:
+    for protein, target, start in [('P0DOX7', '6msy', '6mub')]:
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(args.raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
@@ -68,6 +67,7 @@ def main():
         incorrect = []
 
         for file in os.listdir(pose_path):
+            print(file)
             if file[:len(prefix)] == prefix:
                 df = pd.read_csv(os.path.join(pose_path, file))
                 if len(df) != len(df.name.unique()):
