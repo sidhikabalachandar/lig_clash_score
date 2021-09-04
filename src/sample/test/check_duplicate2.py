@@ -64,6 +64,8 @@ def main():
         incorrect = []
         files = os.listdir(pose_path)
 
+        print(len(files))
+
         for i in range(len(files) - 1, -1, -1):
             file = files[i]
             print(file)
@@ -79,7 +81,7 @@ def main():
                     if combined not in incorrect:
                         incorrect.append(combined)
                 print(time.time() - start_time)
-                return 
+                return
 
         print(len(incorrect))
         print(incorrect)
