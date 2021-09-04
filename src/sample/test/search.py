@@ -151,11 +151,11 @@ def search(args):
     saved_dict = {'name': [], 'conformer_index': [], 'grid_loc_x': [], 'grid_loc_y': [], 'grid_loc_z': [],
                   'rot_x': [], 'rot_y': [], 'rot_z': [], 'start_clash': [], 'target_clash': [], 'rmsd': []}
 
-    # with open(
-    #         os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(args.grid_index, args.conformer_index)),
-    #         'w') as f:
-    #     df = pd.DataFrame.from_dict(saved_dict)
-    #     df.to_csv(f)
+    with open(
+            os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(args.grid_index, args.conformer_index)),
+            'w') as f:
+        df = pd.DataFrame.from_dict(saved_dict)
+        df.to_csv(f)
 
     with open('test.csv', 'w') as f:
         df = pd.DataFrame.from_dict(saved_dict)
@@ -176,8 +176,6 @@ def search(args):
         # get non hydrogen atom indices for rmsd
         c_indices = [a.index for a in c.atom if a.element != 'H']
 
-
-
         for grid_loc in grid:
             # apply grid_loc translation
             translate_structure(c, grid_loc[0], grid_loc[1], grid_loc[2])
@@ -196,18 +194,11 @@ def search(args):
                             saved_dict, pair_path)
 
             translate_structure(c, -grid_loc[0], -grid_loc[1], -grid_loc[2])
-            break
 
-        print(len(saved_dict['name']))
-
-        with open('test.csv', 'a') as f:
+        with open(os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(
+                args.grid_index, args.conformer_index)), 'a') as f:
             df = pd.DataFrame.from_dict(saved_dict)
             df.to_csv(f, header=False)
-
-        # with open(os.path.join(pose_path, 'exhaustive_search_poses_{}_{}.csv'.format(
-        #         args.grid_index, args.conformer_index)), 'a') as f:
-        #     df = pd.DataFrame.from_dict(saved_dict)
-        #     df.to_csv(f, header=False)
 
     # save info for grid_loc
     decoy_end_time = time.time()
@@ -222,8 +213,8 @@ def search(args):
     data_dict['num_correct_after_simple_filter'].append(num_correct_after_simple_filter)
     data_dict['time_elapsed'].append(decoy_end_time - decoy_start_time)
 
-    # df = pd.DataFrame.from_dict(data_dict)
-    # df.to_csv(os.path.join(pose_path, 'exhaustive_search_info_{}_{}.csv'.format(args.grid_index, args.conformer_index)))
+    df = pd.DataFrame.from_dict(data_dict)
+    df.to_csv(os.path.join(pose_path, 'exhaustive_search_info_{}_{}.csv'.format(args.grid_index, args.conformer_index)))
 
 
 def check_search(pairs, raw_root):
