@@ -24,6 +24,7 @@ from read_vdw_params import *
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('task', type=str, help='directory where raw data will be placed')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
     parser.add_argument('--protein', type=str, default='', help='protein name')
     parser.add_argument('--target', type=str, default='', help='target ligand name')
@@ -39,7 +40,7 @@ def main():
                                                                             'ligand pose')
     parser.add_argument('--intolerable_cutoff', type=int, default=0, help='cutoff of max num intolerable residues')
     parser.add_argument('--index', type=int, default=-1, help='index of pose file')
-    parser.add_argument('--n', type=int, default=90, help='number of files processed in each job')
+    parser.add_argument('--n', type=int, default=10, help='number of files processed in each job')
     parser.add_argument('--residue_cutoff', type=int, default=3, help='name of pose group subdir')
     parser.add_argument('--rmsd_cutoff', type=float, default=2.5, help='name of pose group subdir')
     parser.add_argument('--grid_n', type=int, default=75, help='number of grid_points processed in each job')
@@ -49,7 +50,31 @@ def main():
 
     random.seed(0)
 
-    for protein, target, start in [('P0DOX7', '6msy', '6mub')]:
+    if args.task == 'all':
+        protein, target, start = ('P0DOX7', '6msy', '6mub')
+        pair = '{}-to-{}'.format(target, start)
+        protein_path = os.path.join(args.raw_root, protein)
+        pair_path = os.path.join(protein_path, pair)
+
+        grid_size = get_grid_size(pair_path, target, start)
+        group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+        pose_path = os.path.join(pair_path, group_name)
+
+        files = os.listdir(pose_path)
+        grouped_files = group_files(args.n, files)
+        counter = 0
+
+        for i in range(len(grouped_files)):
+            counter += 1
+            cmd = 'sbatch -p rondror -t 0:20:00 -o {} --wrap="$SCHRODINGER/run python3 check_duplicate2.py group {} ' \
+                  '--index {}"'
+            out_file_name = 'check_dup_{}.out'.format(i)
+            os.system(cmd.format(os.path.join(args.run_path, out_file_name), args.raw_root, i))
+
+        print(counter)
+
+    elif args.task == 'group':
+        protein, target, start = ('P0DOX7', '6msy', '6mub')
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(args.raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
@@ -63,14 +88,10 @@ def main():
 
         incorrect = []
         files = os.listdir(pose_path)
+        grouped_files = group_files(args.n, files)
 
-        print(len(files))
-
-        for i in range(len(files) - 1, -1, -1):
-            file = files[i]
-            print(file)
+        for file in grouped_files[args.index]:
             if file[:len(prefix)] == prefix:
-                start_time = time.time()
                 df = pd.read_csv(os.path.join(pose_path, file))
                 if len(df) != len(df.name.unique()):
                     stripped = file[len(prefix):-len(suffix)]
@@ -80,8 +101,6 @@ def main():
                     combined = (protein, target, start, grid_index, conformer_index)
                     if combined not in incorrect:
                         incorrect.append(combined)
-                print(time.time() - start_time)
-                return
 
         print(len(incorrect))
         print(incorrect)
