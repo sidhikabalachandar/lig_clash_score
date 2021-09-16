@@ -25,6 +25,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
+    parser.add_argument('--cutoff', type=int, default=15, help='clash cutoff between target protein and '
+                                                                           'ligand pose')
     args = parser.parse_args()
 
     random.seed(0)
@@ -35,30 +37,40 @@ def main():
 
     print(len(process))
 
-    for protein, target, start in process[:500]:
-        pair = '{}-to-{}'.format(target, start)
-        protein_path = os.path.join(args.raw_root, protein)
-        pair_path = os.path.join(protein_path, pair)
-        target_lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
-        target_lig = list(structure.StructureReader(target_lig_file))[0]
-        start_prot_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
-        start_prot = list(structure.StructureReader(start_prot_file))[0]
+    if not os.path.exists('clash.pkl'):
 
-        volume_docking = steric_clash.clash_volume(start_prot, struc2=target_lig)
-        volumes.append(volume_docking)
+        for protein, target, start in process[:500]:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(args.raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+            target_lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
+            target_lig = list(structure.StructureReader(target_lig_file))[0]
+            start_prot_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
+            start_prot = list(structure.StructureReader(start_prot_file))[0]
 
-    outfile = open('clash.pkl', 'wb')
-    pickle.dump(volumes, outfile)
-    outfile.close()
+            volume_docking = steric_clash.clash_volume(start_prot, struc2=target_lig)
+            volumes.append(volume_docking)
 
-    fig, ax = plt.subplots()
-    sns.distplot(volumes, hist=True)
-    plt.title('Clash Distribution')
-    plt.xlabel('clash volume')
-    plt.ylabel('frequency')
-    ax.legend()
-    fig.savefig('clash.png')
+        outfile = open('clash.pkl', 'wb')
+        pickle.dump(volumes, outfile)
+        outfile.close()
 
+        fig, ax = plt.subplots()
+        sns.distplot(volumes, hist=True)
+        plt.title('Clash Distribution')
+        plt.xlabel('clash volume')
+        plt.ylabel('frequency')
+        ax.legend()
+        fig.savefig('clash.png')
+
+    else:
+        infile = open('clash.pkl', 'rb')
+        volumes = pickle.load(infile)
+        infile.close()
+
+        fine = [i for i in volumes if i < args.cutoff]
+
+        print(len(fine) / len(volumes))
 
 if __name__ == "__main__":
     main()
