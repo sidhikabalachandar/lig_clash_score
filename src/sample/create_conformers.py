@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 create_conformers.py test group /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/splits/search_test_incorrect_glide_index.txt /home/users/sidhikab/lig_clash_score/src/sample/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov --index 0 --n 1
+$ $SCHRODINGER/run python3 create_conformers.py test group docked_prot_file run_path raw_root --protein C8B467 --target 5ult --start 5uov --index 0 --n 1
 """
 
 import argparse
