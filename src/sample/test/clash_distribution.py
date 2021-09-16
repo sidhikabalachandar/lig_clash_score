@@ -26,9 +26,6 @@ def main():
 
     random.seed(0)
 
-    if not os.path.exists(args.run_path):
-        os.mkdir(args.run_path)
-
     process = get_prots(args.docked_prot_file)
 
     volumes = []
