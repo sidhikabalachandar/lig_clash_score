@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 create_conformers.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov --index 0 --n 1
+$ $SCHRODINGER/run python3 clash_distribution.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
 """
 
 import argparse
@@ -12,7 +12,7 @@ import schrodinger.structutils.interactions.steric_clash as steric_clash
 import time
 
 import sys
-sys.path.insert(1, 'util')
+sys.path.insert(1, '../util')
 from util import *
 
 
