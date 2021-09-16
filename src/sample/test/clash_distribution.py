@@ -8,6 +8,7 @@ $ $SCHRODINGER/run python3 clash_distribution.py /oak/stanford/groups/rondror/pr
 import argparse
 import os
 import random
+import schrodinger.structure as structure
 import schrodinger.structutils.interactions.steric_clash as steric_clash
 import time
 
