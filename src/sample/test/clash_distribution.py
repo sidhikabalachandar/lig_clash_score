@@ -40,7 +40,7 @@ def main():
         pair_path = os.path.join(protein_path, pair)
         target_lig_file = os.path.join(pair_path, 'ligand_poses', '{}_lig0.mae'.format(target))
         target_lig = list(structure.StructureReader(target_lig_file))[0]
-        start_prot_file = os.path.join(pair_path, '{}_prot.mae'.format(args.start))
+        start_prot_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
         start_prot = list(structure.StructureReader(start_prot_file))[0]
 
         volume_docking = steric_clash.clash_volume(start_prot, struc2=target_lig)
