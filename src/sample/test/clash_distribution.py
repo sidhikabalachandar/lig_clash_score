@@ -10,7 +10,9 @@ import os
 import random
 import schrodinger.structure as structure
 import schrodinger.structutils.interactions.steric_clash as steric_clash
-import time
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pickle
 
 import sys
 sys.path.insert(1, '../util')
@@ -33,8 +35,7 @@ def main():
 
     print(len(process))
 
-    for protein, target, start in process:
-        start_time = time.time()
+    for protein, target, start in process[:500]:
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(args.raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
@@ -45,8 +46,18 @@ def main():
 
         volume_docking = steric_clash.clash_volume(start_prot, struc2=target_lig)
         volumes.append(volume_docking)
-        print(time.time() - start_time)
-        break
+
+    outfile = open('clash.pkl', 'wb')
+    pickle.dump(volumes, outfile)
+    outfile.close()
+
+    fig, ax = plt.subplots()
+    sns.distplot(volumes, hist=True)
+    plt.title('Clash Distribution')
+    plt.xlabel('clash volume')
+    plt.ylabel('frequency')
+    ax.legend()
+    fig.savefig('clash.png')
 
 
 if __name__ == "__main__":
