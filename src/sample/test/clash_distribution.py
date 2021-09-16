@@ -2,13 +2,14 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 create_conformers.py test group docked_prot_file run_path raw_root --protein C8B467 --target 5ult --start 5uov --index 0 --n 1
+$ $SCHRODINGER/run python3 create_conformers.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --protein C8B467 --target 5ult --start 5uov --index 0 --n 1
 """
 
 import argparse
 import os
 import random
 import schrodinger.structutils.interactions.steric_clash as steric_clash
+import time
 
 import sys
 sys.path.insert(1, 'util')
@@ -19,18 +20,8 @@ from util import *
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('mode', type=str, help='either train or test')
-    parser.add_argument('task', type=str, help='either align or search')
     parser.add_argument('docked_prot_file', type=str, help='file listing proteins to process')
-    parser.add_argument('run_path', type=str, help='directory where script and output files will be written')
     parser.add_argument('raw_root', type=str, help='directory where raw data will be placed')
-    parser.add_argument('--index', type=int, default=-1, help='protein-ligand pair group index')
-    parser.add_argument('--num_conformers', type=int, default=300, help='maximum number of conformers considered')
-    parser.add_argument('--n', type=int, default=1, help='number of protein, target, start groups processed in '
-                                                         'group task')
-    parser.add_argument('--protein', type=str, default='', help='name of protein')
-    parser.add_argument('--target', type=str, default='', help='name of target ligand')
-    parser.add_argument('--start', type=str, default='', help='name of start ligand')
     args = parser.parse_args()
 
     random.seed(0)
@@ -42,7 +33,10 @@ def main():
 
     volumes = []
 
+    print(len(process))
+
     for protein, target, start in process:
+        start_time = time.time()
         pair = '{}-to-{}'.format(target, start)
         protein_path = os.path.join(args.raw_root, protein)
         pair_path = os.path.join(protein_path, pair)
@@ -53,8 +47,9 @@ def main():
 
         volume_docking = steric_clash.clash_volume(start_prot, struc2=target_lig)
         volumes.append(volume_docking)
+        print(time.time() - start_time)
         break
-        
+
 
 if __name__ == "__main__":
     main()
