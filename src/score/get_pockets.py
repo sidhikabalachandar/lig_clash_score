@@ -35,6 +35,7 @@ def main():
     parser.add_argument('--max_num_concurrent_jobs', type=int, default=200, help='maximum number of concurrent jobs '
                                                                                  'that can be run on slurm at one time')
     parser.add_argument('--residue_cutoff', type=int, default=3, help='name of pose group subdir')
+    parser.add_argument('--data_name', type=str, default='data', help='name of saved data folder')
     args = parser.parse_args()
 
     if not os.path.exists(args.run_path):
@@ -44,7 +45,7 @@ def main():
     save_directory = os.path.join(args.root, 'ml_score')
     if not os.path.exists(save_directory):
         os.mkdir(save_directory)
-    save_directory = os.path.join(save_directory, 'data')
+    save_directory = os.path.join(save_directory, args.data_name)
     if not os.path.exists(save_directory):
         os.mkdir(save_directory)
 
