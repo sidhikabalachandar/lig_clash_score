@@ -2,7 +2,7 @@
 The purpose of this code is to get the physics scores and the rmsds
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 get_names.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d
+$ $SCHRODINGER/run python3 get_names.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --data_name small_data
 """
 
 import argparse

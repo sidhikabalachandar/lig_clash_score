@@ -296,7 +296,7 @@ def run(output_root, make_lmdb, split):
     'pocket_file', 'file' are the names of the mae file within the data folder containing the protein pocket and ligand structures
     '''
 
-    input_data = f'{output_root}/data'
+    input_data = f'{output_root}/small_data'
     name_file = 'names.csv'
     id_file_path = f"{input_data}/{name_file}"
     lmdb_folder = 'lmdb_data'
