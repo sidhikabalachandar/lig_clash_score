@@ -299,7 +299,7 @@ def run(output_root, make_lmdb, split):
     input_data = f'{output_root}/small_data'
     name_file = 'names.csv'
     id_file_path = f"{input_data}/{name_file}"
-    lmdb_folder = 'lmdb_data'
+    lmdb_folder = 'small_lmdb_data'
     lmdb_path = f'{output_root}/{lmdb_folder}'
     split_output_folder = f'{output_root}/{lmdb_folder}/split'
 
