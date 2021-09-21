@@ -36,13 +36,14 @@ def main():
     parser.add_argument('--max_num_concurrent_jobs', type=int, default=200, help='maximum number of concurrent jobs '
                                                                                  'that can be run on slurm at one time')
     parser.add_argument('--residue_cutoff', type=int, default=3, help='name of pose group subdir')
+    parser.add_argument('--data_name', type=str, default='data', help='name of saved data folder')
     args = parser.parse_args()
 
     raw_root = os.path.join(args.root, 'raw')
     save_directory = os.path.join(args.root, 'ml_score')
     if not os.path.exists(save_directory):
         os.mkdir(save_directory)
-    save_directory = os.path.join(save_directory, 'data')
+    save_directory = os.path.join(save_directory, args.data_name)
     if not os.path.exists(save_directory):
         os.mkdir(save_directory)
 
@@ -99,6 +100,50 @@ def main():
                 c.title = pose_name
                 filtered.append(c)
                 c.setXYZ(old_coords)
+
+    if args.task == 'small_data':
+        for protein, target, start in [('P02829', '2weq', '2yge'), ('P00797', '3own', '3d91'),
+                                       ('C8B467', '5ult', '5uov'),
+                                       ('P03368', '1gno', '1zp8'), ('P02829', '2fxs', '2weq'),
+                                       ('P11838', '3wz6', '1gvx'),
+                                       ('P00523', '4ybk', '2oiq'), ('P00519', '4twp', '5hu9'),
+                                       ('P0DOX7', '6msy', '6mub')]:
+            pair = '{}-to-{}'.format(target, start)
+            protein_path = os.path.join(raw_root, protein)
+            pair_path = os.path.join(protein_path, pair)
+
+            grid_size = get_grid_size(pair_path, target, start)
+            group_name = 'test_grid_{}_2_rotation_0_360_20_rmsd_2.5'.format(grid_size)
+            pose_path = os.path.join(pair_path, group_name)
+            file = os.path.join(pose_path, 'poses_after_advanced_filter.csv')
+            df = pd.read_csv(file)
+
+            names = df['name'].to_list()
+
+            conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
+            conformers = list(structure.StructureReader(conformer_file))
+
+            ligand_file = os.path.join(save_directory, '{}_{}_ligs.mae'.format(protein, pair))
+            with structure.StructureWriter(ligand_file) as filtered:
+                for name in names[:3]:
+                    pose_name = '{}_{}_{}'.format(protein, pair, name)
+                    conformer_index = df[df['name'] == name]['conformer_index'].iloc[0]
+                    c = conformers[conformer_index]
+                    old_coords = c.getXYZ(copy=True)
+                    grid_loc_x = df[df['name'] == name]['grid_loc_x'].iloc[0]
+                    grid_loc_y = df[df['name'] == name]['grid_loc_y'].iloc[0]
+                    grid_loc_z = df[df['name'] == name]['grid_loc_z'].iloc[0]
+                    rot_x = df[df['name'] == name]['rot_x'].iloc[0]
+                    rot_y = df[df['name'] == name]['rot_y'].iloc[0]
+                    rot_z = df[df['name'] == name]['rot_z'].iloc[0]
+
+                    new_coords = create_pose(c, grid_loc_x, grid_loc_y, grid_loc_z, rot_x, rot_y, rot_z)
+
+                    # for clash features dictionary
+                    c.setXYZ(new_coords)
+                    c.title = pose_name
+                    filtered.append(c)
+                    c.setXYZ(old_coords)
 
 
 if __name__=="__main__":

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-MODEL_DIR=/oak/stanford/groups/rondror/users/hyu42/fragment_stitching_copy/src/models/score_intermediate
-WEIGHTS_SAVE_PATH=/oak/stanford/groups/rondror/projects/ligand-docking/fragment_building/runs
-NAME='EXP44_pdbbind_E3NN'
-DATA_DIR=/oak/stanford/groups/rondror/projects/atom3d/lmdb/LBA/splits/split-by-sequence-identity-30/data
+MODEL_DIR=/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/test
+WEIGHTS_SAVE_PATH=/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/runs
+NAME='lig_clash_score'
+DATA_DIR=/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/ml_score/lmdb_data/split/data
 cd $MODEL_DIR
 #AUGMENT='AUGMENT'
 export DATA_DIR=$DATA_DIR
