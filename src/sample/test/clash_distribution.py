@@ -79,7 +79,7 @@ def main():
         y = []
 
         for i in range(int(max(volumes) + 1)):
-            fine = [i for i in volumes if i == args.cutoff]
+            fine = [i for i in volumes if int(i) == args.cutoff]
             print(fine)
             x.append(i)
             y.append(len(fine) / len(volumes))
