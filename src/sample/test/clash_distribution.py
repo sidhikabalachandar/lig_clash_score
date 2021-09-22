@@ -2,7 +2,7 @@
 The purpose of this code is to create conformers
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 clash_distribution.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw
+$ $SCHRODINGER/run python3 clash_distribution.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/refined_random.txt /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/raw --cutoff 0
 """
 
 import argparse
@@ -67,7 +67,7 @@ def main():
         fig.savefig('clash_custom.png')
 
     else:
-        infile = open('clash.pkl', 'rb')
+        infile = open('clash_custom.pkl', 'rb')
         volumes = pickle.load(infile)
         infile.close()
 
