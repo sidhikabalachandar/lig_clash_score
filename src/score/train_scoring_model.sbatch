@@ -21,5 +21,6 @@ module load cuda/10.1.168
 module load gcc/8.1.0
 conda activate e3nn
 echo 'run now!'
+pwd
 
 sh train_scoriing_model.sh
