@@ -73,6 +73,7 @@ def main():
         infile = open('clash_custom.pkl', 'rb')
         volumes = pickle.load(infile)
         infile.close()
+        print(volumes)
 
         x = []
         y = []
