@@ -1,7 +1,7 @@
 MODEL_DIR=/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/test
 WEIGHTS_SAVE_PATH=/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/runs
 NAME='lig_clash_score'
-DATA_DIR=/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/ml_score/lmdb_data/split/data
+DATA_DIR=/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/ml_score/small_lmdb_data/split/data
 cd $MODEL_DIR
 #AUGMENT='AUGMENT'
 export DATA_DIR=$DATA_DIR
