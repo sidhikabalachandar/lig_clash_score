@@ -2,13 +2,13 @@
 #SBATCH --time=24:00:00
 #SBATCH --mem=32G
 #SBATCH --begin=now
-#SBATCH --output=/oak/stanford/groups/rondror/projects/ligand-docking/fragment_building/logs/EXP44/binding-affinity-%j.out
-#SBATCH --error=/oak/stanford/groups/rondror/projects/ligand-docking/fragment_building/logs/EXP44/binding-affinity-%j.err
+#SBATCH --output=/home/users/sidhikab/lig_clash_score/src/score/run/train_scoring_model.out
+#SBATCH --error=/home/users/sidhikab/lig_clash_score/src/score/run/train_scoring_model.err
 #SBATCH --partition=rondror
 #SBATCH --gres gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --ntasks-per-socket=2
-#SBATCH --job-name=EXP44_Ares_E3nn
+#SBATCH --job-name=train_scoring_model
 #SBATCH --open-mode=append
 #SBATCH --ntasks=1
 #SBATCH --constraint=GPU_SKU:TITAN_Xp
