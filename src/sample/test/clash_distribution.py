@@ -74,32 +74,18 @@ def main():
         volumes = pickle.load(infile)
         infile.close()
 
-        fine = [i for i in volumes if i < args.cutoff]
+        x = []
+        y = []
 
-        print(len(fine) / len(volumes))
+        for i in range(max(volumes) + 1):
+            fine = [i for i in volumes if i == args.cutoff]
+            x.append(i)
+            y.append(len(fine) / len(volumes))
 
         fig, ax = plt.subplots()
-        # Histogram:
-        # Bin it
-        n, bin_edges = np.histogram(volumes, 10)
-        # Normalize it, so that every bins value gives the probability of that bin
-        bin_probability = n / float(n.sum())
-        # Get the mid points of every bin
-        bin_middles = (bin_edges[1:] + bin_edges[:-1]) / 2.
-        # Compute the bin-width
-        bin_width = bin_edges[1] - bin_edges[0]
-        # Plot the histogram as a bar plot
-        plt.bar(bin_middles, bin_probability, width=bin_width)
-
-        # Fit to normal distribution
-        (mu, sigma) = stats.norm.fit(volumes)
-        # The pdf should not normed anymore but scaled the same way as the data
-        y = mlab.normpdf(bin_middles, mu, sigma) * bin_width
-        l = plt.plot(bin_middles, y, 'r', linewidth=2)
-
-        plt.grid(True)
-        plt.xlim(-0.05, 0.05)
+        ax.bar(x, y)
         fig.savefig('clash_custom_prob.png')
+
 
 if __name__ == "__main__":
     main()
