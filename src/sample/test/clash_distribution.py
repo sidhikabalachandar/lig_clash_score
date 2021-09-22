@@ -38,7 +38,7 @@ def main():
 
     print(len(process))
 
-    if not os.path.exists('clash.pkl'):
+    if not os.path.exists('clash_custom.pkl'):
 
         for protein, target, start in process[:500]:
             pair = '{}-to-{}'.format(target, start)
@@ -54,7 +54,7 @@ def main():
             volume_docking = get_clash(target_lig, grid, origin)
             volumes.append(volume_docking)
 
-        outfile = open('clash.pkl', 'wb')
+        outfile = open('clash_custom.pkl', 'wb')
         pickle.dump(volumes, outfile)
         outfile.close()
 
@@ -64,7 +64,7 @@ def main():
         plt.xlabel('clash volume')
         plt.ylabel('frequency')
         ax.legend()
-        fig.savefig('clash.png')
+        fig.savefig('clash_custom.png')
 
     else:
         infile = open('clash.pkl', 'rb')
