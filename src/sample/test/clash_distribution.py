@@ -10,9 +10,12 @@ import os
 import random
 import schrodinger.structure as structure
 import schrodinger.structutils.interactions.steric_clash as steric_clash
-import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
+import numpy as np
+import scipy.stats as stats
+import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
 
 import sys
 sys.path.insert(1, '../util')
@@ -74,6 +77,29 @@ def main():
         fine = [i for i in volumes if i < args.cutoff]
 
         print(len(fine) / len(volumes))
+
+        fig, ax = plt.subplots()
+        # Histogram:
+        # Bin it
+        n, bin_edges = np.histogram(volumes, 10)
+        # Normalize it, so that every bins value gives the probability of that bin
+        bin_probability = n / float(n.sum())
+        # Get the mid points of every bin
+        bin_middles = (bin_edges[1:] + bin_edges[:-1]) / 2.
+        # Compute the bin-width
+        bin_width = bin_edges[1] - bin_edges[0]
+        # Plot the histogram as a bar plot
+        plt.bar(bin_middles, bin_probability, width=bin_width)
+
+        # Fit to normal distribution
+        (mu, sigma) = stats.norm.fit(volumes)
+        # The pdf should not normed anymore but scaled the same way as the data
+        y = mlab.normpdf(bin_middles, mu, sigma) * bin_width
+        l = plt.plot(bin_middles, y, 'r', linewidth=2)
+
+        plt.grid(True)
+        plt.xlim(-0.05, 0.05)
+        fig.savefig('clash_custom_prob.png')
 
 if __name__ == "__main__":
     main()
