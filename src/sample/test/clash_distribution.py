@@ -17,6 +17,7 @@ import pickle
 import sys
 sys.path.insert(1, '../util')
 from util import *
+from schrod_replacement_util import *
 
 
 # MAIN TASK FUNCTIONS
@@ -48,7 +49,9 @@ def main():
             start_prot_file = os.path.join(pair_path, '{}_prot.mae'.format(start))
             start_prot = list(structure.StructureReader(start_prot_file))[0]
 
-            volume_docking = steric_clash.clash_volume(start_prot, struc2=target_lig)
+            # volume_docking = steric_clash.clash_volume(start_prot, struc2=target_lig)
+            grid, origin = get_grid(start_prot)
+            volume_docking = get_clash(target_lig, grid, origin)
             volumes.append(volume_docking)
 
         outfile = open('clash.pkl', 'wb')

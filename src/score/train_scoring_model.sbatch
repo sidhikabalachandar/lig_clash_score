@@ -23,4 +23,4 @@ conda activate e3nn
 echo 'run now!'
 pwd
 
-sh train_scoriing_model.sh
+sh train_scoring_model.sh
