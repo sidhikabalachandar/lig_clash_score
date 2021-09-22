@@ -86,6 +86,10 @@ def main():
 
         fig, ax = plt.subplots()
         ax.bar(x, y)
+        plt.title('Clash Distribution')
+        plt.xlabel('clash volume')
+        plt.ylabel('frequency')
+        ax.legend()
         fig.savefig('clash_custom_prob.png')
 
 
