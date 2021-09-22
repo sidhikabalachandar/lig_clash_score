@@ -10,4 +10,4 @@ TASK='regression'
 echo $WEIGHTS_SAVE_PATH
 echo $MODEL_DIR
 
-python train.py -train $DATA_DIR/train -val $DATA_DIR/val -test $DATA_DIR/test --weights_save_path $WEIGHTS_SAVE_PATH --gpus=1 --num_workers=8 --batch_size=1 --accumulate_grad_batches=2 --learning_rate=0.01 --max_epochs=40 --project_name pdbbind --run_id lig_clash_score --balance_dataset
+python train.py -train $DATA_DIR/train -val $DATA_DIR/val -test $DATA_DIR/test --weights_save_path $WEIGHTS_SAVE_PATH --gpus=1 --num_workers=8 --batch_size=8 --accumulate_grad_batches=2 --learning_rate=0.01 --max_epochs=40 --project_name pdbbind --run_id lig_clash_score --balance_dataset
