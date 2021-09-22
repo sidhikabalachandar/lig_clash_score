@@ -7,4 +7,4 @@
 #SBATCH --partition=rondror
 #SBATCH --gres gpu:1
 
-echo 'run now!'
+echo 'run now2!'
