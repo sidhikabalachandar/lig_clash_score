@@ -78,10 +78,10 @@ def main():
         x = []
         y = []
 
-        for i in range(int(max(volumes) + 1)):
-            fine = [i for i in volumes if int(i) == args.cutoff]
+        for cutoff in range(int(max(volumes) + 1)):
+            fine = [j for j in volumes if j == cutoff]
             print(fine)
-            x.append(i)
+            x.append(cutoff)
             y.append(len(fine) / len(volumes))
 
         fig, ax = plt.subplots()
