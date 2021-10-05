@@ -2,13 +2,13 @@
 The purpose of this code is to get the physics scores and the rmsds
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 get_names.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --data_name small_data
+$ $SCHRODINGER/run python3 get_names.py /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --data_name balanced_data
 """
 
 import argparse
 import os
 import pandas as pd
-import time
+import random
 
 import sys
 sys.path.insert(1, '../sample/util')
@@ -29,6 +29,8 @@ def main():
     parser.add_argument('--rmsd_cutoff', type=float, default=2.5, help='name of pose group subdir')
     parser.add_argument('--data_name', type=str, default='data', help='name of saved data folder')
     args = parser.parse_args()
+
+    random.seed(0)
 
     raw_root = os.path.join(args.root, 'raw')
     save_directory = os.path.join(args.root, 'ml_score')
@@ -79,6 +81,26 @@ def main():
                 else:
                     label = 1
                 counter += 1
+                data['name'].append(pose_name)
+                data['label'].append(label)
+                data['pocket_file'].append('{}_{}_pocket.mae'.format(protein, pair))
+                data['file'].append('{}_{}_ligs.mae'.format(protein, pair))
+        elif args.data_name == 'balanced_data':
+            correct_df = df[df['rmsd'] <= args.rmsd_cutoff]
+            incorrect_df = df[df['rmsd'] > args.rmsd_cutoff]
+
+            correct_names = correct_df['name'].to_list()
+            incorrect_names = incorrect_df['name'].to_list()
+            random.shuffle(incorrect_names)
+            incorrect_names = incorrect_names[:len(correct_names)]
+            names = correct_names + incorrect_names
+            for name in names:
+                pose_name = '{}_{}_{}'.format(protein, pair, name)
+                rmsd = df[df['name'] == name]['rmsd'].iloc[0]
+                if rmsd < args.rmsd_cutoff:
+                    label = 0
+                else:
+                    label = 1
                 data['name'].append(pose_name)
                 data['label'].append(label)
                 data['pocket_file'].append('{}_{}_pocket.mae'.format(protein, pair))
