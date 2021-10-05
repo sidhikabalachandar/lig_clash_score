@@ -173,6 +173,7 @@ def main():
             random.shuffle(incorrect_names)
             incorrect_names = incorrect_names[:len(correct_names)]
             names = correct_names + incorrect_names
+            random.shuffle(names)
 
             conformer_file = os.path.join(pair_path, "aligned_to_start_with_hydrogen_conformers.mae")
             conformers = list(structure.StructureReader(conformer_file))
