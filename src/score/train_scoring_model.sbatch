@@ -7,8 +7,8 @@
 #SBATCH --constraint=GPU_SKU:TITAN_Xp
 #SBATCH --cpus-per-task=4
 #SBATCH --cores-per-socket=4
-#SBATCH --output=/home/users/sidhikab/lig_clash_score/src/score/run/train_scoring_model.out
-#SBATCH --error=/home/users/sidhikab/lig_clash_score/src/score/run/train_scoring_model2.err
+#SBATCH --output=/home/users/sidhikab/lig_clash_score/src/score/run/small_train_scoring_model.out
+#SBATCH --error=/home/users/sidhikab/lig_clash_score/src/score/run/small_train_scoring_model.err
 
 eval "$(/oak/stanford/groups/rondror/projects/ligand-docking/fragment_building/software/anaconda3/bin/conda shell.bash hook)"
 conda deactivate

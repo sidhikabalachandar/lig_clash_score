@@ -1,4 +1,4 @@
-MODEL_DIR=/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/Fragment_stitching/src/models/score_intermediate
+MODEL_DIR=/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/test
 WEIGHTS_SAVE_PATH=/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/runs
 NAME='small_lig_clash_score'
 DATA_DIR=/oak/stanford/groups/rondror/projects/combind/flexibility/atom3d/ml_score/lmdb_data/split/data
