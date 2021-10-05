@@ -2,7 +2,7 @@
 The purpose of this code is to get the physics scores and the rmsds
 
 It can be run on sherlock using
-$ $SCHRODINGER/run python3 get_ligands.py small_data /home/users/sidhikab/lig_clash_score/src/score/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --data_name small_data
+$ $SCHRODINGER/run python3 get_ligands.py balanced_group /home/users/sidhikab/lig_clash_score/src/score/run /oak/stanford/groups/rondror/projects/combind/flexibility/atom3d --data_name balanced_data --protein P02829 --target 2weq --start 2yge
 """
 
 import argparse
