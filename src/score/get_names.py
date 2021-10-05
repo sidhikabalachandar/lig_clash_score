@@ -59,26 +59,26 @@ def main():
         names = df['name'].to_list()
 
         if args.data_name == 'data':
-            counter = 0
             for name in names:
-                pose_name = '{}_{}_{}'.format(protein, pair, name)
-                if counter % 2 == 0:
-                    label = 0
-                else:
-                    label = 1
-                counter += 1
-                data['name'].append(pose_name)
-                data['label'].append(label)
-                data['pocket_file'].append('{}_{}_pocket.mae'.format(protein, pair))
-                data['file'].append('{}_{}_ligs.mae'.format(protein, pair))
-        elif args.data_name == 'small_data':
-            for name in names[:3]:
                 pose_name = '{}_{}_{}'.format(protein, pair, name)
                 rmsd = df[df['name'] == name]['rmsd'].iloc[0]
                 if rmsd < args.rmsd_cutoff:
                     label = 0
                 else:
                     label = 1
+                data['name'].append(pose_name)
+                data['label'].append(label)
+                data['pocket_file'].append('{}_{}_pocket.mae'.format(protein, pair))
+                data['file'].append('{}_{}_ligs.mae'.format(protein, pair))
+        elif args.data_name == 'small_data':
+            counter = 0
+            for name in names[:3]:
+                pose_name = '{}_{}_{}'.format(protein, pair, name)
+                if counter % 2 == 0:
+                    label = 0
+                else:
+                    label = 1
+                counter += 1
                 data['name'].append(pose_name)
                 data['label'].append(label)
                 data['pocket_file'].append('{}_{}_pocket.mae'.format(protein, pair))
