@@ -94,6 +94,7 @@ def main():
             random.shuffle(incorrect_names)
             incorrect_names = incorrect_names[:len(correct_names)]
             names = correct_names + incorrect_names
+            random.shuffle(names)
             for name in names:
                 pose_name = '{}_{}_{}'.format(protein, pair, name)
                 rmsd = df[df['name'] == name]['rmsd'].iloc[0]
